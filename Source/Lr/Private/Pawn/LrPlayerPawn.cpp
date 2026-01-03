@@ -5,6 +5,8 @@
 
 ALrPlayerPawn::ALrPlayerPawn()
 {
+	MoverComponent = CreateDefaultSubobject<UMoverComponent>(TEXT("MoverComponent"));
+
 	// const FMyMoverInput* Input = Params.InputCmdContext ? static_cast<const FMyMoverInput*>(Params.InputCmdContext) : nullptr;
 	// FVector Direction = FVector::ZeroVector;
 	// if (Input)
@@ -17,7 +19,6 @@ ALrPlayerPawn::ALrPlayerPawn()
 void ALrPlayerPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	MoverComponent = CreateDefaultSubobject<UMoverComponent>(TEXT("MoverComponent"));
 	
 	// RootComponent = MoverComponent;// 设置为根组件（处理物理/位置）
 
