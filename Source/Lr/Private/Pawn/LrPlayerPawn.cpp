@@ -17,7 +17,7 @@ ALrPlayerPawn::ALrPlayerPawn()
 void ALrPlayerPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	// MoverComponent = CreateDefaultSubobject<UMoverComponent>(TEXT("MoverComponent"));
+	MoverComponent = CreateDefaultSubobject<UMoverComponent>(TEXT("MoverComponent"));
 	
 	// RootComponent = MoverComponent;// 设置为根组件（处理物理/位置）
 

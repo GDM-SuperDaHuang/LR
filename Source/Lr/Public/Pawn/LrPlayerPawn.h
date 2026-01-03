@@ -39,7 +39,7 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 private:
-	// UPROPERTY(VisibleAnywhere)
-	// UMoverComponent* MoverComponent;
+	UPROPERTY(VisibleAnywhere)
+	UMoverComponent* MoverComponent;
 	
 };
