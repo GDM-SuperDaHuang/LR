@@ -12,6 +12,8 @@
 				"Engine",
 				"EnhancedInput",
 				"GameplayAbilities"
+				"Mover",               // <-- 添加这行
+				"GameplayTags"        // <-- 建议添加这行
 			]
 		}
 	],
@@ -26,6 +28,15 @@
 		{
 			"Name": "GameplayAbilities",
 			"Enabled": true
+		},
+		{
+			"Name": "Mover",          // <-- 添加这个插件块
+			"Enabled": true
+		},
+		{
+			"Name": "EnhancedInput",  // <-- 添加这个插件块（UE5默认启用，但显式声明更安全）
+			"Enabled": true
 		}
+
 	]
 }
