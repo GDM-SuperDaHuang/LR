@@ -7,7 +7,7 @@
 ALrPawnBase::ALrPawnBase()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	CachedMoveInput = FVector2D::ZeroVector;
     bJumpInput = false;
@@ -39,16 +39,16 @@ void ALrPawnBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 void ALrPawnBase::UpdateMove(const FVector2D& Input)
 {
-	CachedMoveInput = *Input
+	CachedMoveInput = Input
 }
 
 void ALrPawnBase::SetJump(const bool Input)
 {
-	bJumpInput = *Input
+	bJumpPressed = *Input
 }
 
 void ALrPawnBase::SetDash(const bool Input)
 {
-	bDashInput = *Input
+	bDashPressed = *Input
 }
 /** 移动相关  */

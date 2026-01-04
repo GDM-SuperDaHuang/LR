@@ -9,7 +9,7 @@
  * 只描述「这一帧玩家做了什么」
  */
 USTRUCT()
-struct FMoverInputCmd : public FMoverInputCmdContext
+struct FLrMoverInputCmd : public FMoverInputCmdContext
 {
     GENERATED_BODY()
 
@@ -30,7 +30,7 @@ struct FMoverInputCmd : public FMoverInputCmdContext
  * ❗ 只要影响下一帧运动结果，就必须在这里
  */
 USTRUCT()
-struct FMoverSyncState : public FMoverSyncState
+struct FLrMoverSyncState : public FMoverSyncState
 {
     GENERATED_BODY()
 

@@ -22,6 +22,10 @@ protected:
 private:
 
 
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<ULrDataAsset> InputConfig;
+
+
 	/** 移动相关 */
 	// 增强输入资源
 	UPROPERTY(EditAnywhere, Category="Input")

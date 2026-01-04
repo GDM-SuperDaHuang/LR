@@ -48,7 +48,7 @@ void ALrPlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 
 // Called every frame
-void ALrPlayerPawn::ProduceMoverInput(float DeltaTime)
+void ALrPlayerPawn::ProduceMoverInput(float DeltaTimeMS, FMoverInputCmdContext* InputContext)
 {
 	FMoverInputCmd* Cmd = static_cast<FMoverInputCmd*>(InputContext);
 

@@ -38,7 +38,8 @@ public:
     virtual void OnGenerateMove(const FMoverSimulationTickParams& Params, FMoverProposedMove& OutMove) override
     {
         const FMoverInputCmd* Input = static_cast<const FMoverInputCmd*>(Params.InputCmdContext);
-
+        if (Input->MoveInput.SizeSquared() < 0.01f) return ;
+        
         // 计算移动方向：从输入的 X 和 Y 分量构建向量，Z 为 0（平面移动）。
         // Dir 被限制在单位向量长度内，防止速度超过预期。
         FVector Dir(Input->MoveInput.X, Input->MoveInput.Y, 0.f);
@@ -57,7 +58,7 @@ public:
         // 这里进行模式切换决策，但不实际修改状态（因为函数可能被回滚）。
         if (Input->bDashPressed && Sync.DashTimeRemaining <= 0.f)
         {
-            Sync.DashDirection = Dir.IsNearlyZero() ? FVector::ForwardVector : Dir;
+            Sync.DashDirection = Dir.IsNearlyZero() ? FVector::ForwardVector : Dir; // 不建议在这修改状态？
             Sync.DashTimeRemaining = 0.25f;
             Params.MoverComponent->QueueNextMode(TEXT("Dash"));
         }

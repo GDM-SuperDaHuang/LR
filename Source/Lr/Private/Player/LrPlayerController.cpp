@@ -33,7 +33,7 @@ void ALrPlayerController::SetupInputComponent()
 	LrInputComponent->BindAction(DashAction, ETriggerEvent::Completed, this, &ALrPlayerController::DashPress);
 
 	// 技能释放相关
-	AuraInputComponent->BindAbilityActions(
+	LrInputComponent->BindAbilityActions(
 		InputConfig, // 数据资产里配了 IA <-> Tag 表
 		this,
 		&ThisClass::AbilityInputTagPressed,

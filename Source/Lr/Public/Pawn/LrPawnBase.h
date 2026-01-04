@@ -53,7 +53,7 @@ public:
 
 	/** 移动更新相关 */
 	FVector2D& CachedMoveInput;
-    bool bJumpInput;
-    bool bDashInput;
+    bool bJumpPressed;
+    bool bDashPressed;
 	/** 移动更新相关 */
 };
