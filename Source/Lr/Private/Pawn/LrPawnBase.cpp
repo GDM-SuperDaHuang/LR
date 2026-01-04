@@ -9,6 +9,9 @@ ALrPawnBase::ALrPawnBase()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	CachedMoveInput = FVector2D::ZeroVector;
+    bJumpInput = false;
+    bDashInput = false;
 }
 
 // Called when the game starts or when spawned
@@ -24,6 +27,7 @@ void ALrPawnBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
+
 
 
 /** 移动相关  */
