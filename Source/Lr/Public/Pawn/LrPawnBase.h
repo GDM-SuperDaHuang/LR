@@ -59,4 +59,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	UMoverComponent* MoverComponent;
+	// Mover输入生产
+    void ProduceMoverInput(float DeltaTimeMS, FMoverInputCmdContext* InputContext);
 };
