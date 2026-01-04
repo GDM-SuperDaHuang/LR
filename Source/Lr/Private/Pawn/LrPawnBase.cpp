@@ -10,8 +10,8 @@ ALrPawnBase::ALrPawnBase()
 	MoverComponent->SetupAttachment(GetRootComponent());
 
     CachedMoveInput = FVector2D::ZeroVector;
-    bJumpInput = false;
-    bDashInput = false;
+    bJumpPressed = false;
+    bDashPressed = false;
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -46,11 +46,11 @@ void ALrPawnBase::UpdateMove(const FVector2D& Input)
 
 void ALrPawnBase::SetJump(const bool Input)
 {
-	bJumpInput = *Input
+	bJumpPressed = *Input
 }
 
 void ALrPawnBase::SetDash(const bool Input)
 {
-	bDashInput = *Input
+	bDashPressed = *Input
 }
 /** 移动相关  */
