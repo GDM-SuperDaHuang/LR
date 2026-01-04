@@ -5,16 +5,7 @@
 
 ALrPlayerPawn::ALrPlayerPawn()
 {
-	MoverComponent = CreateDefaultSubobject<UMoverComponent>(TEXT("MoverComponent"));
-	// todo 初始化状态
-
-	// const FMyMoverInput* Input = Params.InputCmdContext ? static_cast<const FMyMoverInput*>(Params.InputCmdContext) : nullptr;
-	// FVector Direction = FVector::ZeroVector;
-	// if (Input)
-	// {
-	// 	Direction = FVector(Input->MoveDirection.X, Input->MoveDirection.Y, 0.f).GetClampedToMaxSize(1.f);
-	// }
-	// OutMove.LinearVelocity = Direction * 600.f;
+	
 }
 
 void ALrPlayerPawn::BeginPlay()
