@@ -25,10 +25,26 @@ void ALrPawnBase::Tick(float DeltaTime)
 
 }
 
-// Called to bind functionality to input
+
+/** 移动相关  */
 void ALrPawnBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
 
+void ALrPawnBase::UpdateMove(const FVector2D& Input)
+{
+	CachedMoveInput = *Input
+}
+
+void ALrPawnBase::SetJump(const bool Input)
+{
+	bJumpInput = *Input
+}
+
+void ALrPawnBase::SetDash(const bool Input)
+{
+	bDashInput = *Input
+}
+/** 移动相关  */

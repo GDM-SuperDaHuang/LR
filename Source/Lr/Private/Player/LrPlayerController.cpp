@@ -28,31 +28,51 @@ void ALrPlayerController::SetupInputComponent()
 	check(LrInputComponent);
 
 	// 普通移动轴绑定
-	LrInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this,  &ALrPlayerController::Move );
-	// // Shift 按下/松开（用来区分“强制施法”与“点地移动”）
-	// LrInputComponent->BindAction(ShiftAction, ETriggerEvent::Started, this, &ALrPlayerController::ShiftPressed);
-	// LrInputComponent->BindAction(ShiftAction, ETriggerEvent::Completed, this, &ALrPlayerController::ShiftReleased);
+	LrInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this,  &ALrPlayerController::Move);
+	LrInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ALrPlayerController::JumpPress);
+	LrInputComponent->BindAction(DashAction, ETriggerEvent::Completed, this, &ALrPlayerController::DashPress);
 
-	
-
+	// 技能释放相关
+	AuraInputComponent->BindAbilityActions(
+		InputConfig, // 数据资产里配了 IA <-> Tag 表
+		this,
+		&ThisClass::AbilityInputTagPressed,
+		&ThisClass::AbilityInputTagReleased, 
+		ThisClass::AbilityInputTagHeld);
 }
 
 void ALrPlayerController::Move(const FInputActionValue& InputActionValue) 
 {
-	// 增强输入默认返回 FVector2D
-	const FVector2D InputAxisVecter = InputActionValue.Get<FVector2D>();
-
-	//返回 摄像机或控制器 的 世界旋转
-	const FRotator Rotator = GetControlRotation();
-	// 提取 Yaw 旋转，忽略 Pitch/Roll
-	const FRotator YawRotator(0.f, Rotator.Yaw, 0.f); //水平面朝向（俯仰角清零），防止 上坡/下坡 时 前后方向错位。
-
-	// 把二维输入映射到世界空间的前/右方向
-	const FVector ForwardDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::X);
-	const FVector RightDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::Y);
-	if (APawn* PawnController = GetPawn<APawn>())
-	{
-		PawnController->AddMovementInput(ForwardDirection, InputAxisVecter.X);
-		PawnController->AddMovementInput(RightDirection, InputAxisVecter.Y);
+	if (LrPawnBase* LrPawn = GetPawn<LrPawnBase>()){
+		LrPawn.UpdateMove(InputActionValue.Get<FVector2D>())
 	}
+}
+
+void ALrPlayerController::JumpPress(const FInputActionValue& InputActionValue) 
+{
+	if (LrPawnBase* LrPawn = GetPawn<LrPawnBase>()){
+		LrPawn.SetJump(true)
+	}
+}
+
+void ALrPlayerController::DashPress(const FInputActionValue& InputActionValue) 
+{
+	if (LrPawnBase* LrPawn = GetPawn<LrPawnBase>()){
+		LrPawn.SetDash(true)
+	}
+}
+
+void ALrPlayerController::AbilityInputTagPressed(FGameplayTag InputTag) 
+{
+
+}
+
+void ALrPlayerController::AbilityInputTagReleased(FGameplayTag InputTag) 
+{
+
+}
+
+void ALrPlayerController::AbilityInputTagHeld(FGameplayTag InputTag) 
+{
+
 }

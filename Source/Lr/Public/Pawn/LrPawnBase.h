@@ -6,6 +6,24 @@
 #include "GameFramework/Pawn.h"
 #include "LrPawnBase.generated.h"
 
+// USTRUCT()
+// struct FActionStatus 
+// {
+//     GENERATED_BODY()
+
+//     UPROPERTY()
+//     FVector2D CachedMoveInput = FVector2D::ZeroVector;
+//     bool bJumpInput;
+//     bool bDashInput;
+//     uint8 bJumpPressed : 1;
+//     uint8 bDashPressed : 1;
+//     FActionStatus()
+//         : bJumpPressed(false)
+//         , bDashPressed(false)
+//     {}
+// };
+
+
 UCLASS()
 class LR_API ALrPawnBase : public APawn
 {
@@ -14,6 +32,12 @@ class LR_API ALrPawnBase : public APawn
 public:
 	// Sets default values for this pawn's properties
 	ALrPawnBase();
+
+	/** 移动更新相关 */
+	void UpdateMove(const FVector2D& Input);
+	void SetJump(bool Input);
+	void SetDash(bool Input);
+	/** 移动更新相关 */
 
 protected: 
 	// Called when the game starts or when spawned
@@ -26,4 +50,10 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+
+	/** 移动更新相关 */
+	FVector2D& CachedMoveInput;
+    bool bJumpInput;
+    bool bDashInput;
+	/** 移动更新相关 */
 };
