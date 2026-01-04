@@ -8,22 +8,6 @@
 #include "LrPlayerPawn.generated.h"
 
 class UMoverComponent;
-
-// 自定义输入结构体
-// USTRUCT()
-// struct FMyMoverInput : public FMoverInputCmdContext
-// {
-// 	GENERATED_BODY()
-//
-// 	UPROPERTY()
-// 	FVector2D MoveDirection;
-//
-// 	UPROPERTY()
-// 	bool bJump;
-//
-// 	UPROPERTY()
-// 	bool bDash;
-// };
 /**
  * 
  */
@@ -39,7 +23,6 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 private:
-	UPROPERTY(VisibleAnywhere)
-	UMoverComponent* MoverComponent;
+
 	
 };

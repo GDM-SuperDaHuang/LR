@@ -56,4 +56,7 @@ public:
     bool bJumpInput;
     bool bDashInput;
 	/** 移动更新相关 */
+
+	UPROPERTY(VisibleAnywhere)
+	UMoverComponent* MoverComponent;
 };
