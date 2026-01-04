@@ -7,7 +7,7 @@
 ALrPawnBase::ALrPawnBase()
 {
 	MoverComponent = CreateDefaultSubobject<UMoverComponent>(TEXT("MoverComponent"));
-	MoverComponent->SetupAttachment(GetRootComponent());
+	RootComponent = MoverComponent;
 
     CachedMoveInput = FVector2D::ZeroVector;
     bJumpPressed = false;
@@ -31,7 +31,6 @@ void ALrPawnBase::Tick(float DeltaTime)
 
 }
 
-
 /** 移动相关  */
 void ALrPawnBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -46,11 +45,13 @@ void ALrPawnBase::UpdateMove(const FVector2D& Input)
 
 void ALrPawnBase::SetJump(const bool Input)
 {
-	bJumpPressed = *Input
+	bJumpPressed = Input
 }
 
 void ALrPawnBase::SetDash(const bool Input)
 {
-	bDashPressed = *Input
+	bDashPressed = Input
 }
 /** 移动相关  */
+
+

@@ -35,21 +35,20 @@ public:
 
 	/** 移动更新相关 */
 	void UpdateMove(const FVector2D& Input);
-	void SetJump(bool Input);
-	void SetDash(bool Input);
+	void SetJump(const bool Input);
+	void SetDash(const bool Input);
 	/** 移动更新相关 */
 
 protected: 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 
 	/** 移动更新相关 */
 	FVector2D& CachedMoveInput;
@@ -59,6 +58,5 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	UMoverComponent* MoverComponent;
-	// Mover输入生产
-    void ProduceMoverInput(float DeltaTimeMS, FMoverInputCmdContext* InputContext);
+	
 };
