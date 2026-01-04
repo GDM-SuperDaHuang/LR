@@ -24,6 +24,8 @@
 // };
 
 
+class UMoverComponent;
+
 UCLASS()
 class LR_API ALrPawnBase : public APawn
 {
@@ -34,11 +36,10 @@ public:
 	ALrPawnBase();
 
 	/** 移动更新相关 */
-	void UpdateMove(const FVector2D& Input);
+	void UpdateMove(const FVector2D Input);
 	void SetJump(bool Input);
 	void SetDash(bool Input);
 	/** 移动更新相关 */
-
 protected: 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -52,9 +53,9 @@ public:
 
 
 	/** 移动更新相关 */
-	FVector2D& CachedMoveInput;
-    bool bJumpInput;
-    bool bDashInput;
+	FVector2D CachedMoveInput = FVector2D::ZeroVector;;
+    bool bJumpPressed;
+    bool bDashPressed;
 	/** 移动更新相关 */
 
 	UPROPERTY(VisibleAnywhere)

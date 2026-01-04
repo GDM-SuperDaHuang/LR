@@ -5,6 +5,7 @@
 
 #include "EnhancedInputSubsystems.h"
 #include "Input/LrInputComponent.h"
+#include "Pawn/LrPawnBase.h"
 
 void ALrPlayerController::BeginPlay()
 {
@@ -33,32 +34,32 @@ void ALrPlayerController::SetupInputComponent()
 	LrInputComponent->BindAction(DashAction, ETriggerEvent::Completed, this, &ALrPlayerController::DashPress);
 
 	// 技能释放相关
-	AuraInputComponent->BindAbilityActions(
+	LrInputComponent->BindAbilityActions(
 		InputConfig, // 数据资产里配了 IA <-> Tag 表
 		this,
 		&ThisClass::AbilityInputTagPressed,
 		&ThisClass::AbilityInputTagReleased, 
-		ThisClass::AbilityInputTagHeld);
+		&ThisClass::AbilityInputTagHeld);
 }
 
 void ALrPlayerController::Move(const FInputActionValue& InputActionValue) 
 {
-	if (LrPawnBase* LrPawn = GetPawn<LrPawnBase>()){
-		LrPawn.UpdateMove(InputActionValue.Get<FVector2D>())
+	if (ALrPawnBase* LrPawn = GetPawn<ALrPawnBase>()){
+		LrPawn->UpdateMove(InputActionValue.Get<FVector2D>());
 	}
 }
 
 void ALrPlayerController::JumpPress(const FInputActionValue& InputActionValue) 
 {
-	if (LrPawnBase* LrPawn = GetPawn<LrPawnBase>()){
-		LrPawn.SetJump(true)
+	if (ALrPawnBase* LrPawn = GetPawn<ALrPawnBase>()){
+		LrPawn->SetJump(true);
 	}
 }
 
 void ALrPlayerController::DashPress(const FInputActionValue& InputActionValue) 
 {
-	if (LrPawnBase* LrPawn = GetPawn<LrPawnBase>()){
-		LrPawn.SetDash(true)
+	if (ALrPawnBase* LrPawn = GetPawn<ALrPawnBase>()){
+		LrPawn->SetDash(true);
 	}
 }
 

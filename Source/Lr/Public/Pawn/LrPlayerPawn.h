@@ -23,6 +23,7 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 private:
-
+	// Mover输入生产
+	void ProduceMoverInput(float DeltaTimeMS, FMoverInputCmdContext* InputContext);
 	
 };

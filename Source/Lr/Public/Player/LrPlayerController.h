@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "LrPlayerController.generated.h"
 
+class ULrDataAsset;
+struct FGameplayTag;
 struct FInputActionValue;
 class UInputAction;
 class UInputMappingContext;
@@ -20,6 +22,8 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
 private:
+	UPROPERTY(EditAnywhere, Category="Input")
+	TObjectPtr<ULrDataAsset> InputConfig;
 
 
 	/** 移动相关 */
