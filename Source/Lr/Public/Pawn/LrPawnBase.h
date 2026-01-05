@@ -61,3 +61,5 @@ public:
 	UMoverComponent* MoverComponent;
 	
 };
+
+// AMoverExamplesCharacter
