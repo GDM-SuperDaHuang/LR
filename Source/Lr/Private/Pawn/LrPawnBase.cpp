@@ -2,56 +2,52 @@
 
 
 #include "Pawn/LrPawnBase.h"
+#include "MoverComponent.h"
 
 // Sets default values
 ALrPawnBase::ALrPawnBase()
 {
 	MoverComponent = CreateDefaultSubobject<UMoverComponent>(TEXT("MoverComponent"));
-	RootComponent = MoverComponent;
+	RootComponent = Cast<USceneComponent>(MoverComponent); // Casting to a base class type
 
-    CachedMoveInput = FVector2D::ZeroVector;
-    bJumpPressed = false;
-    bDashPressed = false;
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// CachedMoveInput = FVector2D::ZeroVector;
+	bJumpPressed = false;
+	bDashPressed = false;
+	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-
 }
 
 // Called when the game starts or when spawned
 void ALrPawnBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
 void ALrPawnBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 /** 移动相关  */
 void ALrPawnBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
 }
 
-void ALrPawnBase::UpdateMove(const FVector2D& Input)
+void ALrPawnBase::UpdateMove(const FVector2D Input)
 {
-	CachedMoveInput = *Input
+	CachedMoveInput = Input;
 }
 
 void ALrPawnBase::SetJump(const bool Input)
 {
-	bJumpPressed = Input
+	bJumpPressed = Input;
 }
 
 void ALrPawnBase::SetDash(const bool Input)
 {
-	bDashPressed = Input
+	bDashPressed = Input;
 }
+
 /** 移动相关  */
-
-
