@@ -55,3 +55,37 @@ class LR_API ULrBaseMovementMode : public UBaseMovementMode
 	GENERATED_BODY()
 	
 };
+
+/** 能力输入（Input Data */
+USTRUCT(BlueprintType)
+struct FSimpleAbilityInputs : public FMoverDataStructBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	bool bDashJustPressed = false;
+
+	UPROPERTY(BlueprintReadWrite)
+	bool bJumpJustPressed = false;
+
+	virtual FMoverDataStructBase* Clone() const override
+	{
+		return new FSimpleAbilityInputs(*this);
+	}
+
+	virtual bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess) override
+	{
+		Super::NetSerialize(Ar, Map, bOutSuccess);
+
+		Ar.SerializeBits(&bDashJustPressed, 1);
+		Ar.SerializeBits(&bJumpJustPressed, 1);
+
+		bOutSuccess = true;
+		return true;
+	}
+
+	virtual UScriptStruct* GetScriptStruct() const override
+	{
+		return StaticStruct();
+	}
+};
