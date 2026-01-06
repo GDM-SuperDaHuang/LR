@@ -37,6 +37,7 @@ namespace ExtendedModeNames
 // 		return StaticStruct();
 // 	}
 // };
+
 /**
  * Dash 是：典型“时间驱动 Mode”
  * 短时间，
