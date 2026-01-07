@@ -38,6 +38,21 @@ void ALrPlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+void ALrPlayerPawn::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	CharacterMotionComponent = FindComponentByClass<UCharacterMoverComponent>();
+
+	if (CharacterMotionComponent)
+	{
+		if (USceneComponent* UpdatedComponent = CharacterMotionComponent->GetUpdatedComponent())
+		{
+			UpdatedComponent->SetCanEverAffectNavigation(bCanAffectNavigationGeneration);
+		}
+	}
+}
+
 void ALrPlayerPawn::ProduceMoverInput(float DeltaTimeMS, FMoverInputCmdContext* InputContext)
 {
 	FLrMoverInputCmd* Cmd = static_cast<FLrMoverInputCmd*>(InputContext);

@@ -27,7 +27,7 @@
 class UMoverComponent;
 
 UCLASS()
-class LR_API ALrPawnBase : public APawn
+class LR_API ALrPawnBase : public APawn, public IMoverInputProducerInterface
 {
 	GENERATED_BODY()
 
@@ -44,6 +44,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
+	UPROPERTY(Category = Movement, VisibleAnywhere, BlueprintReadOnly, Transient, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UCharacterMoverComponent> CharacterMotionComponent;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -57,8 +60,7 @@ public:
     bool bDashPressed;
 	/** 移动更新相关 */
 
-	UPROPERTY(VisibleAnywhere)
-	UMoverComponent* MoverComponent;
+
 	
 };
 

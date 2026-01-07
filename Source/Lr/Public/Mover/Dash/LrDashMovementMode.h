@@ -12,32 +12,6 @@ namespace ExtendedModeNames
 }
 
 
-// USTRUCT()
-// struct FDashState : public FMoverDataStructBase
-// {
-// 	GENERATED_BODY()
-
-// 	float RemainingTime = 0.f;
-
-// 	virtual FMoverDataStructBase* Clone() const override
-// 	{
-// 		return new FDashState(*this);
-// 	}
-
-// 	virtual bool NetSerialize(FArchive& Ar, UPackageMap*, bool& bOutSuccess) override
-// 	{
-// 		Super::NetSerialize(Ar, nullptr, bOutSuccess);
-// 		Ar << RemainingTime;
-// 		bOutSuccess = true;
-// 		return true;
-// 	}
-
-// 	virtual UScriptStruct* GetScriptStruct() const override
-// 	{
-// 		return StaticStruct();
-// 	}
-// };
-
 /**
  * Dash 是：典型“时间驱动 Mode”
  * 短时间，
