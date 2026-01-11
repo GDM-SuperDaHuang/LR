@@ -11,7 +11,8 @@
 			"AdditionalDependencies": [
 				"Engine",
 				"Mover",
-				"EnhancedInput"
+				"EnhancedInput",
+				"GameplayAbilities"
 			]
 		}
 	],
@@ -29,6 +30,10 @@
 		},
 		{
 			"Name": "MoverExamples",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayAbilities",
 			"Enabled": true
 		}
 	]
