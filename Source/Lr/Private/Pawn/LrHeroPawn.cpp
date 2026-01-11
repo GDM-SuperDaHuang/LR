@@ -40,8 +40,8 @@ ALrHeroPawn::ALrHeroPawn()
 	LrSkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrMesh"));
 	LrSkeletalMeshComponent->SetupAttachment(LrCapsuleComponent);
 	LrSkeletalMeshComponent->SetRelativeLocation(FVector(0, 0, -88));
-
-
+	LrSkeletalMeshComponent->SetOnlyOwnerSee(false);
+	LrSkeletalMeshComponent->SetOwnerNoSee(false);
 	// =========================
 	// Mover
 	// =========================
@@ -72,7 +72,7 @@ ALrHeroPawn::ALrHeroPawn()
 	// AIControllerClass = AAIController::StaticClass();
 	// bUseControllerRotationYaw = false;
 
-	AutoPossessPlayer = EAutoReceiveInput::Player0; // ⭐关键
+	// AutoPossessPlayer = EAutoReceiveInput::Player0; // ⭐关键
 
 
 	// 添加特定的自定义移动模式
@@ -80,8 +80,8 @@ ALrHeroPawn::ALrHeroPawn()
 	// 默认激活模式设定视需求而定
 	// ⭐ 核心：设置初始模式名字
 	// LrMoverComponent->StartingMovementMode = TEXT("LrWalk");
-	CharacterMotionComponent->StartingMovementMode = TEXT("Walk");
-
+	// CharacterMotionComponent->StartingMovementMode = TEXT("Walk");
+	CharacterMotionComponent->StartingMovementMode = DefaultModeNames::Walking;
 }
 
 void ALrHeroPawn::BeginPlay()
@@ -95,11 +95,11 @@ void ALrHeroPawn::BeginPlay()
 	// 	LrMoverComponent->AddMovementModeFromClass(TEXT("LrWalk"), ULrWalkMovementMode::StaticClass());
 	// }
 
-	if (CharacterMotionComponent)
-	{
-		// 添加特定的自定义移动模式
-		CharacterMotionComponent->AddMovementModeFromClass(TEXT("Walk"), UWalkingMode::StaticClass());
-	}
+	// if (CharacterMotionComponent)
+	// {
+	// 	// 添加特定的自定义移动模式
+	// 	CharacterMotionComponent->AddMovementModeFromClass(TEXT("Walk"), UWalkingMode::StaticClass());
+	// }
 }
 
 void ALrHeroPawn::PostInitializeComponents()

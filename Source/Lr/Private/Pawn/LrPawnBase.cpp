@@ -12,6 +12,7 @@ ALrPawnBase::ALrPawnBase()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
 	// 关键：禁用Actor级别的移动复制
 	// Mover组件有自己独立的网络预测和复制系统，不需要标准的Actor移动复制
 	SetReplicatingMovement(false); // disable Actor-level movement replication, since our Mover component will handle it
@@ -36,6 +37,7 @@ ALrPawnBase::ALrPawnBase()
 	// AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	// AIControllerClass = AAIController::StaticClass();
 	// bUseControllerRotationYaw = false;
+	
 }
 
 // Called when the game starts or when spawned
@@ -68,7 +70,7 @@ void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdR
 	{
 		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent,MoveIntentLocal.GetClampedToMaxSize(1.f));
 		Inputs.OrientationIntent = MoveIntentLocal.GetSafeNormal();
-		Inputs.SuggestedMovementMode = TEXT("Walk");
+		Inputs.SuggestedMovementMode = DefaultModeNames::Walking;
 	}
 	else
 	{
