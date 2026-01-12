@@ -6,9 +6,9 @@
 #include "GameFramework/PlayerController.h"
 #include "LrPlayerController.generated.h"
 
-class ULrDataAsset;
 struct FGameplayTag;
 struct FInputActionValue;
+class ULrInputConfigDA;
 class UInputAction;
 class UInputMappingContext;
 /**
@@ -21,39 +21,28 @@ class LR_API ALrPlayerController : public APlayerController
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
+	// virtual void CreateInputComponent(TSubclassOf<UInputComponent> InputComponentToCreate) override;
 private:
-	UPROPERTY(EditAnywhere, Category="Input")
-	TObjectPtr<ULrDataAsset> InputConfig;
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<ULrInputConfigDA> InputConfig;
 
-
-	/** 移动相关 */
-	// 增强输入资源
 	UPROPERTY(EditAnywhere, Category="Input")
-	TObjectPtr<UInputMappingContext> LrInputMappingContext;
+	TObjectPtr<UInputMappingContext> AuraContext;
 
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> MoveAction;
 
 	UPROPERTY(EditAnywhere, Category="Input")
-	TObjectPtr<UInputAction> JumpAction;
-
-	UPROPERTY(EditAnywhere, Category="Input")
-	TObjectPtr<UInputAction> DashAction;
-
-	void Move(const FInputActionValue& InputActionValue) ;
-	void JumpPress(const FInputActionValue& InputActionValue) ;
-	void DashPress(const FInputActionValue& InputActionValue) ;
-
-	/** 移动相关 */
+	TObjectPtr<UInputAction> ShiftAction;
 
 
-	/** 技能释放相关 */
 	void AbilityInputTagPressed(FGameplayTag InputTag);
 	void AbilityInputTagReleased(FGameplayTag InputTag);
 	void AbilityInputTagHeld(FGameplayTag InputTag);
-	/** 技能释放相关 */
 
 
-
+	
+	void Move(const FInputActionValue& InputActionValue);
+	void Jump(const FInputActionValue& InputActionValue);
 
 };

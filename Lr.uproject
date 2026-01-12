@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.4",
+	"EngineAssociation": "5.7",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -10,10 +10,9 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
-				"EnhancedInput",
-				"GameplayAbilities",
 				"Mover",
-				"GameplayTags"
+				"EnhancedInput",
+				"GameplayAbilities"
 			]
 		}
 	],
@@ -26,19 +25,15 @@
 			]
 		},
 		{
-			"Name": "GameplayAbilities",
-			"Enabled": true
-		},
-		{
 			"Name": "Mover",
 			"Enabled": true
 		},
 		{
-			"Name": "EnhancedInput",
+			"Name": "MoverExamples",
 			"Enabled": true
 		},
 		{
-			"Name": "MoverExamples",
+			"Name": "GameplayAbilities",
 			"Enabled": true
 		}
 	]
