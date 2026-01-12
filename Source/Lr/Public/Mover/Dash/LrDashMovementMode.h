@@ -19,7 +19,7 @@ namespace ExtendedModeNames
  * 固定速度，
  * 自动结束
  * 
- 	Dash 输入	FMoverExampleAbilityInputs
+ 	Dash 输入	ULrDashMovementMode
 	Dash 状态	FDashState（SyncState）
 	位移	SimulationTick
 	结束	Duration 到期 → 切 Mode
@@ -35,13 +35,22 @@ public:
 	UPROPERTY(EditAnywhere)
 	float DashDuration = 0.25f;
 
-	
+	/**
+	 * FMoverDataStructBase
+	 * Input State (刺激) 原始 Enhanced Input
+	 * Sync  State (权威) 上一帧权威状态
+	 * Aux   State (表现) 上一帧权威状态
+	 */
 	virtual void OnGenerateMove(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const override;
 	virtual void OnSimulationTick(const FSimulationTickParams& Params, FMoverTickEndData& OutputState) override;
 
 };
 
-
+/**
+ * FMoverDataStructBase的结构体用于封装所需的输入参数
+ * FMoverDataStructBase 是 Mover 框架中
+ * “可预测、可回滚、可插值、值语义”的最小状态单元。
+ */
 USTRUCT()
 struct FDashState : public FMoverDataStructBase
 {
@@ -56,11 +65,15 @@ struct FDashState : public FMoverDataStructBase
 	// Total duration
 	float Duration = 0.f;
 
+	// 复制历史帧
+	// 帧结束：调用 历史快照（Clone）
 	virtual FMoverDataStructBase* Clone() const override
 	{
 		return new FDashState(*this);
 	}
 
+
+	//精准同步
 	virtual bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess) override
 	{
 		Super::NetSerialize(Ar, Map, bOutSuccess);
@@ -78,6 +91,7 @@ struct FDashState : public FMoverDataStructBase
 		return StaticStruct();
 	}
 
+	// 判断是否回滚
 	virtual bool ShouldReconcile(const FMoverDataStructBase& AuthorityState) const override
 	{
 		const FDashState& Auth = static_cast<const FDashState&>(AuthorityState);
@@ -87,6 +101,7 @@ struct FDashState : public FMoverDataStructBase
 			|| !FMath::IsNearlyEqual(Duration, Auth.Duration);
 	}
 
+	// 客户端平滑
 	virtual void Interpolate(
 		const FMoverDataStructBase& From,
 		const FMoverDataStructBase& To,

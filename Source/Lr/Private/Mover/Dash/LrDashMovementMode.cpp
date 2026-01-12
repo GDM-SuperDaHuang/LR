@@ -3,7 +3,10 @@
 
 #include "Mover/LrDashMovementMode.h"
 
-void ULrDashMovementMode::OnGenerateMove(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
+/**
+ * Network Prediction 可能在一帧内：调用多次
+ */
+void ULrDashMovementMode::OnGenerateMove(const FMoverTickStartData& Start	State, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
 {
 
 	/** 
