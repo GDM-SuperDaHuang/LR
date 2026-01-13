@@ -52,8 +52,11 @@ void ALrPlayerController::SetupInputComponent()
 
 	/**
 	 * 普通移动轴绑定 
-	 * ETriggerEvent::Triggered:(按下：调用,按住：调用)
+	 * ETriggerEvent::Started:(按下：调用,只这一下)
+	 * ETriggerEvent::Triggered:(每帧调用,按下:调用, 按住:调用)
 	 * ETriggerEvent::Completed:(松开：调用)
+	 * ETriggerEvent::Ongoing:(特定条件满足时：每帧调用（如长按未达标）)
+	 * ETriggerEvent::Canceled:(条件中断：调用一次（异常取消）)
 	 */
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALrPlayerController::Move);
 
