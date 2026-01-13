@@ -77,10 +77,13 @@ void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdR
 	{
 		// ⭐ 正确的“停下”
 		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent,FVector::ZeroVector);
-		Inputs.OrientationIntent = FVector::ZeroVector;
-		Inputs.SuggestedMovementMode = NAME_None;
+		// Inputs.OrientationIntent = FVector::ZeroVector;
+		// Inputs.SuggestedMovementMode = NAME_None;
 	}
-	CachedMoveInput = FVector2D::ZeroVector;
+	// todo 清零再别的地方
+	// CachedMoveInput = FVector2D::ZeroVector;
+
+
 	// // 如果没有控制器且是服务器上的模拟代理，提供默认空输入
 	// // 这是为网络同步考虑：未控制的Pawn不应接收输入
 	// if (GetController() == nullptr)

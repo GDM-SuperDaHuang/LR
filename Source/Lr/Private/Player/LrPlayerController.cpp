@@ -50,9 +50,15 @@ void ALrPlayerController::SetupInputComponent()
 	ULrInputComponent* AuraInputComponent = CastChecked<ULrInputComponent>(InputComponent);
 	check(AuraInputComponent);
 
-	// 普通移动轴绑定
+	/**
+	 * 普通移动轴绑定 
+	 * ETriggerEvent::Triggered:(按下：调用,按住：调用)
+	 * ETriggerEvent::Completed:(松开：调用)
+	 */
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALrPlayerController::Move);
-	
+
+	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ALrPlayerController::MoveCompleted);
+
 	// 一键批量绑定所有“技能输入 Tag”到三个回调
 	AuraInputComponent->BindAbilityActions(
 		InputConfig, // 数据资产里配了 IA <-> Tag 表
@@ -92,6 +98,24 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 	// const FVector RightDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::Y);
 
 	
+}
+
+void ALrPlayerController::MoveCompleted(const FInputActionValue& InputActionValue) 
+{
+	// 增强输入默认返回 FVector2D
+	const FVector2D Input = FVector2D::ZeroVector;
+	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
+	{
+		ControlledPawn->UpdateMove(Input);
+	}
+	// //返回 摄像机或控制器 的 世界旋转
+	// const FRotator Rotator = GetControlRotation();
+	// // 提取 Yaw 旋转，忽略 Pitch/Roll
+	// const FRotator YawRotator(0.f, Rotator.Yaw, 0.f); //水平面朝向（俯仰角清零），防止 上坡/下坡 时 前后方向错位。
+	//
+	// // 把二维输入映射到世界空间的前/右方向
+	// const FVector ForwardDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::X);
+	// const FVector RightDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::Y);
 }
 
 void ALrPlayerController::Jump(const FInputActionValue& InputActionValue)
