@@ -6,10 +6,10 @@
 #include "Misc/StringBuilder.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
 
-ULrMoverComponent::ULrMoverComponent()
-{
-	PrimaryComponentTick.bCanEverTick = true;
-}
+// ULrMoverComponent::ULrMoverComponent()
+// {
+// 	PrimaryComponentTick.bCanEverTick = true;
+// }
 
 // void ULrMoverComponent::InitializeComponent()
 // {
@@ -19,10 +19,10 @@ ULrMoverComponent::ULrMoverComponent()
 // 	StartingMovementMode = TEXT("LrWalk");
 // }
 
-void ULrMoverComponent::OnRegister()
-{
-	Super::OnRegister();
-}
+// void ULrMoverComponent::OnRegister()
+// {
+// 	Super::OnRegister();
+// }
 
 /**
  * 规范入口：把外部传进来的输入“标准化”后存下，确保网络端与本地端完全一致

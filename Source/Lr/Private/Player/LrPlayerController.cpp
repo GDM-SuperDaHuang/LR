@@ -26,6 +26,7 @@ void ALrPlayerController::BeginPlay()
 	bShowMouseCursor = true; //显示鼠标光标
 	DefaultMouseCursor = EMouseCursor::Default; // 设置默认鼠标光标样式
 
+
 	// 输入模式：既响应游戏（WASD）也响应 UI（点击 Widget）
 	// FInputModeGameAndUI InputModeData;
 	// InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock); // 不锁定鼠标到视口

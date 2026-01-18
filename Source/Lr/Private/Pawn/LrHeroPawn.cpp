@@ -3,15 +3,18 @@
 
 #include "Pawn/LrHeroPawn.h"
 
+#include "AbilitySystemComponent.h"
 #include "AIController.h"
+#include "ASC/LrASC.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
-#include "DefaultMovementSet/Modes/SimpleWalkingMode.h"
+#include "DefaultMovementSet/Modes/SmoothWalkingMode.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
+#include "Player/PS/LrPS.h"
 
 ALrHeroPawn::ALrHeroPawn()
 {
@@ -50,7 +53,7 @@ ALrHeroPawn::ALrHeroPawn()
 
 	CharacterMotionComponent = CreateDefaultSubobject<UCharacterMoverComponent>(TEXT("MoverComponent"));
 	CharacterMotionComponent->SetUpdatedComponent(LrCapsuleComponent);
-
+	// CharacterMotionComponent->SetIsReplicated(true);
 	
 
 	// =========================
@@ -80,8 +83,11 @@ ALrHeroPawn::ALrHeroPawn()
 	// 默认激活模式设定视需求而定
 	// ⭐ 核心：设置初始模式名字
 	// LrMoverComponent->StartingMovementMode = TEXT("LrWalk");
-	// CharacterMotionComponent->StartingMovementMode = TEXT("Walk");
-	CharacterMotionComponent->StartingMovementMode = DefaultModeNames::Walking;
+	CharacterMotionComponent->StartingMovementMode = TEXT("LrWalk");
+	// CharacterMotionComponent->StartingMovementMode = DefaultModeNames::Walking;
+
+
+	
 }
 
 void ALrHeroPawn::BeginPlay()
@@ -94,7 +100,7 @@ void ALrHeroPawn::BeginPlay()
 	// 	// 添加特定的自定义移动模式
 	// 	LrMoverComponent->AddMovementModeFromClass(TEXT("LrWalk"), ULrWalkMovementMode::StaticClass());
 	// }
-
+	CharacterMotionComponent->AddMovementModeFromClass(TEXT("LrWalk"), USmoothWalkingMode::StaticClass());
 	// if (CharacterMotionComponent)
 	// {
 	// 	// 添加特定的自定义移动模式
@@ -114,4 +120,26 @@ void ALrHeroPawn::PostInitializeComponents()
 	// 	// ⭐ 核心：设置初始模式名字
 	// 	LrMoverComponent->StartingMovementMode = TEXT("LrWalk");
 	// }
+}
+
+void ALrHeroPawn::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	ALrPS* LrPS = GetPlayerState<ALrPS>();
+	check(LrPS);
+	// 绑定 自身与ps 到ASC
+	LrPS->GetAbilitySystemComponent()->InitAbilityActorInfo(LrPS, this);
+	// AttributeSet = LrAS->GetAttributeSet();
+	// todo ???
+	// OnASCRegistered.Broadcast(AbilitySystemComponent);
+	LrASC = LrPS->GetAbilitySystemComponent();
+	LrAS = LrPS->GetAttributeSet();
+	// 初始技能
+	ULrASC* ASC = CastChecked<ULrASC>(LrASC);
+	ASC->AddGA(InitGAListConfig);
+}
+
+void ALrHeroPawn::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
 }

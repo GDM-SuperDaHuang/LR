@@ -3,7 +3,6 @@
 
 #include "Pawn/LrPawnBase.h"
 
-#include "AIController.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
 

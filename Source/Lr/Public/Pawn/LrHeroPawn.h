@@ -6,6 +6,7 @@
 #include "Pawn/LrPawnBase.h"
 #include "LrHeroPawn.generated.h"
 
+class UGameplayAbility;
 class USpringArmComponent;
 class UCameraComponent;
 /**
@@ -22,14 +23,17 @@ public:
 	virtual void BeginPlay() override;
 
 	virtual void PostInitializeComponents() override;
+
+	// 服务器
+	virtual void PossessedBy(AController* NewController) override;
+
+	// 客户端
+	virtual void OnRep_PlayerState() override;
 protected:
 	/** 碰撞体（NavAgent & Mover 都依赖它） */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
 
-	/** 骨骼 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
-	TObjectPtr<USkeletalMeshComponent> LrSkeletalMeshComponent;
 
 	/** 相机 弹簧臂*/
 	UPROPERTY(VisibleAnywhere)
@@ -39,6 +43,11 @@ protected:
 	TObjectPtr<USpringArmComponent> CameraBoom;
 	/** 相机 弹簧臂*/
 
-
+private:
+	//技能列表
+	UPROPERTY(EditAnywhere, Category="Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> InitGAListConfig;
+	
+	
 	
 };
