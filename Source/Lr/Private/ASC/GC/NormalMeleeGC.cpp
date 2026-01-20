@@ -3,3 +3,28 @@
 
 #include "ASC/GC/NormalMeleeGC.h"
 
+#include "Kismet/GameplayStatics.h"
+
+bool UNormalMeleeGC::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
+{
+	if (!MyTarget) return false;
+
+	AActor* SourceActor = Parameters.Instigator.Get();
+	if (!SourceActor) return false;
+
+	// 1. 播放受击特效
+	// UGameplayStatics::SpawnEmitterAtLocation(
+	// 	MyTarget->GetWorld(),
+	// 	HitEffect,
+	// 	Parameters.Location
+	// );
+	//
+	// // 2. 播放受击音效
+	// UGameplayStatics::PlaySoundAtLocation(
+	// 	MyTarget,
+	// 	HitSound,
+	// 	Parameters.Location
+	// );
+	
+	return true;
+}

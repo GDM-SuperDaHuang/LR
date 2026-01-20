@@ -50,6 +50,13 @@ public:
 	/**************************************** 输入 相关 ************************/
 
 
+	/**************************************** 技能自身 相关 ************************/
+	FGameplayTag GA_1;
+	FGameplayTag GA_2;
+	FGameplayTag GA_3;
+	/**************************************** 技能自身 相关 ************************/
+
+
 	//
 	// FGameplayTag Attributes_Secondary_Armor;
 	// FGameplayTag Attributes_Secondary_ArmorPenetration;
