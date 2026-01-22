@@ -8,6 +8,7 @@
 #include "GameFramework/Pawn.h"
 #include "LrPawnBase.generated.h"
 
+class UMotionWarpingComponent;
 class UAttributeSet;
 class UAbilitySystemComponent;
 class UCharacterMoverComponent;
@@ -23,9 +24,12 @@ public:
 	// Sets default values for this pawn's properties
 	ALrPawnBase();
 
-	/** 骨骼 */
+	/** 身体骨骼 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	TObjectPtr<USkeletalMeshComponent> LrSkeletalMeshComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
+	TObjectPtr<UMotionWarpingComponent> LrMotionWarpingComponent;
 
 protected:
 	// Called when the game starts or when spawned

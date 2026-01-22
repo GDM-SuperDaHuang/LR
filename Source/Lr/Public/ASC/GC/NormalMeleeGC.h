@@ -14,6 +14,7 @@ class LR_API UNormalMeleeGC : public UGameplayCueNotify_Static
 {
 	GENERATED_BODY()
 public:
+	UNormalMeleeGC();
 	virtual bool OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const override;
 	
 };

@@ -45,6 +45,18 @@ ALrHeroPawn::ALrHeroPawn()
 	LrSkeletalMeshComponent->SetRelativeLocation(FVector(0, 0, -88));
 	LrSkeletalMeshComponent->SetOnlyOwnerSee(false);
 	LrSkeletalMeshComponent->SetOwnerNoSee(false);
+
+	// =========================
+	// 武器 →骨架
+	// =========================
+	WeaponSKM = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrMesh"));
+	// 挂到右手插槽，可在子类改 Socket 名，注意名称 WeaponHandSocket 一定要一致
+	WeaponSKM->SetupAttachment(LrSkeletalMeshComponent, FName(TEXT("WeaponSocket1")));
+	// 武器本身不产生物理碰撞
+	WeaponSKM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+
+	
 	// =========================
 	// Mover
 	// =========================

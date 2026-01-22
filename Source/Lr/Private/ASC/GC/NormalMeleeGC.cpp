@@ -4,6 +4,14 @@
 #include "ASC/GC/NormalMeleeGC.h"
 
 #include "Kismet/GameplayStatics.h"
+#include "Tags/LrGameplayTags.h"
+
+UNormalMeleeGC::UNormalMeleeGC()
+{
+	FLrGameplayTags LrGameplayTags = FLrGameplayTags::Get();
+	// ASC->ExecuteGameplayCue(TAG_Melee_Trail, Params); 触发 OnExecute_Implementation
+	GameplayCueTag = LrGameplayTags.GameplayCue_Melee;
+}
 
 bool UNormalMeleeGC::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {

@@ -4,6 +4,7 @@
 #include "ASC/GA/MeleeGA/LrNormalMeleeGA.h"
 
 #include "AbilitySystemComponent.h"
+#include "MotionWarpingComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Data/LrGAListDA.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -45,30 +46,38 @@ void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 		return;
 	}
 
+	AActor* TargetActor = nullptr;
+	// 需要和蒙太奇运动扭曲轨道，
+	OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocation("FacingTarget", TargetActor->GetActorLocation());
+
 	// 2. 监听 AnimNotify 事件
 	UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
 	if (ASC)
 	{
+		FGameplayCueParameters Params;
+		Params.Location = Hit.ImpactPoint;
+		Params.Normal = Hit.ImpactNormal;
+
+
 		ASC->GenericGameplayEventCallbacks
-		.FindOrAdd(LrGameplayTags.As_Attack)
-		.AddUObject(this, &ULrNormalMeleeGA::OnAttackEventReceived);
+		   .FindOrAdd(LrGameplayTags.As_Attack)
+		   .AddUObject(this, &ULrNormalMeleeGA::OnAttackEventReceived);
 	}
 
 	// 3. 播放蒙太奇
-	// GAS 官方推荐：AbilityTask_PlayMontageAndWait
 	UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,
 		NAME_None,
 		Montage,
 		1.f
 	);
-	
+
 	Task->OnCompleted.AddDynamic(this, &ULrNormalMeleeGA::OnMontageFinished);
 	Task->OnInterrupted.AddDynamic(this, &ULrNormalMeleeGA::OnMontageFinished);
 	Task->OnCancelled.AddDynamic(this, &ULrNormalMeleeGA::OnMontageFinished);
 	Task->ReadyForActivation();
 
-	
+
 	//1, 获取 敌人目标
 	// ========== 1. 获取敌人目标 ==========
 	AActor* TargetActor = nullptr;
@@ -89,7 +98,6 @@ void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	}
 
 
-	
 	//
 	// 视觉方面
 	//2,接受蒙太奇通知，然后面向敌人 todo
@@ -128,14 +136,9 @@ void ULrNormalMeleeGA::EndAbility(const FGameplayAbilitySpecHandle Handle, const
 
 void ULrNormalMeleeGA::OnMontageFinished()
 {
-	
 }
-
 
 
 void ULrNormalMeleeGA::OnAttackEventReceived(const FGameplayEventData* GameplayEventData) const
 {
-	
 }
-
-

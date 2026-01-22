@@ -186,11 +186,11 @@ public:
 	//
 
 	//GameplayCue
-	// FGameplayTag GameplayCue_MeleeImpact;
-	// FGameplayTag GameplayCue_ShockBurst;
-	// FGameplayTag GameplayCue_ShockLoop;
-	// FGameplayTag GameplayCue_ArcaneShards;
-	// FGameplayTag GameplayCue_FireBlast;
+	FGameplayTag GameplayCue_Melee;
+	FGameplayTag GameplayCue_ShockBurst;
+	FGameplayTag GameplayCue_ShockLoop;
+	FGameplayTag GameplayCue_ArcaneShards;
+	FGameplayTag GameplayCue_FireBlast;
 	//
 	//        
 	//

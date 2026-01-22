@@ -33,8 +33,7 @@ protected:
 	/** 碰撞体（NavAgent & Mover 都依赖它） */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
-
-
+	
 	/** 相机 弹簧臂*/
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCameraComponent> TopDownCameraComponent;
@@ -43,6 +42,12 @@ protected:
 	TObjectPtr<USpringArmComponent> CameraBoom;
 	/** 相机 弹簧臂*/
 
+
+	/** 武器 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
+	TObjectPtr<USkeletalMeshComponent> WeaponSKM;
+	/** 武器 */
+	
 private:
 	//技能列表
 	UPROPERTY(EditAnywhere, Category="Abilities")
