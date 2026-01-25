@@ -8,6 +8,7 @@
 #include "Lib/LrCommonLibrary.h"
 #include "Pawn/LrHeroPawn.h"
 #include "Player/Input/LrInputComponent.h"
+#include "Tags/LrGameplayTags.h"
 
 void ALrPlayerController::BeginPlay()
 {
@@ -60,6 +61,7 @@ void ALrPlayerController::SetupInputComponent()
 	 */
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALrPlayerController::Move);
 
+	// 停止
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ALrPlayerController::MoveCompleted);
 
 	// 一键批量绑定所有“技能输入 Tag”到三个回调
@@ -106,8 +108,23 @@ void ALrPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 
 void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 {
-	// 增强输入默认返回 FVector2D
-	const FVector2D Input = InputActionValue.Get<FVector2D>();
+	if (LrASC == nullptr)
+	{
+		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
+		if (LrASC == nullptr) return;
+	}
+	FVector2D Input;
+	bool bIsBlockMove = LrASC->HasMatchingGameplayTag(FLrGameplayTags::Get().State_Block_Move);
+	if (bIsBlockMove)
+	{
+		Input = FVector2D::ZeroVector;
+	}
+	else
+	{
+		// 增强输入默认返回 FVector2D
+		Input = InputActionValue.Get<FVector2D>();
+	}
+
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
 	{
 		ControlledPawn->UpdateMove(Input);

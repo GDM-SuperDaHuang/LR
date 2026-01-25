@@ -13,7 +13,7 @@ public class Lr : ModuleRules
 
 		PublicDependencyModuleNames.AddRange(new string[] { "GameplayTasks", "Core", "CoreUObject", "Engine", "UnrealEd", "InputCore", "EnhancedInput", "Mover", "AIModule", "GameplayTags", "GameplayAbilities", "MotionWarping" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "Engine", "Core", "NetCore", "Networking", "PacketHandler" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Engine", "Core", "NetCore", "Networking", "PacketHandler", "Niagara" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

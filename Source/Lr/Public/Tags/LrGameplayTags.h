@@ -53,8 +53,8 @@ public:
 
 	/**************************************** 技能自身 相关 ************************/
 	FGameplayTag GA_1;
-	// FGameplayTag GA_2;
-	// FGameplayTag GA_3;
+	FGameplayTag GA_2;
+	FGameplayTag GA_3;
 	/**************************************** 技能自身 相关 ************************/
 
 
@@ -187,7 +187,9 @@ public:
 	//
 
 	/**************************************** GameplayCue 相关 ************************/
-	FGameplayTag GameplayCue_Melee;
+	FGameplayTag GameplayCue_Melee_Trail;
+	FGameplayTag GameplayCue_Melee_Hit;// 命中特效
+
 	// FGameplayTag GameplayCue_ShockBurst;
 	// FGameplayTag GameplayCue_ShockLoop;
 	// FGameplayTag GameplayCue_ArcaneShards;
@@ -205,8 +207,15 @@ public:
 	// FGameplayTag Play_Block_CursorTrace;
 
 	/**************************************** 蒙太奇通知 相关 ************************/
-	FGameplayTag Montage_Event_Attack;
+	FGameplayTag Montage_Event_Attack_GA1;
+	FGameplayTag Montage_Event_Attack_GA2;
+	FGameplayTag Montage_Event_Attack_GA3;
+
 	/**************************************** 蒙太奇通知 相关 ************************/
+
+	/**************************************** 状态 阻塞移动 相关 ************************/
+	FGameplayTag State_Block_Move;
+	/**************************************** 状态 阻塞移动 相关 ************************/
 
 
 protected:

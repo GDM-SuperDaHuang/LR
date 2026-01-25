@@ -13,7 +13,7 @@ void ULrASC::AddGA(const TArray<FGameplayTag>& GATagList)
 {
 	for (const FGameplayTag GATag : GATagList)
 	{
-		FLrDAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(GetOwner(), GATag);
+		FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(GetOwner(), GATag);
 		// 创建技能规格（Spec），Level 1，默认不给予输入
 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(LrDAConfig.GAClass, 1);
 		AbilitySpec.GetDynamicSpecSourceTags().AddTag(LrDAConfig.InputTag);
@@ -45,7 +45,7 @@ void ULrASC::AbilityInputTagPressed(const FGameplayTag& InputTags)
 			AbilitySpecInputPressed(AbilitySpec);
 			if (AbilitySpec.IsActive())
 			{
-				// todo 
+				// todo 过时
 				InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputPressed, AbilitySpec.Handle, AbilitySpec.ActivationInfo.GetActivationPredictionKey());
 			}
 		}
@@ -90,6 +90,7 @@ void ULrASC::AbilityInputTagReleased(const FGameplayTag& InputTags)
 		if (AbilitySpec.GetDynamicSpecSourceTags().HasTag(InputTags) && AbilitySpec.IsActive())
 		{
 			AbilitySpecInputReleased(AbilitySpec);
+			// // todo 过时
 			InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased, AbilitySpec.Handle, AbilitySpec.ActivationInfo.GetActivationPredictionKey());
 		}
 	}

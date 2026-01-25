@@ -12,7 +12,8 @@
 				"Engine",
 				"Mover",
 				"EnhancedInput",
-				"GameplayAbilities"
+				"GameplayAbilities",
+				"AIModule"
 			]
 		}
 	],

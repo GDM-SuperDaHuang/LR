@@ -3,9 +3,9 @@
 
 #include "Data/LrGAListDA.h"
 
-const FLrDAConfig* ULrGAListDA::FindGAByTag(const FGameplayTag& GATag) const
+const FLrGAConfig* ULrGAListDA::FindGAByTag(const FGameplayTag& GATag) const
 {
-	for (const FLrDAConfig& GAConfig : GAConfigList)
+	for (const FLrGAConfig& GAConfig : GAConfigList)
 	{
 		if (GAConfig.GATag == GATag)
 		{
@@ -13,5 +13,17 @@ const FLrDAConfig* ULrGAListDA::FindGAByTag(const FGameplayTag& GATag) const
 		}
 	}
 
+	return nullptr;
+}
+
+const FLrNSConfig* ULrGAListDA::FindNSByTag(const FGameplayTag& Tag) const
+{
+	for (const FLrNSConfig& Config : NSConfigList)
+	{
+		if (Config.NSTag == Tag)
+		{
+			return &Config;
+		}
+	}
 	return nullptr;
 }

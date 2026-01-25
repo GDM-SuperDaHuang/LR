@@ -8,28 +8,40 @@
 #include "LrGAListDA.generated.h"
 
 
+class UNiagaraSystem;
 class UGameplayAbility;
 
 USTRUCT(BlueprintType)
-struct FLrDAConfig
+struct FLrGAConfig
 {
 	GENERATED_BODY()
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UGameplayAbility> GAClass; //技能
-	
+
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag GATag = FGameplayTag(); // 技能本身
 
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag InputTag = FGameplayTag(); // 触发技的标签。
-	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	UAnimMontage* Montage = nullptr;
+	TArray<UAnimMontage*> MontageList;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	USoundBase* ImpactSound = nullptr;
 };
 
+
+USTRUCT(BlueprintType)
+struct FLrNSConfig
+{
+	GENERATED_BODY()
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag NSTag = FGameplayTag(); // 特效的标签。
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<UNiagaraSystem> NS;
+};
 /**
  * 
  */
@@ -40,7 +52,12 @@ class LR_API ULrGAListDA : public UDataAsset
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<FLrDAConfig> GAConfigList;
+	TArray<FLrGAConfig> GAConfigList;
 
-	const FLrDAConfig* FindGAByTag(const FGameplayTag& GATag) const;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FLrNSConfig> NSConfigList;
+
+	const FLrGAConfig* FindGAByTag(const FGameplayTag& GATag) const;
+	const FLrNSConfig* FindNSByTag(const FGameplayTag& Tag) const;
+
 };
