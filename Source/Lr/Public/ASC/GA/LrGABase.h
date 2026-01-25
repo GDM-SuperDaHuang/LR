@@ -20,6 +20,6 @@ public:
 	 * 在编辑器中配置，用于在技能添加时绑定到输入事件
 	 * 与UAureAbilitySystemComponent中的输入处理逻辑联动
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	FGameplayTag InputTag;
+	// UPROPERTY(EditDefaultsOnly, Category = "Input")
+	// FGameplayTag InputTag;
 };

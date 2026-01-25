@@ -8,13 +8,12 @@
 
 ALrPS::ALrPS()
 {
-	NetUpdateFrequency = 100.0f;
+	SetNetUpdateFrequency(100.f);
 	// 这里ASC最大扫描和UAureAttributeSet进行绑定
 	LrASC = CreateDefaultSubobject<ULrASC>("AbilitySystemComponent");
 	LrASC->SetIsReplicated(true); //复制
 	LrASC->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 	LrAS = CreateDefaultSubobject<ULrAS>("AttributeSet");
-
 }
 
 void ALrPS::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

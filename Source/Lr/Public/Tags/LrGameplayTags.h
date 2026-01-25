@@ -39,6 +39,7 @@ public:
 
 
 	/**************************************** 输入 相关 ************************/
+	FGameplayTag InputTag_Move_WASD;
 	FGameplayTag InputTag_LMB;
 	FGameplayTag InputTag_RMB;
 	FGameplayTag InputTag_J;
@@ -52,8 +53,8 @@ public:
 
 	/**************************************** 技能自身 相关 ************************/
 	FGameplayTag GA_1;
-	FGameplayTag GA_2;
-	FGameplayTag GA_3;
+	// FGameplayTag GA_2;
+	// FGameplayTag GA_3;
 	/**************************************** 技能自身 相关 ************************/
 
 
@@ -185,12 +186,15 @@ public:
 	// FGameplayTag Effects_HitReact;
 	//
 
-	//GameplayCue
+	/**************************************** GameplayCue 相关 ************************/
 	FGameplayTag GameplayCue_Melee;
-	FGameplayTag GameplayCue_ShockBurst;
-	FGameplayTag GameplayCue_ShockLoop;
-	FGameplayTag GameplayCue_ArcaneShards;
-	FGameplayTag GameplayCue_FireBlast;
+	// FGameplayTag GameplayCue_ShockBurst;
+	// FGameplayTag GameplayCue_ShockLoop;
+	// FGameplayTag GameplayCue_ArcaneShards;
+	// FGameplayTag GameplayCue_FireBlast;
+	/**************************************** GameplayCue 相关 ************************/
+
+	
 	//
 	//        
 	//
@@ -199,6 +203,10 @@ public:
 	// FGameplayTag Play_Block_InputHeld;
 	// FGameplayTag Play_Block_InputReleased;
 	// FGameplayTag Play_Block_CursorTrace;
+
+	/**************************************** 蒙太奇通知 相关 ************************/
+	FGameplayTag Montage_Event_Attack;
+	/**************************************** 蒙太奇通知 相关 ************************/
 
 
 protected:

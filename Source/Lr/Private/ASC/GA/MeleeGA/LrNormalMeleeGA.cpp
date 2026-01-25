@@ -6,12 +6,18 @@
 #include "AbilitySystemComponent.h"
 #include "MotionWarpingComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Data/LrGAListDA.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Pawn/LrPawnBase.h"
 #include "Tags/LrGameplayTags.h"
 
+
+// ULrNormalMeleeGA::ULrNormalMeleeGA()
+// {
+// 	InputTag = FLrGameplayTags::Get().InputTag_J;
+// }
 
 void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
@@ -32,93 +38,76 @@ void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 		return;
 	}
 
-	FLrGameplayTags LrGameplayTags = FLrGameplayTags::Get();
-	const FLrDAConfig* LrDAConfig = ULrCommonLibrary::FindGAByTag(OwnerPawn, LrGameplayTags.GA_1);
-	if (LrDAConfig == nullptr)
+
+	AActor* TargetActor = nullptr;
+	// 如果没有目标，则使用前方作为默认方向
+	FVector TargetLocation;
+	if (TargetActor)
 	{
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		TargetLocation = TargetActor->GetActorLocation();
+	}
+	else
+	{
+		// 默认向前 500cm 作为“假目标点”
+		TargetLocation = OwnerPawn->GetActorLocation() + OwnerPawn->GetActorForwardVector() * 500.f;
 	}
 
-	UAnimMontage* Montage = LrDAConfig->Montage;
-	if (!Montage)
+	// ========== 2. 设置 Motion Warping ==========
+	// 需要和蒙太奇运动扭曲轨道，
+	OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocation("FacingTarget", TargetLocation);
+
+
+	// ================== 2. 播放 Montage ==================
+	FLrGameplayTags LrGameplayTags = FLrGameplayTags::Get();
+	FLrDAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(OwnerPawn, LrGameplayTags.GA_1);
+	UAnimMontage* MeleeMontage = LrDAConfig.Montage;
+	if (!MeleeMontage)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	AActor* TargetActor = nullptr;
-	// 需要和蒙太奇运动扭曲轨道，
-	OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocation("FacingTarget", TargetActor->GetActorLocation());
+	float MontagePlayRate = 1; //GetMontagePlayRate(); // 可根据需要调整速率
+	FName SectionName = ""; //GetMontageSectionName();  // 可选：指定Section
 
-	// 2. 监听 AnimNotify 事件
-	UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
-	if (ASC)
-	{
-		FGameplayCueParameters Params;
-		Params.Location = Hit.ImpactPoint;
-		Params.Normal = Hit.ImpactNormal;
+	// float Length = GetAbilitySystemComponentFromActorInfo()->PlayMontage(
+	// 		this,
+	// 		CurrentSpecHandle,
+	// 		CurrentActivationInfo,
+	// 		MeleeMontage,
+	// 		1.f
+	// 	);
 
-
-		ASC->GenericGameplayEventCallbacks
-		   .FindOrAdd(LrGameplayTags.As_Attack)
-		   .AddUObject(this, &ULrNormalMeleeGA::OnAttackEventReceived);
-	}
-
-	// 3. 播放蒙太奇
-	UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
+	// UE_LOG(LogTemp, Warning, TEXT("Montage Length: %f"), Length);
+	// ========== 3. 播放近战 Montage ==========
+	UAbilityTask_PlayMontageAndWait* PlayTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,
 		NAME_None,
-		Montage,
-		1.f
+		MeleeMontage,
+		MontagePlayRate,
+		NAME_None,
+		true //结束了Montage 还在播（常见坑）
+	);
+	
+	PlayTask->OnCompleted.AddDynamic(this, &ULrNormalMeleeGA::OnMontageFinished);
+	PlayTask->OnInterrupted.AddDynamic(this, &ULrNormalMeleeGA::OnMontageFinished);
+	PlayTask->OnCancelled.AddDynamic(this, &ULrNormalMeleeGA::OnMontageFinished);
+	PlayTask->ReadyForActivation();
+
+
+	// ========== 4. 等待攻击真正生效通知 ==========
+	UAbilityTask_WaitGameplayEvent* EventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+		this,
+		LrGameplayTags.Montage_Event_Attack
 	);
 
-	Task->OnCompleted.AddDynamic(this, &ULrNormalMeleeGA::OnMontageFinished);
-	Task->OnInterrupted.AddDynamic(this, &ULrNormalMeleeGA::OnMontageFinished);
-	Task->OnCancelled.AddDynamic(this, &ULrNormalMeleeGA::OnMontageFinished);
-	Task->ReadyForActivation();
 
+	EventTask->EventReceived.AddDynamic(
+		this,
+		&ULrNormalMeleeGA::OnAttackEvent
+	);
 
-	//1, 获取 敌人目标
-	// ========== 1. 获取敌人目标 ==========
-	AActor* TargetActor = nullptr;
-	if (ActorInfo->PlayerController != nullptr) // 玩家控制 → 取当前锁定敌人
-	{
-		// TargetActor = ULrCombatLibrary::GetLockedEnemy(OwnerCharacter);
-	}
-	else // AI 控制 → 取最近可攻击敌人
-	{
-		// TArray<AActor*> Enemies;
-		// ULrCombatLibrary::GetNearbyEnemies(OwnerCharacter, 600.f, Enemies);
-		// TargetActor = ULrCombatLibrary::SelectClosestTarget(OwnerCharacter, Enemies);
-	}
-
-	if (TargetActor == nullptr)
-	{
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
-	}
-
-
-	//
-	// 视觉方面
-	//2,接受蒙太奇通知，然后面向敌人 todo
-	OwnerPawn->SetActorRotation(UKismetMathLibrary::FindLookAtRotation(OwnerPawn->GetActorLocation(), TargetActor->GetActorLocation()));
-
-	// 3，从数据资产读取，获取攻击蒙太奇(普通攻击有多个，随机挑选一个)，先播放。
-
-
-	// 4，武器/攻击的 插槽位置
-
-	// const FVector SocketLocation = OwnerPawn->LrSkeletalMeshComponent->GetSocketLocation( bRightHandSwing ? TEXT("Weapon_R") : TEXT("Weapon_L"));
-
-
-	// 获取周围最近的敌人，如果是玩家则由玩家选择敌人
-
-
-	// 造成伤害
-
-
-	// 特效播放
-
+	EventTask->ReadyForActivation();
 
 	// ========== 7. 能力结束时机 ==========
 	// 让蒙太age 的 AnimNotify 在播放到“收刀”帧时调用 EndAbility；
@@ -136,9 +125,45 @@ void ULrNormalMeleeGA::EndAbility(const FGameplayAbilitySpecHandle Handle, const
 
 void ULrNormalMeleeGA::OnMontageFinished()
 {
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 
 void ULrNormalMeleeGA::OnAttackEventReceived(const FGameplayEventData* GameplayEventData) const
+{
+}
+
+
+void ULrNormalMeleeGA::OnAttackEvent(FGameplayEventData Payload)
+{
+	ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
+	if (!OwnerPawn) return;
+
+	// ========== 1. 播放武器轨迹 Niagara ==========
+	SpawnWeaponTrailFX(OwnerPawn);
+
+	// ========== 2. 命中检测 ==========
+	TArray<FHitResult> HitResults;
+	PerformMeleeTrace(OwnerPawn, HitResults);
+
+	for (const FHitResult& Hit : HitResults)
+	{
+		AActor* HitActor = Hit.GetActor();
+		if (!HitActor || HitActor == OwnerPawn) continue;
+
+		// ========== 3. 应用伤害 ==========
+		// ApplyDamageToTarget(HitActor, Hit);
+		//
+		// // ========== 4. 敌人血液特效 ==========
+		// PlayHitBloodFX(HitActor, Hit);
+	}
+
+}
+
+void ULrNormalMeleeGA::SpawnWeaponTrailFX(ALrPawnBase* OwnerPawn)
+{
+}
+
+void ULrNormalMeleeGA::PerformMeleeTrace(ALrPawnBase* OwnerPawn, TArray<FHitResult>& Array)
 {
 }

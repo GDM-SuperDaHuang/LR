@@ -4,6 +4,8 @@
 #include "Player/LrPlayerController.h"
 
 #include "EnhancedInputSubsystems.h"
+#include "ASC/LrASC.h"
+#include "Lib/LrCommonLibrary.h"
 #include "Pawn/LrHeroPawn.h"
 #include "Player/Input/LrInputComponent.h"
 
@@ -46,7 +48,7 @@ void ALrPlayerController::SetupInputComponent()
 	// 创建你自己的 InputComponent
 	InputComponent = NewObject<ULrInputComponent>(this, ULrInputComponent::StaticClass());
 	InputComponent->RegisterComponent();
-	
+
 	// 我们自定义的 UAuraInputComponent 在 BP 里已经挂载，直接强转
 	ULrInputComponent* AuraInputComponent = CastChecked<ULrInputComponent>(InputComponent);
 	check(AuraInputComponent);
@@ -69,19 +71,40 @@ void ALrPlayerController::SetupInputComponent()
 		&ThisClass::AbilityInputTagHeld);
 }
 
+// 按下
 void ALrPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
+	if (LrASC == nullptr)
+	{
+		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
+		if (LrASC == nullptr) return;
+	}
+	LrASC->AbilityInputTagPressed(InputTag);
 }
 
+// 释放
 void ALrPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 {
+	if (LrASC == nullptr)
+	{
+		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
+		if (LrASC == nullptr) return;
+	}
+	LrASC->AbilityInputTagReleased(InputTag);
 }
 
+// 一直按
 void ALrPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 {
+	if (LrASC == nullptr)
+	{
+		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
+		if (LrASC == nullptr) return;
+	}
+	LrASC->AbilityInputTagHeld(InputTag);
 }
 
-void ALrPlayerController::Move(const FInputActionValue& InputActionValue) 
+void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 {
 	// 增强输入默认返回 FVector2D
 	const FVector2D Input = InputActionValue.Get<FVector2D>();
@@ -97,11 +120,9 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 	// // 把二维输入映射到世界空间的前/右方向
 	// const FVector ForwardDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::X);
 	// const FVector RightDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::Y);
-
-	
 }
 
-void ALrPlayerController::MoveCompleted(const FInputActionValue& InputActionValue) 
+void ALrPlayerController::MoveCompleted(const FInputActionValue& InputActionValue)
 {
 	// 增强输入默认返回 FVector2D
 	const FVector2D Input = FVector2D::ZeroVector;
@@ -121,9 +142,8 @@ void ALrPlayerController::MoveCompleted(const FInputActionValue& InputActionValu
 
 void ALrPlayerController::Jump(const FInputActionValue& InputActionValue)
 {
-	if (ALrPawnBase* ControlledPawn  = GetPawn<ALrPawnBase>())
+	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
 	{
 		ControlledPawn->UpdatePressedJump(true);
 	}
-	
 }

@@ -8,16 +8,23 @@
 #include "LrGAListDA.generated.h"
 
 
+class UGameplayAbility;
+
 USTRUCT(BlueprintType)
 struct FLrDAConfig
 {
 	GENERATED_BODY()
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	UAnimMontage* Montage = nullptr;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UGameplayAbility> GAClass; //技能
+	
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag GATag = FGameplayTag(); // 技能本身
 
 	UPROPERTY(EditDefaultsOnly)
-	FGameplayTag GATag = FGameplayTag();
+	FGameplayTag InputTag = FGameplayTag(); // 触发技的标签。
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimMontage* Montage = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	USoundBase* ImpactSound = nullptr;
@@ -32,10 +39,8 @@ class LR_API ULrGAListDA : public UDataAsset
 	GENERATED_BODY()
 
 public:
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FLrDAConfig> GAConfigList;
-	
-	const FLrDAConfig* FindGAByTag(const FGameplayTag& GATag) const;
 
+	const FLrDAConfig* FindGAByTag(const FGameplayTag& GATag) const;
 };

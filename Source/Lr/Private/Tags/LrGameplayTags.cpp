@@ -33,7 +33,7 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 		FName(TEXT("As.MaxEndurance")),
 		FString("MaxEndurance"));
 
-	
+
 	GameplayTags.As_Attack = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("As.Attack")),
 		FString("Attack"));
@@ -61,6 +61,10 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 
 
 	/***************************************** 输入 相关 ****************************************************************************************/
+	GameplayTags.InputTag_Move_WASD = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("InputTag.Move.WASD")),
+		FString("Input Move WASD"));
+
 	GameplayTags.InputTag_LMB = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("InputTag.LMB")),
 		FString("Input LMB"));
@@ -92,5 +96,27 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 	GameplayTags.InputTag_O = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("InputTag.O")),
 		FString("Input O"));
-	/***************************************** 输入 相关 ****************************************************************************************/
+	/***************************************** End 输入 相关 ****************************************************************************************/
+
+
+	/***************************************** Start 技能 相关 ****************************************************************************************/
+	GameplayTags.GA_1 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.1")),
+		FString("GA 1"));
+
+	/***************************************** End 技能 相关 ****************************************************************************************/
+
+
+	/***************************************** Start GameplayCue 相关 ****************************************************************************************/
+	GameplayTags.GameplayCue_Melee = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GameplayCue.Melee")),
+		FString("GameplayCue Melee Attack"));
+	/***************************************** End GameplayCue 相关 ****************************************************************************************/
+
+
+	/***************************************** Start 蒙太奇通知 相关 ****************************************************************************************/
+	GameplayTags.Montage_Event_Attack = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("Montage.Event.Attack")),
+		FString("Montage Event Attack"));
+	/***************************************** End 蒙太奇通知 相关 ****************************************************************************************/
 }

@@ -5,6 +5,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
+#include "MotionWarpingComponent.h"
 #include "ASC/LrASC.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -49,14 +50,19 @@ ALrHeroPawn::ALrHeroPawn()
 	// =========================
 	// 武器 →骨架
 	// =========================
-	WeaponSKM = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrMesh"));
+	WeaponSKM = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponSKM"));
 	// 挂到右手插槽，可在子类改 Socket 名，注意名称 WeaponHandSocket 一定要一致
-	WeaponSKM->SetupAttachment(LrSkeletalMeshComponent, FName(TEXT("WeaponSocket1")));
+	WeaponSKM->SetupAttachment(LrSkeletalMeshComponent, FName(TEXT("WeaponHandSocket")));
 	// 武器本身不产生物理碰撞
 	WeaponSKM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 
-	
+	// =========================
+	// 运动扭曲 
+	// =========================
+	LrMotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
+
+
 	// =========================
 	// Mover
 	// =========================
@@ -66,7 +72,7 @@ ALrHeroPawn::ALrHeroPawn()
 	CharacterMotionComponent = CreateDefaultSubobject<UCharacterMoverComponent>(TEXT("MoverComponent"));
 	CharacterMotionComponent->SetUpdatedComponent(LrCapsuleComponent);
 	// CharacterMotionComponent->SetIsReplicated(true);
-	
+
 
 	// =========================
 	// Nav → Mover 桥接
@@ -97,9 +103,6 @@ ALrHeroPawn::ALrHeroPawn()
 	// LrMoverComponent->StartingMovementMode = TEXT("LrWalk");
 	CharacterMotionComponent->StartingMovementMode = TEXT("LrWalk");
 	// CharacterMotionComponent->StartingMovementMode = DefaultModeNames::Walking;
-
-
-	
 }
 
 void ALrHeroPawn::BeginPlay()
@@ -143,12 +146,15 @@ void ALrHeroPawn::PossessedBy(AController* NewController)
 	LrPS->GetAbilitySystemComponent()->InitAbilityActorInfo(LrPS, this);
 	// AttributeSet = LrAS->GetAttributeSet();
 	// todo ???
-	// OnASCRegistered.Broadcast(AbilitySystemComponent);
 	LrASC = LrPS->GetAbilitySystemComponent();
+	//ASC 初始化成功委托
+	OnASCRegistered.Broadcast(LrASC);
 	LrAS = LrPS->GetAttributeSet();
 	// 初始技能
 	ULrASC* ASC = CastChecked<ULrASC>(LrASC);
-	ASC->AddGA(InitGAListConfig);
+	
+	ASC->AddGA(GATagListConfig);
+
 }
 
 void ALrHeroPawn::OnRep_PlayerState()

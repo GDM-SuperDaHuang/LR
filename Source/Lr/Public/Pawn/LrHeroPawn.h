@@ -29,15 +29,16 @@ public:
 
 	// 客户端
 	virtual void OnRep_PlayerState() override;
+
 protected:
 	/** 碰撞体（NavAgent & Mover 都依赖它） */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
-	
+
 	/** 相机 弹簧臂*/
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCameraComponent> TopDownCameraComponent;
-	
+
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USpringArmComponent> CameraBoom;
 	/** 相机 弹簧臂*/
@@ -47,12 +48,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	TObjectPtr<USkeletalMeshComponent> WeaponSKM;
 	/** 武器 */
-	
+
 private:
-	//技能列表
+	// 技能列表
 	UPROPERTY(EditAnywhere, Category="Abilities")
-	TArray<TSubclassOf<UGameplayAbility>> InitGAListConfig;
-	
-	
-	
+	TArray<FGameplayTag> GATagListConfig;
 };

@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "LrCommonLibrary.generated.h"
 
+class UAbilitySystemComponent;
 struct FGameplayTag;
 struct FLrDAConfig;
 /**
@@ -18,7 +19,10 @@ class LR_API ULrCommonLibrary : public UBlueprintFunctionLibrary
 
 public:
 	
+	UFUNCTION(BlueprintPure, Category = Ability, Meta=(DefaultToSelf = "Actor"))
+	static UAbilitySystemComponent* GetASC(AActor* Actor);
+
 	// 查找技能配置
 	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))
-	static const FLrDAConfig* FindGAByTag(const UObject* WorldContextObject, const FGameplayTag& GATag);
+	static const FLrDAConfig& FindGAByTag(const UObject* WorldContextObject, const FGameplayTag& GATag);
 };

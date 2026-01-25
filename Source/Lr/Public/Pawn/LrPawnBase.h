@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
 #include "MoverSimulationTypes.h"
 #include "GameFramework/NavMovementComponent.h"
 #include "GameFramework/Pawn.h"
@@ -15,8 +16,10 @@ class UCharacterMoverComponent;
 // class ULrMoverComponent;
 class ULrNavMovementComponent;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnASCRegistered, UAbilitySystemComponent*);
+
 UCLASS()
-class LR_API ALrPawnBase : public APawn, public IMoverInputProducerInterface
+class LR_API ALrPawnBase : public APawn, public IMoverInputProducerInterface, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -24,12 +27,17 @@ public:
 	// Sets default values for this pawn's properties
 	ALrPawnBase();
 
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
 	/** 身体骨骼 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	TObjectPtr<USkeletalMeshComponent> LrSkeletalMeshComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	TObjectPtr<UMotionWarpingComponent> LrMotionWarpingComponent;
+
+
+	FOnASCRegistered OnASCRegistered;
 
 protected:
 	// Called when the game starts or when spawned

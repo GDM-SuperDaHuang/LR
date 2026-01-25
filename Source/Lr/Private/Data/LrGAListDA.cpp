@@ -12,6 +12,6 @@ const FLrDAConfig* ULrGAListDA::FindGAByTag(const FGameplayTag& GATag) const
 			return &GAConfig;
 		}
 	}
-	
+
 	return nullptr;
 }
