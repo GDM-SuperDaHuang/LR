@@ -6,6 +6,8 @@
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
 #include "MotionWarpingComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
 #include "ASC/LrASC.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -56,7 +58,15 @@ ALrHeroPawn::ALrHeroPawn()
 	// 武器本身不产生物理碰撞
 	WeaponSKM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	// =========================
+	// NS→武器
+	// =========================
+	WeaponTrailComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("WeaponTrail"));
+	WeaponTrailComponent->SetupAttachment(WeaponSKM, TEXT("WeaponTrailSocket"));
 
+	WeaponTrailComponent->SetAsset(LoadObject<UNiagaraSystem>(nullptr, TEXT("/Game/FX/NS_WeaponTrail.NS_WeaponTrail")));
+	WeaponTrailComponent->SetAutoActivate(false);
+	WeaponTrailComponent->bAutoDestroy = false;
 	// =========================
 	// 运动扭曲 
 	// =========================
@@ -152,9 +162,8 @@ void ALrHeroPawn::PossessedBy(AController* NewController)
 	LrAS = LrPS->GetAttributeSet();
 	// 初始技能
 	ULrASC* ASC = CastChecked<ULrASC>(LrASC);
-	
-	ASC->AddGA(GATagListConfig);
 
+	ASC->AddGA(GATagListConfig);
 }
 
 void ALrHeroPawn::OnRep_PlayerState()

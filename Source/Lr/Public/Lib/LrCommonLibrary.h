@@ -19,7 +19,6 @@ class LR_API ULrCommonLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
-	
 	UFUNCTION(BlueprintPure, Category = Ability, Meta=(DefaultToSelf = "Actor"))
 	static UAbilitySystemComponent* GetASC(AActor* Actor);
 
@@ -29,6 +28,5 @@ public:
 
 	// 根据标签查找特效NS
 	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))
-	static const FLrNSConfig& FindNSByTag(const UObject* WorldContextObject, const FGameplayTag& GATag);
-
+	static FLrNSConfig FindNSByTag(const UObject* WorldContextObject, const FGameplayTag& GATag);
 };

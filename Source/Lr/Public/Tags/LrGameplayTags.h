@@ -187,7 +187,7 @@ public:
 	//
 
 	/**************************************** GameplayCue 相关 ************************/
-	FGameplayTag GameplayCue_Melee_Trail;
+	FGameplayTag GameplayCue_Melee_Trail;//轨迹特效
 	FGameplayTag GameplayCue_Melee_Hit;// 命中特效
 
 	// FGameplayTag GameplayCue_ShockBurst;

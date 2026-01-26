@@ -15,20 +15,20 @@ UAbilitySystemComponent* ULrCommonLibrary::GetASC(AActor* Actor)
 
 const FLrGAConfig& ULrCommonLibrary::FindGAByTag(const UObject* WorldContextObject, const FGameplayTag& GATag)
 {
-	static const FLrGAConfig EmptyConfig; 
+	static const FLrGAConfig EmptyConfig;
 	const ALrGameModeBase* LrGameMode = Cast<ALrGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
 	if (LrGameMode == nullptr) return EmptyConfig;
 	TObjectPtr<ULrGAListDA> LrGAListDA = LrGameMode->LrGAConfigList;
 	if (LrGAListDA == nullptr) return EmptyConfig;
 	const FLrGAConfig* FindGaByTag = LrGAListDA.Get()->FindGAByTag(GATag);
 	if (FindGaByTag == nullptr) return EmptyConfig;
-	
+
 	return *FindGaByTag;
 }
 
-const FLrNSConfig& ULrCommonLibrary::FindNSByTag(const UObject* WorldContextObject, const FGameplayTag& GATag)
+FLrNSConfig ULrCommonLibrary::FindNSByTag(const UObject* WorldContextObject, const FGameplayTag& GATag)
 {
-	static const FLrNSConfig EmptyConfig; 
+	static const FLrNSConfig EmptyConfig; // 只读兜底
 	const ALrGameModeBase* LrGameMode = Cast<ALrGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
 	if (LrGameMode == nullptr) return EmptyConfig;
 	TObjectPtr<ULrGAListDA> LrGAListDA = LrGameMode->LrGAConfigList;

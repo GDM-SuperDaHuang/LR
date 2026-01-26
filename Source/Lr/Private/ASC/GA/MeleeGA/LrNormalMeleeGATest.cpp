@@ -46,7 +46,7 @@ void ULrNormalMeleeGATest::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	// ========== 2. 设置 Motion Warping ==========
 	// 需要和蒙太奇运动扭曲轨道，
 	OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocation("FacingTarget", TargetLocation);
-	
+
 	// ================== 2. 播放 Montage ==================
 
 	FLrGameplayTags LrGameplayTags = FLrGameplayTags::Get();
@@ -148,6 +148,7 @@ void ULrNormalMeleeGATest::OnMontageFinished()
 		ASC->RemoveLooseGameplayTag(LrGameplayTags.State_Block_Move);
 	}
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+	ASC->RemoveGameplayCue(LrGameplayTags.GameplayCue_Melee_Trail);
 }
 
 void ULrNormalMeleeGATest::OnAttackEvent(FGameplayEventData Payload)
@@ -161,13 +162,15 @@ void ULrNormalMeleeGATest::OnAttackEvent(FGameplayEventData Payload)
 	// ================== 1. 武器轨迹（所有客户端） ==================
 	FGameplayCueParameters CueParams;
 	CueParams.SourceObject = OwnerPawn;
+	CueParams.Instigator = OwnerPawn;
+	CueParams.EffectCauser = OwnerPawn;
 	CueParams.Location = OwnerPawn->GetActorLocation();
 
 	ASC->ExecuteGameplayCue(
 		FLrGameplayTags::Get().GameplayCue_Melee_Trail,
 		CueParams
 	);
-	
+
 	// ========== 1. 播放武器轨迹 Niagara ==========
 	SpawnWeaponTrailFX(OwnerPawn);
 
@@ -198,7 +201,6 @@ void ULrNormalMeleeGATest::OnAttackEvent(FGameplayEventData Payload)
 
 void ULrNormalMeleeGATest::SpawnWeaponTrailFX(ALrPawnBase* OwnerPawn)
 {
-	
 }
 
 void ULrNormalMeleeGATest::PerformMeleeTrace(ALrPawnBase* OwnerPawn, TArray<FHitResult>& Array)

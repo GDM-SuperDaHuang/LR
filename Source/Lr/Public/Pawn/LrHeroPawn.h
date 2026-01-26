@@ -6,6 +6,7 @@
 #include "Pawn/LrPawnBase.h"
 #include "LrHeroPawn.generated.h"
 
+class UNiagaraComponent;
 class UGameplayAbility;
 class USpringArmComponent;
 class UCameraComponent;
@@ -49,6 +50,11 @@ protected:
 	TObjectPtr<USkeletalMeshComponent> WeaponSKM;
 	/** 武器 */
 
+
+	/** 武器轨迹 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FX")
+	TObjectPtr<UNiagaraComponent> WeaponTrailComponent;
+	/** 武器轨迹 */
 private:
 	// 技能列表
 	UPROPERTY(EditAnywhere, Category="Abilities")
