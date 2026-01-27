@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "LrGameModeBase.generated.h"
 
+class ULrGAListDA;
 /**
  * 
  */
@@ -13,5 +14,8 @@ UCLASS()
 class LR_API ALrGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "Character Class Defaults")
+	TObjectPtr<ULrGAListDA> LrGAConfigList;
 	
 };

@@ -4,8 +4,11 @@
 #include "Player/LrPlayerController.h"
 
 #include "EnhancedInputSubsystems.h"
+#include "ASC/LrASC.h"
+#include "Lib/LrCommonLibrary.h"
 #include "Pawn/LrHeroPawn.h"
 #include "Player/Input/LrInputComponent.h"
+#include "Tags/LrGameplayTags.h"
 
 void ALrPlayerController::BeginPlay()
 {
@@ -26,6 +29,7 @@ void ALrPlayerController::BeginPlay()
 	bShowMouseCursor = true; //显示鼠标光标
 	DefaultMouseCursor = EMouseCursor::Default; // 设置默认鼠标光标样式
 
+
 	// 输入模式：既响应游戏（WASD）也响应 UI（点击 Widget）
 	// FInputModeGameAndUI InputModeData;
 	// InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock); // 不锁定鼠标到视口
@@ -45,7 +49,7 @@ void ALrPlayerController::SetupInputComponent()
 	// 创建你自己的 InputComponent
 	InputComponent = NewObject<ULrInputComponent>(this, ULrInputComponent::StaticClass());
 	InputComponent->RegisterComponent();
-	
+
 	// 我们自定义的 UAuraInputComponent 在 BP 里已经挂载，直接强转
 	ULrInputComponent* AuraInputComponent = CastChecked<ULrInputComponent>(InputComponent);
 	check(AuraInputComponent);
@@ -60,6 +64,7 @@ void ALrPlayerController::SetupInputComponent()
 	 */
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALrPlayerController::Move);
 
+	// 停止
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ALrPlayerController::MoveCompleted);
 
 	// 一键批量绑定所有“技能输入 Tag”到三个回调
@@ -71,22 +76,58 @@ void ALrPlayerController::SetupInputComponent()
 		&ThisClass::AbilityInputTagHeld);
 }
 
+// 按下
 void ALrPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
+	if (LrASC == nullptr)
+	{
+		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
+		if (LrASC == nullptr) return;
+	}
+	LrASC->AbilityInputTagPressed(InputTag);
 }
 
+// 释放
 void ALrPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 {
+	if (LrASC == nullptr)
+	{
+		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
+		if (LrASC == nullptr) return;
+	}
+	LrASC->AbilityInputTagReleased(InputTag);
 }
 
+// 一直按
 void ALrPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 {
+	if (LrASC == nullptr)
+	{
+		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
+		if (LrASC == nullptr) return;
+	}
+	LrASC->AbilityInputTagHeld(InputTag);
 }
 
-void ALrPlayerController::Move(const FInputActionValue& InputActionValue) 
+void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 {
-	// 增强输入默认返回 FVector2D
-	const FVector2D Input = InputActionValue.Get<FVector2D>();
+	if (LrASC == nullptr)
+	{
+		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
+		if (LrASC == nullptr) return;
+	}
+	FVector2D Input;
+	bool bIsBlockMove = LrASC->HasMatchingGameplayTag(FLrGameplayTags::Get().State_Block_Move);
+	if (bIsBlockMove)
+	{
+		Input = FVector2D::ZeroVector;
+	}
+	else
+	{
+		// 增强输入默认返回 FVector2D
+		Input = InputActionValue.Get<FVector2D>();
+	}
+
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
 	{
 		ControlledPawn->UpdateMove(Input);
@@ -99,11 +140,9 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 	// // 把二维输入映射到世界空间的前/右方向
 	// const FVector ForwardDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::X);
 	// const FVector RightDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::Y);
-
-	
 }
 
-void ALrPlayerController::MoveCompleted(const FInputActionValue& InputActionValue) 
+void ALrPlayerController::MoveCompleted(const FInputActionValue& InputActionValue)
 {
 	// 增强输入默认返回 FVector2D
 	const FVector2D Input = FVector2D::ZeroVector;
@@ -123,9 +162,8 @@ void ALrPlayerController::MoveCompleted(const FInputActionValue& InputActionValu
 
 void ALrPlayerController::Jump(const FInputActionValue& InputActionValue)
 {
-	if (ALrPawnBase* ControlledPawn  = GetPawn<ALrPawnBase>())
+	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
 	{
 		ControlledPawn->UpdatePressedJump(true);
 	}
-	
 }

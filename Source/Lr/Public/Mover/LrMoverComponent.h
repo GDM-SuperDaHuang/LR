@@ -38,12 +38,12 @@ class LR_API ULrMoverComponent : public UMoverComponent
 	GENERATED_BODY()
 
 public:
-	ULrMoverComponent();
+	// ULrMoverComponent();
 
 	
 	// virtual void InitializeComponent() override;
 public:
-	virtual void OnRegister() override;
+	// virtual void OnRegister() override;
 };
 
 

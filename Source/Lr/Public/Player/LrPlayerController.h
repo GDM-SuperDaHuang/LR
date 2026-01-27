@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "LrPlayerController.generated.h"
 
+class ULrASC;
 struct FGameplayTag;
 struct FInputActionValue;
 class ULrInputConfigDA;
@@ -23,6 +24,10 @@ protected:
 	virtual void SetupInputComponent() override;
 	// virtual void CreateInputComponent(TSubclassOf<UInputComponent> InputComponentToCreate) override;
 private:
+
+	UPROPERTY()
+	TObjectPtr<ULrASC> LrASC;
+	
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<ULrInputConfigDA> InputConfig;
 
@@ -32,8 +37,8 @@ private:
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> MoveAction;
 
-	UPROPERTY(EditAnywhere, Category="Input")
-	TObjectPtr<UInputAction> ShiftAction;
+	// UPROPERTY(EditAnywhere, Category="Input")
+	// TObjectPtr<UInputAction> ShiftAction;
 
 
 	void AbilityInputTagPressed(FGameplayTag InputTag);
@@ -46,4 +51,6 @@ private:
 	void MoveCompleted(const FInputActionValue& InputActionValue);
 	void Jump(const FInputActionValue& InputActionValue);
 
+
+	
 };

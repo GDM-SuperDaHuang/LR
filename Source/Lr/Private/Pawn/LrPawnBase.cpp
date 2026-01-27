@@ -3,7 +3,6 @@
 
 #include "Pawn/LrPawnBase.h"
 
-#include "AIController.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
 
@@ -13,7 +12,7 @@ ALrPawnBase::ALrPawnBase()
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	// bReplicates = true;
-	
+
 	// 关键：禁用Actor级别的移动复制
 	// Mover组件有自己独立的网络预测和复制系统，不需要标准的Actor移动复制
 	SetReplicatingMovement(false); // disable Actor-level movement replication, since our Mover component will handle it
@@ -38,7 +37,12 @@ ALrPawnBase::ALrPawnBase()
 	// AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	// AIControllerClass = AAIController::StaticClass();
 	// bUseControllerRotationYaw = false;
-	
+}
+
+UAbilitySystemComponent* ALrPawnBase::GetAbilitySystemComponent() const
+{
+	// 使得 UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor)可以拿到ASC
+	return LrASC;
 }
 
 // Called when the game starts or when spawned
@@ -55,7 +59,6 @@ void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdCon
 
 void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdResult)
 {
-	
 	/**
 	  * 关键步骤1：获取输入数据结构
 	  * FCharacterDefaultInputs是派生自FMoverDataStructBase的结构
@@ -69,14 +72,14 @@ void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdR
 
 	if (!MoveIntentLocal.IsNearlyZero())
 	{
-		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent,MoveIntentLocal.GetClampedToMaxSize(1.f));
+		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent, MoveIntentLocal.GetClampedToMaxSize(1.f));
 		Inputs.OrientationIntent = MoveIntentLocal.GetSafeNormal();
 		Inputs.SuggestedMovementMode = DefaultModeNames::Walking;
 	}
 	else
 	{
 		// ⭐ 正确的“停下”
-		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent,FVector::ZeroVector);
+		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent, FVector::ZeroVector);
 		// Inputs.OrientationIntent = FVector::ZeroVector;
 		// Inputs.SuggestedMovementMode = NAME_None;
 	}

@@ -3,15 +3,21 @@
 
 #include "Pawn/LrHeroPawn.h"
 
+#include "AbilitySystemComponent.h"
 #include "AIController.h"
+#include "MotionWarpingComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
+#include "ASC/LrASC.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
-#include "DefaultMovementSet/Modes/SimpleWalkingMode.h"
+#include "DefaultMovementSet/Modes/SmoothWalkingMode.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
+#include "Player/PS/LrPS.h"
 
 ALrHeroPawn::ALrHeroPawn()
 {
@@ -42,6 +48,31 @@ ALrHeroPawn::ALrHeroPawn()
 	LrSkeletalMeshComponent->SetRelativeLocation(FVector(0, 0, -88));
 	LrSkeletalMeshComponent->SetOnlyOwnerSee(false);
 	LrSkeletalMeshComponent->SetOwnerNoSee(false);
+
+	// =========================
+	// 武器 →骨架
+	// =========================
+	WeaponSKM = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponSKM"));
+	// 挂到右手插槽，可在子类改 Socket 名，注意名称 WeaponHandSocket 一定要一致
+	WeaponSKM->SetupAttachment(LrSkeletalMeshComponent, FName(TEXT("WeaponHandSocket")));
+	// 武器本身不产生物理碰撞
+	WeaponSKM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// =========================
+	// NS→武器
+	// =========================
+	WeaponTrailComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("WeaponTrail"));
+	WeaponTrailComponent->SetupAttachment(WeaponSKM, TEXT("WeaponTrailSocket"));
+
+	WeaponTrailComponent->SetAsset(LoadObject<UNiagaraSystem>(nullptr, TEXT("/Game/FX/NS_WeaponTrail.NS_WeaponTrail")));
+	WeaponTrailComponent->SetAutoActivate(false);
+	WeaponTrailComponent->bAutoDestroy = false;
+	// =========================
+	// 运动扭曲 
+	// =========================
+	LrMotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
+
+
 	// =========================
 	// Mover
 	// =========================
@@ -50,8 +81,8 @@ ALrHeroPawn::ALrHeroPawn()
 
 	CharacterMotionComponent = CreateDefaultSubobject<UCharacterMoverComponent>(TEXT("MoverComponent"));
 	CharacterMotionComponent->SetUpdatedComponent(LrCapsuleComponent);
+	// CharacterMotionComponent->SetIsReplicated(true);
 
-	
 
 	// =========================
 	// Nav → Mover 桥接
@@ -80,8 +111,8 @@ ALrHeroPawn::ALrHeroPawn()
 	// 默认激活模式设定视需求而定
 	// ⭐ 核心：设置初始模式名字
 	// LrMoverComponent->StartingMovementMode = TEXT("LrWalk");
-	// CharacterMotionComponent->StartingMovementMode = TEXT("Walk");
-	CharacterMotionComponent->StartingMovementMode = DefaultModeNames::Walking;
+	CharacterMotionComponent->StartingMovementMode = TEXT("LrWalk");
+	// CharacterMotionComponent->StartingMovementMode = DefaultModeNames::Walking;
 }
 
 void ALrHeroPawn::BeginPlay()
@@ -94,7 +125,7 @@ void ALrHeroPawn::BeginPlay()
 	// 	// 添加特定的自定义移动模式
 	// 	LrMoverComponent->AddMovementModeFromClass(TEXT("LrWalk"), ULrWalkMovementMode::StaticClass());
 	// }
-
+	CharacterMotionComponent->AddMovementModeFromClass(TEXT("LrWalk"), USmoothWalkingMode::StaticClass());
 	// if (CharacterMotionComponent)
 	// {
 	// 	// 添加特定的自定义移动模式
@@ -114,4 +145,28 @@ void ALrHeroPawn::PostInitializeComponents()
 	// 	// ⭐ 核心：设置初始模式名字
 	// 	LrMoverComponent->StartingMovementMode = TEXT("LrWalk");
 	// }
+}
+
+void ALrHeroPawn::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	ALrPS* LrPS = GetPlayerState<ALrPS>();
+	check(LrPS);
+	// 绑定 自身与ps 到ASC
+	LrPS->GetAbilitySystemComponent()->InitAbilityActorInfo(LrPS, this);
+	// AttributeSet = LrAS->GetAttributeSet();
+	// todo ???
+	LrASC = LrPS->GetAbilitySystemComponent();
+	//ASC 初始化成功委托
+	OnASCRegistered.Broadcast(LrASC);
+	LrAS = LrPS->GetAttributeSet();
+	// 初始技能
+	ULrASC* ASC = CastChecked<ULrASC>(LrASC);
+
+	ASC->AddGA(GATagListConfig);
+}
+
+void ALrHeroPawn::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
 }

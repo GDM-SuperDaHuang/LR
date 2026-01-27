@@ -3,23 +3,41 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
 #include "MoverSimulationTypes.h"
 #include "GameFramework/NavMovementComponent.h"
 #include "GameFramework/Pawn.h"
 #include "LrPawnBase.generated.h"
 
+class UMotionWarpingComponent;
+class UAttributeSet;
+class UAbilitySystemComponent;
 class UCharacterMoverComponent;
-class ULrMoverComponent;
+// class ULrMoverComponent;
 class ULrNavMovementComponent;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnASCRegistered, UAbilitySystemComponent*);
+
 UCLASS()
-class LR_API ALrPawnBase : public APawn, public IMoverInputProducerInterface
+class LR_API ALrPawnBase : public APawn, public IMoverInputProducerInterface, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this pawn's properties
 	ALrPawnBase();
+
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	/** 身体骨骼 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
+	TObjectPtr<USkeletalMeshComponent> LrSkeletalMeshComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
+	TObjectPtr<UMotionWarpingComponent> LrMotionWarpingComponent;
+
+
+	FOnASCRegistered OnASCRegistered;
 
 protected:
 	// Called when the game starts or when spawned
@@ -28,13 +46,13 @@ protected:
 	/** 角色移动组件（Mover系统的核心） */
 	// UPROPERTY(Category = Movement, VisibleAnywhere, BlueprintReadOnly, Transient, meta = (AllowPrivateAccess = "true"))
 	// TObjectPtr<ULrMoverComponent> LrMoverComponent;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="LrNavMoverComponent")
 	TObjectPtr<ULrNavMovementComponent> LrNavMoverComponent;
 
 	/** 角色移动组件（Mover系统的核心） */
 	UPROPERTY(Category = Movement, VisibleAnywhere, BlueprintReadOnly, Transient, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCharacterMoverComponent> CharacterMotionComponent;
+
 
 	/**
 	 * 输入生产入口点，不要重写！
@@ -51,6 +69,11 @@ protected:
 	 */
 	virtual void OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdResult);
 
+	UPROPERTY()
+	TObjectPtr<UAbilitySystemComponent> LrASC;
+	UPROPERTY()
+	TObjectPtr<UAttributeSet> LrAS;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -61,10 +84,9 @@ public:
 	void UpdatePressedJump(bool Input);
 
 private:
-	/** 最后一次非零移动输入（用于维持朝向） */
+	/** 帧更新，最后一次非零移动输入（用于维持朝向） */
 	FVector2D CachedMoveInput = FVector2D::ZeroVector; // Movement input (intent or velocity) the last time we had one that wasn't zero
 	bool bIsJumpJustPressed = false; // 本帧刚刚按下
 	bool bIsJumpPressed = false; // 当前处于按住状态
-
-	;
+	/** 最后一次非零移动输入（用于维持朝向） */
 };
