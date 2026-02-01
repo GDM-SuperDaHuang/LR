@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/LrGAListDA.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "LrCommonLibrary.generated.h"
 
@@ -29,4 +30,8 @@ public:
 	// 根据标签查找特效NS
 	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))
 	static FLrNSConfig FindNSByTag(const UObject* WorldContextObject, const FGameplayTag& GATag);
+
+	// 根据ID查找武器信息u
+	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))
+	static FLrWeaponConfig FindWeaponByID(const UObject* WorldContextObject, const int32 WeaponID);
 };

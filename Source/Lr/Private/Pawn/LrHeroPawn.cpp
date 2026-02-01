@@ -8,9 +8,11 @@
 #include "MotionWarpingComponent.h"
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
+#include "Actor/Weapon/LrWeaponBase.h"
 #include "ASC/LrASC.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Data/LrGAListDA.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "DefaultMovementSet/Modes/SmoothWalkingMode.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -52,21 +54,20 @@ ALrHeroPawn::ALrHeroPawn()
 	// =========================
 	// 武器 →骨架
 	// =========================
-	WeaponSKM = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponSKM"));
-	// 挂到右手插槽，可在子类改 Socket 名，注意名称 WeaponHandSocket 一定要一致
-	WeaponSKM->SetupAttachment(LrSkeletalMeshComponent, FName(TEXT("WeaponHandSocket")));
-	// 武器本身不产生物理碰撞
-	WeaponSKM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	EquippedWeaponComponent = CreateDefaultSubobject<UChildActorComponent>(TEXT("EquippedWeapon"));
+	EquippedWeaponComponent->SetupAttachment(LrSkeletalMeshComponent); // 或 RootComponent，根据需求
+	// EquippedWeaponComponent->SetChildActorClass(ALrWeaponBase::StaticClass()); // 默认类，可后期覆盖
+
 
 	// =========================
 	// NS→武器
 	// =========================
-	WeaponTrailComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("WeaponTrail"));
-	WeaponTrailComponent->SetupAttachment(WeaponSKM, TEXT("WeaponTrailSocket"));
-
-	WeaponTrailComponent->SetAsset(LoadObject<UNiagaraSystem>(nullptr, TEXT("/Game/FX/NS_WeaponTrail.NS_WeaponTrail")));
-	WeaponTrailComponent->SetAutoActivate(false);
-	WeaponTrailComponent->bAutoDestroy = false;
+	// WeaponTrailComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("WeaponTrail"));
+	// WeaponTrailComponent->SetupAttachment(WeaponSKM, TEXT("WeaponTrailSocket"));
+	//
+	// WeaponTrailComponent->SetAsset(LoadObject<UNiagaraSystem>(nullptr, TEXT("/Game/FX/NS_WeaponTrail.NS_WeaponTrail")));
+	// WeaponTrailComponent->SetAutoActivate(false);
+	// WeaponTrailComponent->bAutoDestroy = false;
 	// =========================
 	// 运动扭曲 
 	// =========================
@@ -169,4 +170,37 @@ void ALrHeroPawn::PossessedBy(AController* NewController)
 void ALrHeroPawn::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
+}
+
+void ALrHeroPawn::EquipWeapon(FLrWeaponConfig WeaponConfig)
+{
+	if (!HasAuthority()) return; // 服务器执行
+
+	// 先卸下旧武器
+	if (ALrWeaponBase* OldWeapon = Cast<ALrWeaponBase>(EquippedWeaponComponent->GetChildActor()))
+	{
+		if (OldWeapon) OldWeapon->OnUnequipped();
+	}
+
+	// 设置新武器
+	EquippedWeaponComponent->SetChildActorClass(WeaponConfig.WeaponClass);
+	// EquippedWeaponComponent->SetChildActorClass(ALrWeaponBase::StaticClass()); // 默认类，可后期覆盖
+	
+	if (ALrWeaponBase* NewWeapon = Cast<ALrWeaponBase>(EquippedWeaponComponent->GetChildActor()))
+	{
+		NewWeapon->OnEquipped(this,WeaponConfig);
+	}
+	// 通知客户端（如果需要）
+	// MarkPackageDirty() 或用 RPC
+}
+
+void ALrHeroPawn::Unequipped(FLrWeaponConfig WeaponConfig)
+{
+	if (!HasAuthority()) return; // 服务器执行
+
+	// 先卸下旧武器
+	if (ALrWeaponBase* OldWeapon = Cast<ALrWeaponBase>(EquippedWeaponComponent->GetChildActor()))
+	{
+		if (OldWeapon) OldWeapon->OnUnequipped();
+	}
 }
