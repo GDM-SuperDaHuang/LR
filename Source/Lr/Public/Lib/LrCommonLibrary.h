@@ -34,4 +34,8 @@ public:
 	// 根据ID查找武器信息u
 	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))
 	static FLrWeaponConfig FindWeaponByID(const UObject* WorldContextObject, const int32 WeaponID);
+
+
+	// 打印信息
+	static void PrintLog(const UObject* WorldContextObject,const APlayerController* PC);
 };

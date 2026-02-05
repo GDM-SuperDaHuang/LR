@@ -155,9 +155,11 @@ void ALrHeroPawn::PossessedBy(AController* NewController)
 	check(LrPS);
 	// 绑定 自身与ps 到ASC
 	LrPS->GetAbilitySystemComponent()->InitAbilityActorInfo(LrPS, this);
+
 	// AttributeSet = LrAS->GetAttributeSet();
 	// todo ???
 	LrASC = LrPS->GetAbilitySystemComponent();
+	
 	//ASC 初始化成功委托
 	OnASCRegistered.Broadcast(LrASC);
 	LrAS = LrPS->GetAttributeSet();
@@ -170,6 +172,12 @@ void ALrHeroPawn::PossessedBy(AController* NewController)
 void ALrHeroPawn::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
+	ALrPS* LrPS = GetPlayerState<ALrPS>();
+	check(LrPS);
+	// 绑定 自身与ps 到ASC
+	LrPS->GetAbilitySystemComponent()->InitAbilityActorInfo(LrPS, this);
+	LrASC = LrPS->GetAbilitySystemComponent();
+
 }
 
 void ALrHeroPawn::EquipWeapon(FLrWeaponConfig WeaponConfig)

@@ -10,7 +10,7 @@
 ALrPawnBase::ALrPawnBase()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	// PrimaryActorTick.bCanEverTick = true;
 	// bReplicates = true;
 
 	// 关键：禁用Actor级别的移动复制

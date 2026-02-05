@@ -50,3 +50,23 @@ FLrWeaponConfig ULrCommonLibrary::FindWeaponByID(const UObject* WorldContextObje
 	return *Config;
 }
 
+void ULrCommonLibrary::PrintLog(const UObject* WorldContextObject, const APlayerController* PC)
+{
+	const UWorld* World = Cast<UWorld>(WorldContextObject);
+	if (PC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Authority=%d Local=%d NetMode=%d"), PC->HasAuthority(), (PC->IsLocalController()), (int32)World->GetNetMode());
+	}
+	if (World->IsNetMode(NM_ListenServer))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ListenServer"));
+	}
+	else if (World->IsNetMode(NM_Client))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Client"));
+	}
+	else if (World->IsNetMode(NM_DedicatedServer))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("DedicatedServer"));
+	}
+}
