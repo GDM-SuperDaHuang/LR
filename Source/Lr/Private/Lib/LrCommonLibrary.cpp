@@ -37,3 +37,16 @@ FLrNSConfig ULrCommonLibrary::FindNSByTag(const UObject* WorldContextObject, con
 	if (Config == nullptr) return EmptyConfig;
 	return *Config;
 }
+
+FLrWeaponConfig ULrCommonLibrary::FindWeaponByID(const UObject* WorldContextObject, const int32 WeaponID)
+{
+	static const FLrWeaponConfig EmptyConfig; // 只读兜底
+	const ALrGameModeBase* LrGameMode = Cast<ALrGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
+	if (LrGameMode == nullptr) return EmptyConfig;
+	TObjectPtr<ULrGAListDA> LrGAListDA = LrGameMode->LrGAConfigList;
+	if (LrGAListDA == nullptr) return EmptyConfig;
+	const FLrWeaponConfig* Config = LrGAListDA.Get()->FindWeaponByID(WeaponID);
+	if (Config == nullptr) return EmptyConfig;
+	return *Config;
+}
+

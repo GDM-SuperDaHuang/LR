@@ -36,7 +36,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	TObjectPtr<UMotionWarpingComponent> LrMotionWarpingComponent;
 
+	/** 武器 */
+	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
+	// TObjectPtr<USkeletalMeshComponent> WeaponSKM;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<UChildActorComponent> EquippedWeaponComponent;
+	/** 武器 */
+	
 	FOnASCRegistered OnASCRegistered;
 
 protected:

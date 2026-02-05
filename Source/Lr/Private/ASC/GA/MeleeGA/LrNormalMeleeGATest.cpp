@@ -166,7 +166,12 @@ void ULrNormalMeleeGATest::OnAttackEvent(FGameplayEventData Payload)
 	CueParams.EffectCauser = OwnerPawn;
 	CueParams.Location = OwnerPawn->GetActorLocation();
 
-	ASC->ExecuteGameplayCue(
+	// ASC->ExecuteGameplayCue(
+	// 	FLrGameplayTags::Get().GameplayCue_Melee_Trail,
+	// 	CueParams
+	// );
+
+	ASC->AddGameplayCue(
 		FLrGameplayTags::Get().GameplayCue_Melee_Trail,
 		CueParams
 	);

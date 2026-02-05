@@ -31,7 +31,7 @@ struct FLrGAConfig
 	USoundBase* ImpactSound = nullptr;
 };
 
-
+// 特效配置
 USTRUCT(BlueprintType)
 struct FLrNSConfig
 {
@@ -42,6 +42,24 @@ struct FLrNSConfig
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UNiagaraSystem> NS;
 };
+
+// 武器配置
+USTRUCT(BlueprintType)
+struct FLrWeaponConfig
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly)
+	int32 WeaponID = -1;
+
+	/** 武器类 */
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class ALrWeaponBase> WeaponClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<USkeletalMesh*> WeaponSMList;
+};
+
 /**
  * 
  */
@@ -57,7 +75,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FLrNSConfig> NSConfigList;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FLrWeaponConfig> LrWeaponConfigList;
+
 	const FLrGAConfig* FindGAByTag(const FGameplayTag& GATag) const;
 	const FLrNSConfig* FindNSByTag(const FGameplayTag& Tag) const;
-
+	const FLrWeaponConfig* FindWeaponByID(const int32 WeaponID) const;
 };

@@ -27,3 +27,15 @@ const FLrNSConfig* ULrGAListDA::FindNSByTag(const FGameplayTag& Tag) const
 	}
 	return nullptr;
 }
+
+const FLrWeaponConfig* ULrGAListDA::FindWeaponByID(const int32 WeaponID) const
+{
+	for (const FLrWeaponConfig& Config : LrWeaponConfigList)
+	{
+		if (Config.WeaponID == WeaponID)
+		{
+			return &Config;
+		}
+	}
+	return nullptr;
+}
