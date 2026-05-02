@@ -302,9 +302,9 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
         TargetRot.Roll = 0.f;
         FQuat DesiredRotation = TargetRot.Quaternion();
 
-        // 平滑插值旋转：使用球面插值(Slerp)让转向更自然
-        // 旋转速度：720度/秒，可根据需要调整
-        const float RotationSpeed = 720.0f; // 度/秒
+        // 平滑插值旋转：使用指数衰减平滑让转向更自然
+        // 旋转速度：240度/秒，降低旋转速度使动画更流畅
+        const float RotationSpeed = 240.0f; // 度/秒
         const float MaxRotationThisFrame = RotationSpeed * DeltaTime;
         const float AngleDiff = FMath::Acos(FMath::Clamp(CurrentRotation | DesiredRotation, -1.0f, 1.0f)) * (180.0f / PI);
 
@@ -315,8 +315,9 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
         }
         else
         {
-            // 使用 Slerp 进行平滑插值
-            const float T = MaxRotationThisFrame / AngleDiff;
+            // 使用 Slerp 进行平滑插值，使用固定插值因子使旋转更稳定
+            // 限制每帧最大旋转角度，避免跳跃
+            const float T = FMath::Clamp(MaxRotationThisFrame / AngleDiff, 0.05f, 0.3f);
             TargetRotation = FQuat::Slerp(CurrentRotation, DesiredRotation, T);
             TargetRotation.Normalize();
         }
@@ -329,22 +330,23 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
         OutputState.MovementEndState.NextModeName = RealisticModes::Air;
         FHitResult Hit;
 
-        // 尝试移动组件，处理可能的碰撞
-        Params.MovingComps.UpdatedComponent->MoveComponent(ProposedVelocity * DeltaTime, TargetRotation, true, &Hit);
+        // 尝试移动组件，处理可能的碰撞（只移动位置，不改变旋转）
+        Params.MovingComps.UpdatedComponent->MoveComponent(ProposedVelocity * DeltaTime, CurrentRotation, true, &Hit);
         if (Hit.IsValidBlockingHit())// 如果碰撞到了物体，将速度投影到碰撞面以模拟滑行
         {
             FVector Slide = FVector::VectorPlaneProject(ProposedVelocity, Hit.Normal);
             ProposedVelocity = Slide;
         }
 
-        // 以当前位置、旋转、处理后的速度更新输出同步状态
+        // 以当前位置、目标旋转、处理后的速度更新输出同步状态
         OutputSyncState.SetTransforms_WorldSpace(Params.MovingComps.UpdatedComponent->GetComponentLocation(), TargetRotation.Rotator(), ProposedVelocity, FVector::ZeroVector);
 
         return;
     }
 
     FHitResult Hit;
-    Params.MovingComps.UpdatedComponent->MoveComponent(ProposedVelocity * DeltaTime, TargetRotation, true, &Hit);
+    // 只移动位置，不改变旋转，避免与 SyncState 的旋转冲突
+    Params.MovingComps.UpdatedComponent->MoveComponent(ProposedVelocity * DeltaTime, CurrentRotation, true, &Hit);
 
     // 正常地面移动：先尝试按提议速度移动
     if (Hit.IsValidBlockingHit())
@@ -352,7 +354,7 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
         // 创建移动记录并利用工具函数尝试沿阻挡面滑动（处理爬坡、墙角等）
         FMovementRecord MoveRecord;
         MoveRecord.SetDeltaSeconds(DeltaTime);
-        UMovementUtils::TryMoveToSlideAlongSurface(Params.MovingComps, ProposedVelocity * DeltaTime, 1.0f - Hit.Time, TargetRotation, Hit.Normal, Hit, true, MoveRecord);
+        UMovementUtils::TryMoveToSlideAlongSurface(Params.MovingComps, ProposedVelocity * DeltaTime, 1.0f - Hit.Time, CurrentRotation, Hit.Normal, Hit, true, MoveRecord);
 
         // 更新速度为滑动后的实际速度
         ProposedVelocity = MoveRecord.GetRelevantVelocity();
@@ -366,7 +368,7 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
     if (FloorResult.bWalkableFloor)
     {
         // 如果角色悬浮于地面之上（距离 > 0.1 单位），则向下移动以贴合地面
-        if (FloorResult.FloorDist > 0.1f) Params.MovingComps.UpdatedComponent->MoveComponent(FVector(0, 0, -FloorResult.FloorDist), TargetRotation, true, nullptr);
+        if (FloorResult.FloorDist > 0.1f) Params.MovingComps.UpdatedComponent->MoveComponent(FVector(0, 0, -FloorResult.FloorDist), CurrentRotation, true, nullptr);
     }
     else
     {
@@ -375,7 +377,7 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
     }
 
     // 最终将更新后的位置、旋转和速度写入输出状态
-    // 使用 TargetRotation 而不是当前组件旋转，确保角色朝向移动方向
+    // 使用 TargetRotation 作为最终旋转，让 Mover 插件处理平滑
     OutputSyncState.SetTransforms_WorldSpace(Params.MovingComps.UpdatedComponent->GetComponentLocation(), TargetRotation.Rotator(), ProposedVelocity, FVector::ZeroVector);
 
 }
