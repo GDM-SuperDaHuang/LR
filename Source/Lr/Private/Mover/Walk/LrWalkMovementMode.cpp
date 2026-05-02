@@ -93,6 +93,59 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
         ForwardDot = (MoveIntent | LookDir); // 1.0 = вперед, -1.0 = назад
     }
  
+    // 判断是否正在移动（速度 > 1.0 认为有意义）
+    bool bIsMoving = Speed > 1.0f;
+    float Alignment = 0.0f;    // 当前速度方向与输入方向的点积，用于判断同向/反向
+    if (bIsMoving && bHasInput) Alignment = (CurrentVelocity.GetSafeNormal() | MoveIntent);
+    bool bIsOpposing = bIsMoving && bHasInput && (Alignment < -0.1f);    // 是否处于“反向移动”状态：正在移动，有输入，且方向几乎相反（点积 < -0.1）
+
+    // ========== 加速惩罚逻辑（慢启动） ==========
+    // 基于当前速度与输入方向的差异计算加速限制
+    // 1. 从静止启动：速度为0，需要慢启动
+    // 2. 180度转向：当前速度方向与输入方向相反，需要慢启动
+    float SpeedAlignment = 0.0f;
+    if (bIsMoving && bHasInput)
+    {
+        SpeedAlignment = (CurrentVelocity.GetSafeNormal() | MoveIntent);
+    }
+    else if (!bIsMoving && bHasInput)
+    {
+        // 从静止启动，视为最大惩罚
+        SpeedAlignment = -1.0f;
+    }
+
+    // 计算加速系数：
+    // - SpeedAlignment = 1.0（同向）-> 系数 = 1.0（满速）
+    // - SpeedAlignment = 0.0（垂直）-> 系数 = 1.0 - Penalty * 0.5
+    // - SpeedAlignment = -1.0（反向/静止）-> 系数 = 1.0 - Penalty（最慢）
+    float AccelerationRamp = 1.0f;
+    if (bHasInput)
+    {
+        float Penalty = FMath::Clamp(Settings->StartSpeedPenalty, 0.0f, 1.0f);
+        // 将 [-1, 1] 映射到 [1-Penalty, 1]
+        AccelerationRamp = 1.0f - Penalty * (1.0f - SpeedAlignment) * 0.5f;
+    }
+
+    // 每帧恢复加速进度（向 1.0 恢复）
+    if (bHasInput && AccelerationRamp < 1.0f)
+    {
+        float RampUpRate = (Settings->AccelerationRampUpTime > 0.0f) ? (DeltaSeconds / Settings->AccelerationRampUpTime) : 1.0f;
+        // 使用成员变量跟踪当前的实际加速进度
+        CurrentAccelerationRamp = FMath::Min(1.0f, CurrentAccelerationRamp + RampUpRate);
+        // 取两者中的较大值：当前恢复进度 或 基于方向的计算值
+        AccelerationRamp = FMath::Max(AccelerationRamp, CurrentAccelerationRamp);
+    }
+    else if (!bHasInput)
+    {
+        // 无输入时重置加速进度
+        CurrentAccelerationRamp = 0.0f;
+    }
+    else
+    {
+        // 有输入且不需要惩罚，保持满速
+        CurrentAccelerationRamp = 1.0f;
+    }
+
     // ---------- 调试信息：显示当前状态、速度与最大速度 ----------
     if (GEngine)
     {
@@ -101,50 +154,16 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
         if (Inputs->bIsCrouchPressed) MoveState = TEXT("CROUCH");
         if (ForwardDot < -0.5f) MoveState += TEXT(" (BACKWARDS)");
  
-        FString DebugMsg = FString::Printf(TEXT("STATE: %s | Speed: %.0f / %.0f"),
+        // 显示同步状态速度（SyncSpeed）和计算后的目标速度（TargetSpeed）
+        FString DebugMsg = FString::Printf(TEXT("STATE: %s | SyncSpeed: %.0f | TargetSpeed: %.0f / %.0f | Ramp: %.2f | Align: %.2f"),
             *MoveState,
             Speed,
-            Settings->MaxWalkSpeed); // Показываем базовую макс скорость
+            CurrentVelocity.Size(),
+            Settings->MaxWalkSpeed * AccelerationRamp,
+            AccelerationRamp,
+            SpeedAlignment);
  
         GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::Cyan, DebugMsg);
-    }
-
-    // 判断是否正在移动（速度 > 1.0 认为有意义）
-    bool bIsMoving = Speed > 1.0f;
-    float Alignment = 0.0f;    // 当前速度方向与输入方向的点积，用于判断同向/反向
-    if (bIsMoving && bHasInput) Alignment = (CurrentVelocity.GetSafeNormal() | MoveIntent);
-    bool bIsOpposing = bIsMoving && bHasInput && (Alignment < -0.1f);    // 是否处于“反向移动”状态：正在移动，有输入，且方向几乎相反（点积 < -0.1）
-
-    // ========== 加速惩罚逻辑 ==========
-    // 检测是否需要重置加速进度：
-    // 1. 从静止启动（上一帧无输入，这一帧有输入）
-    // 2. 大角度转向（输入方向与上一帧输入方向的点积 < 0.5，即角度 > 60度）
-    bool bJustStarted = LastMoveIntent.IsNearlyZero() && bHasInput;
-    float DirectionChangeDot = (LastMoveIntent.IsNearlyZero() || !bHasInput) ? 1.0f : (LastMoveIntent | MoveIntent);
-    bool bSharpTurn = DirectionChangeDot < 0.5f; // 角度 > 60度视为大角度转向
-
-    if (bJustStarted || bSharpTurn)
-    {
-        // 重置加速进度到惩罚状态
-        CurrentAccelerationRamp = 1.0f - FMath::Clamp(Settings->StartSpeedPenalty, 0.0f, 1.0f);
-    }
-
-    // 每帧恢复加速进度
-    if (CurrentAccelerationRamp < 1.0f && bHasInput)
-    {
-        float RampUpRate = (Settings->AccelerationRampUpTime > 0.0f) ? (DeltaSeconds / Settings->AccelerationRampUpTime) : 1.0f;
-        CurrentAccelerationRamp = FMath::Min(1.0f, CurrentAccelerationRamp + RampUpRate);
-    }
-    else if (!bHasInput)
-    {
-        // 无输入时保持当前进度（下次启动时继续惩罚）
-        // 或者可以重置：CurrentAccelerationRamp = 0.0f;
-    }
-
-    // 更新上一帧输入方向
-    if (bHasInput)
-    {
-        LastMoveIntent = MoveIntent;
     }
 
  
@@ -154,16 +173,15 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
     CurrentVelocity = CurrentVelocity / (1.0f + (FrictionForce * DeltaSeconds));
 
     // ========== 2. 制动（刹车）处理 ==========
-    // 当没有输入，或正在反向移动时，施加额外的制动力
-    if (!bHasInput || bIsOpposing)
+    // 当没有输入时，施加制动力（不再对反向移动进行额外制动）
+    if (!bHasInput)
     {
         // 获取制动减速度，如果设置值过小（小于10），则使用默认强制值 4000
         float BaseBrake = (Settings->BrakingDeceleration < 10.0f) ? 4000.0f : Settings->BrakingDeceleration;
         float BrakingMagnitude = BaseBrake;
 
-        // 反向移动时制动强度加倍；无输入时制动强度乘以5（更快速地停止）
-        if (bIsOpposing) BrakingMagnitude *= 2.0f;
-        else BrakingMagnitude *= 5.0f;
+        // 无输入时制动强度乘以5（更快速地停止）
+        BrakingMagnitude *= 5.0f;
 
         // 表面摩擦也会影响制动力度
         float EffectiveFriction = FMath::Max(SurfaceFriction, 1.0f);
@@ -178,9 +196,8 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
     }
  
     // ========== 3. 加速处理 ==========
-    // 只有存在有效输入时才允许加速，但在高速反向时禁止加速（优先制动）
+    // 有输入时允许加速（包括180度转向时）
     bool bCanAccelerate = bHasInput;
-    if (bIsOpposing && CurrentVelocity.Size() > 50.0f) bCanAccelerate = false;
  
     if (bCanAccelerate)
     {
@@ -202,12 +219,6 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
             TargetMaxSpeed *= SprintMult;
         }
  
-        // 3. 后退移动惩罚：如果点积 < -0.5，说明几乎是纯后退，将最大速度降低 40%
-        if (ForwardDot < -0.5f)
-        {
-            TargetMaxSpeed *= 0.6f; // Замедляем до 60%
-        }
- 
         // ---------- 推进力自动缩放（解决高摩擦下速度无法达到最大值的问题） ----------
         // 理论上需要的推力 = 质量 * 地面摩擦 * 目标速度
         float RequiredForce = Settings->Mass * Settings->GroundFriction * TargetMaxSpeed;
@@ -221,8 +232,8 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
         // 推力也受表面摩擦力影响（粗糙表面需要更大的力才能加速）
         PushForce *= SurfaceFriction;
 
-        // 应用加速惩罚：将目标最大速度乘以当前加速进度
-        float EffectiveMaxSpeed = TargetMaxSpeed * CurrentAccelerationRamp;
+        // 应用加速惩罚：将目标最大速度乘以加速系数
+        float EffectiveMaxSpeed = TargetMaxSpeed * AccelerationRamp;
 
         // 根据牛顿第二定律计算加速度并叠加到当前速度
         FVector Acceleration = (MoveIntent * PushForce) / Settings->Mass;
