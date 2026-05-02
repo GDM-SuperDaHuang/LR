@@ -71,6 +71,13 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
     FVector CurrentVelocity = SyncState->GetVelocity_WorldSpace();
     CurrentVelocity.Z = 0.f;
 
+    // 如果 SyncState 速度为 0 但上一帧有计算速度，使用上一帧的计算速度
+    // 这避免了 Mover 插件同步状态延迟导致的速度为 0 问题
+    if (CurrentVelocity.IsNearlyZero() && !LastCalculatedVelocity.IsNearlyZero())
+    {
+        CurrentVelocity = LastCalculatedVelocity;
+    }
+
     // 获取原始输入向量
     FVector MoveInput = Inputs->GetMoveInput();
  
@@ -155,7 +162,7 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
         if (ForwardDot < -0.5f) MoveState += TEXT(" (BACKWARDS)");
  
         // 显示同步状态速度（SyncSpeed）和计算后的目标速度（TargetSpeed）
-        FString DebugMsg = FString::Printf(TEXT("STATE: %s | SyncSpeed: %.0f | TargetSpeed: %.0f / %.0f | Ramp: %.2f | Align: %.2f"),
+        FString DebugMsg = FString::Printf(TEXT("STATE: %s | SyncSpeed: %.0f | CalcSpeed: %.0f | Target: %.0f | Ramp: %.2f | Align: %.2f"),
             *MoveState,
             Speed,
             CurrentVelocity.Size(),
@@ -265,6 +272,9 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
     {
         OutProposedMove.LinearVelocity.Z = Settings->JumpImpulseForce / Settings->Mass;
     }
+
+    // 保存当前计算的速度，用于下一帧
+    LastCalculatedVelocity = CurrentVelocity;
 }
 
 

@@ -23,6 +23,8 @@ private:
 	mutable float CurrentAccelerationRamp = 1.0f;
 	// 上一帧的输入方向，用于检测方向变化
 	mutable FVector LastMoveIntent = FVector::ZeroVector;
+	// 上一帧的计算速度，用于避免 SyncState 速度为 0 的问题
+	mutable FVector LastCalculatedVelocity = FVector::ZeroVector;
 };
 
 
