@@ -4,6 +4,7 @@
 #include "Animation/LrAnimInstance.h"
 
 #include "DefaultMovementSet/CharacterMoverComponent.h"
+#include "Mover/LrMoverComponent.h"
 
 void ULrAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
@@ -16,7 +17,7 @@ void ULrAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 
-	UCharacterMoverComponent* Mover = Pawn->FindComponentByClass<UCharacterMoverComponent>();
+	ULrMoverComponent* Mover = Pawn->FindComponentByClass<ULrMoverComponent>();
 
 	if (!Mover)
 	{

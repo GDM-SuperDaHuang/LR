@@ -25,8 +25,8 @@ void ALrHUD::BeginPlay()
 	// 2️⃣ 加到屏幕（关键！）
 	MainWidget->AddToViewport();
 
-	// 动态创建
-	ViewModel = NewObject<UMVVMMainScreen>(GetTransientPackage(), FName("UMVVMMainScreen"));
+	// 动态创建 GetTransientPackage()
+	ViewModel = NewObject<UMVVMMainScreen>(GetWorld(), FName("UMVVMMainScreen"));
 	// 创建 ViewModel（HUD 持有）
 	// ViewModel = NewObject<UMVVMMainScreen>(this, ViewModelClass);
 	// 监听 ViewModel 请求

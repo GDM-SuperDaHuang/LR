@@ -4,25 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "MovementMode.h"
-#include "LrWalkMovementMode.generated.h"
+#include "LrAirMovementMode.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class LR_API ULrWalkMovementMode : public UBaseMovementMode
+class LR_API ULrAirMovementMode : public UBaseMovementMode
 {
 	GENERATED_BODY()
-
 public:
+	ULrAirMovementMode();
+
 	virtual void GenerateMove_Implementation(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const override;
 	virtual void SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState) override;
 
-private:
-	// 当前加速进度（0.0 ~ 1.0），用于启动/大角度转向时的速度惩罚
-	mutable float CurrentAccelerationRamp = 1.0f;
-	// 上一帧的输入方向，用于检测方向变化
-	mutable FVector LastMoveIntent = FVector::ZeroVector;
 };
-
-

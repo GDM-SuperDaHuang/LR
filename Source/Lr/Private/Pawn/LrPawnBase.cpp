@@ -3,6 +3,9 @@
 
 #include "Pawn/LrPawnBase.h"
 
+#include "DefaultMovementSet/CharacterMoverComponent.h"
+#include "Lib/LrCommonLibrary.h"
+#include "Mover/FRealisticMoverInputCmd.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
 
@@ -11,7 +14,7 @@ ALrPawnBase::ALrPawnBase()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	// PrimaryActorTick.bCanEverTick = true;
-	// bReplicates = true;
+	bReplicates = true;
 
 	// 关键：禁用Actor级别的移动复制
 	// Mover组件有自己独立的网络预测和复制系统，不需要标准的Actor移动复制
@@ -39,6 +42,7 @@ ALrPawnBase::ALrPawnBase()
 	// bUseControllerRotationYaw = false;
 }
 
+
 UAbilitySystemComponent* ALrPawnBase::GetAbilitySystemComponent() const
 {
 	// 使得 UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor)可以拿到ASC
@@ -49,115 +53,141 @@ UAbilitySystemComponent* ALrPawnBase::GetAbilitySystemComponent() const
 void ALrPawnBase::BeginPlay()
 {
 	Super::BeginPlay();
+	FMoverInputCmdContext MoverInputCmdContext = CharacterMotionComponent->GetLastInputCmd();
+	if (FMoverDataStructBase* MoverDataStructBase = MoverInputCmdContext.InputCollection.FindDataByType(FCharacterDefaultInputs::StaticStruct()))
+	{
+		FCharacterDefaultInputs::StaticStruct()->CopyScriptStruct(
+			&CharacterDefaultInputsPre,
+			MoverDataStructBase
+		);
+	}
+	
 }
 
 void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)
 {
+	if (GetLocalRole() == ROLE_SimulatedProxy)
+	{
+		return;
+	}
 	// IMoverInputProducerInterface::ProduceInput_Implementation(SimTimeMs, InputCmdResult);
 	OnProduceInput(SimTimeMs, InputCmdResult);
 }
 
+// void ALrPawnBase::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction)
+// {
+// 	Super::TickActor(DeltaTime, TickType, ThisTickFunction);
+// 	FMoverInputCmdContext MoverInputCmdContext = CharacterMotionComponent->GetLastInputCmd();
+// 	if (FMoverDataStructBase* MoverDataStructBase = MoverInputCmdContext.InputCollection.FindDataByType(FCharacterDefaultInputs::StaticStruct()))
+// 	{
+// 		FCharacterDefaultInputs::StaticStruct()->CopyScriptStruct(
+// 			&CharacterDefaultInputsPre,
+// 			MoverDataStructBase
+// 		);
+// 	}
+// }
+
+
+// void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdResult)
+// {
+// 	// CharacterMotionComponent.
+// 	// 1️⃣ 清空“蓝图里的 InputDataCollection”
+// 	// InputDataCollection.Empty();
+// 	// CharacterDefaultInputsPre.SetMoveInput(EMoveInputType::DirectionalIntent, CachedMoveInput);
+// 	// CharacterDefaultInputsPre.OrientationIntent = CachedMoveInput;
+// 	// InputDataCollection.AddDataByCopy(&CharacterDefaultInputsPre);
+// 	// InputCmdResult.InputCollection.AddDataByCopy(&CharacterDefaultInputsPre);
+// 	// InputCmdResult.InputCollection = InputDataCollection;
+//
+// 	// FMoverDataCollection,K2_AddDataToCollection
+// 	// CharacterDefaultInputsPre
+// 	/**
+// 	  * 关键步骤1：获取输入数据结构
+// 	  * FCharacterDefaultInputs是派生自FMoverDataStructBase的结构
+// 	  * 使用FindOrAddMutableDataByType获取或创建，存储在InputCollection中
+// 	  * 生命周期：仅属于这一帧的InputCmd，模拟帧结束后丢弃
+// 	  */
+// 	// FLrDefaultInputs& Inputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FLrDefaultInputs>();
+// 	UWorld* World = this->GetWorld();
+//
+// 	// ************************************************************************************************
+// 	FCharacterDefaultInputs& Inputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FCharacterDefaultInputs>();
+// 	const FVector RawMove = CachedMoveInput;
+// 	FVector MoveIntentLocal(RawMove.Y, RawMove.X, 0.f);
+// 	
+// 	if (!MoveIntentLocal.IsNearlyZero())
+// 	{
+// 		if (World->IsNetMode(NM_ListenServer))
+// 		{
+// 			UE_LOG(LogTemp, Warning, TEXT("Server===%s"), *CachedMoveInput.ToString());
+// 		}
+// 		else if (World->IsNetMode(NM_Client))
+// 		{
+// 			UE_LOG(LogTemp, Warning, TEXT("Client==%s"), *CachedMoveInput.ToString());
+// 		}
+//
+// 		
+// 		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent, MoveIntentLocal.GetClampedToMaxSize(1.f));
+// 		Inputs.OrientationIntent = MoveIntentLocal.GetSafeNormal();
+// 		Inputs.SuggestedMovementMode = DefaultModeNames::Walking;
+// 		if (World->IsNetMode(NM_ListenServer))
+// 		{
+// 			UE_LOG(LogTemp, Warning, TEXT("Server*****%s"), *Inputs.OrientationIntent.ToString());
+// 		}
+// 		else if (World->IsNetMode(NM_Client))
+// 		{
+// 			UE_LOG(LogTemp, Warning, TEXT("Client*********%s"), *Inputs.OrientationIntent.ToString());
+// 		}
+// 	}
+// 	else
+// 	{
+// 		// ⭐ 正确的“停下”
+// 		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent, FVector::ZeroVector);
+// 		// Inputs.OrientationIntent = FVector::ZeroVector;
+// 		// Inputs.SuggestedMovementMode = NAME_None;
+// 	}
+// }
+
 void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdResult)
 {
-	/**
-	  * 关键步骤1：获取输入数据结构
-	  * FCharacterDefaultInputs是派生自FMoverDataStructBase的结构
-	  * 使用FindOrAddMutableDataByType获取或创建，存储在InputCollection中
-	  * 生命周期：仅属于这一帧的InputCmd，模拟帧结束后丢弃
-	  */
-	// FLrDefaultInputs& Inputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FLrDefaultInputs>();
-	FCharacterDefaultInputs& Inputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FCharacterDefaultInputs>();
-	const FVector2D RawMove2D = CachedMoveInput;
-	FVector MoveIntentLocal(RawMove2D.Y, RawMove2D.X, 0.f);
 
-	if (!MoveIntentLocal.IsNearlyZero())
+	UWorld* World = this->GetWorld();
+
+	FRealisticMoverInputCmd& Inputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FRealisticMoverInputCmd>();
+
+	// 可选：检测地面物理材质，影响摩擦力（例如冰面）
+	float FrictionMult = 1.0f;
+	CheckFloorPhysics(FrictionMult);
+
+	// 根据摩擦力调整输入强度
+	FVector EffectiveInput = CachedMoveInput;
+	if (FrictionMult < 0.5f)
 	{
-		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent, MoveIntentLocal.GetClampedToMaxSize(1.f));
-		Inputs.OrientationIntent = MoveIntentLocal.GetSafeNormal();
-		Inputs.SuggestedMovementMode = DefaultModeNames::Walking;
+		EffectiveInput *= 0.2f; // Скользкий лед
+	}
+	
+	// 填充输入数据
+	Inputs.ControlRotation = GetControlRotation();// 当前控制器旋转（相机朝向）
+
+	if (!EffectiveInput.IsNearlyZero())
+	{
+		// 设置移动意图类型为方向性意图，并传入移动方向
+		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent, EffectiveInput);
+		// 朝移动方向看（角色面向行走方向）
+		Inputs.OrientationIntent = EffectiveInput; // Смотрим туда, куда идем
 	}
 	else
 	{
-		// ⭐ 正确的“停下”
+		// 无移动输入：移动意图为零向量
 		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent, FVector::ZeroVector);
-		// Inputs.OrientationIntent = FVector::ZeroVector;
-		// Inputs.SuggestedMovementMode = NAME_None;
+		// 保持当前角色朝向（或使用控制器前向，取决于设计）
+		Inputs.OrientationIntent = GetActorForwardVector();
 	}
-	// todo 清零再别的地方
-	// CachedMoveInput = FVector2D::ZeroVector;
-
-
-	// // 如果没有控制器且是服务器上的模拟代理，提供默认空输入
-	// // 这是为网络同步考虑：未控制的Pawn不应接收输入
-	// if (GetController() == nullptr)
-	// {
-	// 	if (GetLocalRole() == ENetRole::ROLE_Authority && GetRemoteRole() == ENetRole::ROLE_SimulatedProxy)
-	// 	{
-	// 		// static const FLrDefaultInputs DoNothingInput;
-	// 		static const FCharacterDefaultInputs DoNothingInput;
-	// 		// If we get here, that means this pawn is not currently possessed and we're choosing to provide default do-nothing input
-	// 		// 如果我们到这里，意味着这个pawn当前未被控制，我们提供默认的"什么都不做"输入
-	// 		Inputs = DoNothingInput;
-	// 	}
-	//
-	// 	// We don't have a local controller so we can't run the code below. This is ok. Simulated proxies will just use previous input when extrapolating
-	// 	return;
-	// }
-	//
-	// // ---------------------------------------------------------------------
-	// // 2. 读取“原始移动输入”（通常来自 Enhanced Input）
-	// //    这里假设你已经在 Pawn 里缓存了
-	// // ---------------------------------------------------------------------
-	// // 例如：CachedMoveInput = FVector2D(X, Y)
-	// const FVector2D RawMove2D = CachedMoveInput; // [-1,1]
-	//
-	// // 转成 Forward / Right
-	// FVector MoveIntentLocal(RawMove2D.Y, RawMove2D.X, 0.f);
-	//
-	// // ---------------------------------------------------------------------
-	// // 3. 写入 MoveInput
-	// // ---------------------------------------------------------------------
-	// if (!MoveIntentLocal.IsNearlyZero())
-	// {
-	// 	// Inputs.SetMoveInput(ELrMoveInputType::DirectionalIntent,MoveIntentLocal.GetClampedToMaxSize(1.f));
-	// 	Inputs.SetMoveInput(EMoveInputType::DirectionalIntent,MoveIntentLocal.GetClampedToMaxSize(1.f));
-	//
-	// }
-	// else
-	// {
-	// 	Inputs.SetMoveInput(EMoveInputType::None, FVector::ZeroVector);
-	// 	// Inputs.SetMoveInput(ELrMoveInputType::None, FVector::ZeroVector);
-	// }
-	//
-	// // ---------------------------------------------------------------------
-	// // 4. 控制旋转（极其重要）
-	// // ---------------------------------------------------------------------
-	// Inputs.ControlRotation = GetControlRotation();
-	//
-	// // ---------------------------------------------------------------------
-	// // 5. 朝向意图（用于 Walk 朝向 / 动画）
-	// // ---------------------------------------------------------------------
-	// if (!MoveIntentLocal.IsNearlyZero())
-	// {
-	// 	Inputs.OrientationIntent = MoveIntentLocal.GetSafeNormal();
-	// }
-	// else
-	// {
-	// 	Inputs.OrientationIntent = FVector::ZeroVector;
-	// }
-	//
-	// // ---------------------------------------------------------------------
-	// // 6. 建议进入 Walk 模式（不是强制）
-	// // ---------------------------------------------------------------------
-	// Inputs.SuggestedMovementMode = TEXT("Walk");
-	//
-	// // ---------------------------------------------------------------------
-	// // 7. 跳跃（留给 JumpMode 用）
-	// // ---------------------------------------------------------------------
-	// Inputs.bIsJumpJustPressed = bIsJumpJustPressed;
-	// Inputs.bIsJumpPressed = bIsJumpPressed;
 }
 
+
+
+// ue的mover插件，客户端移动出现抖动，服务器的移动的画面没有问题
 // Called every frame
 void ALrPawnBase::Tick(float DeltaTime)
 {
@@ -166,13 +196,13 @@ void ALrPawnBase::Tick(float DeltaTime)
 
 // Called to bind functionality to input
 void ALrPawnBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
+{ 
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 
 /** 输入更新相关 */
-void ALrPawnBase::UpdateMove(FVector2D Input)
+void ALrPawnBase::UpdateMove(FVector Input)
 {
 	CachedMoveInput = Input;
 }
@@ -183,3 +213,23 @@ void ALrPawnBase::UpdatePressedJump(bool Input)
 }
 
 /** 输入更新相关 */
+
+
+void ALrPawnBase::CheckFloorPhysics(float& OutFrictionMult)
+{
+	OutFrictionMult = 1.0f;
+	FVector Start = GetActorLocation();
+	FVector End = Start - FVector(0, 0, 100.0f);
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	Params.bReturnPhysicalMaterial = true;
+
+	if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params))
+	{
+		if (Hit.PhysMaterial.IsValid())
+		{
+			OutFrictionMult = Hit.PhysMaterial->Friction;
+		}
+	}
+}

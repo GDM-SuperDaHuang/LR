@@ -9,6 +9,7 @@
 #include "GameFramework/Pawn.h"
 #include "LrPawnBase.generated.h"
 
+class ULrMoverComponent;
 class UMotionWarpingComponent;
 class UAttributeSet;
 class UAbilitySystemComponent;
@@ -27,6 +28,8 @@ public:
 	// Sets default values for this pawn's properties
 	ALrPawnBase();
 
+	// virtual void TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
+
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	/** 身体骨骼 */
@@ -43,7 +46,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<UChildActorComponent> EquippedWeaponComponent;
 	/** 武器 */
-	
+
 	FOnASCRegistered OnASCRegistered;
 
 protected:
@@ -58,7 +61,8 @@ protected:
 
 	/** 角色移动组件（Mover系统的核心） */
 	UPROPERTY(Category = Movement, VisibleAnywhere, BlueprintReadOnly, Transient, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UCharacterMoverComponent> CharacterMotionComponent;
+	// TObjectPtr<UCharacterMoverComponent> CharacterMotionComponent;
+	TObjectPtr<ULrMoverComponent> CharacterMotionComponent;
 
 
 	/**
@@ -87,13 +91,20 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	void UpdateMove(FVector2D Input);
+	void UpdateMove(FVector Input);
 	void UpdatePressedJump(bool Input);
+
+	// 地面摩檫力物理
+	void CheckFloorPhysics(float& OutFrictionMult);
 
 private:
 	/** 帧更新，最后一次非零移动输入（用于维持朝向） */
-	FVector2D CachedMoveInput = FVector2D::ZeroVector; // Movement input (intent or velocity) the last time we had one that wasn't zero
+	// FVector2D CachedMoveInput = FVector2D::ZeroVector; // Movement input (intent or velocity) the last time we had one that wasn't zero
 	bool bIsJumpJustPressed = false; // 本帧刚刚按下
 	bool bIsJumpPressed = false; // 当前处于按住状态
+	FVector CachedMoveInput = FVector::ZeroVector; // Movement input (intent or velocity) the last time we had one that wasn't zero
+
+	FCharacterDefaultInputs CharacterDefaultInputsPre;
+	FMoverDataCollection InputDataCollection;
 	/** 最后一次非零移动输入（用于维持朝向） */
 };

@@ -13,5 +13,7 @@ UCLASS()
 class LR_API ULrNavMovementComponent : public UNavMovementComponent
 {
 	GENERATED_BODY()
-	
+
+public:
+	virtual void BeginPlay() override;
 };

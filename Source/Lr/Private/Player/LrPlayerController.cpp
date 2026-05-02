@@ -118,16 +118,25 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
 		if (LrASC == nullptr) return;
 	}
-	FVector2D Input;
+	FVector Input;
 	bool bIsBlockMove = LrASC->HasMatchingGameplayTag(FLrGameplayTags::Get().State_Block_Move);
 	if (bIsBlockMove)
 	{
-		Input = FVector2D::ZeroVector;
+		Input = FVector::ZeroVector;
+		Input.Normalize();
 	}
 	else
 	{
 		// 增强输入默认返回 FVector2D
-		Input = InputActionValue.Get<FVector2D>();
+		FVector2D InputVector = InputActionValue.Get<FVector2D>();
+		const FRotator Rotation = GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		Input = (ForwardDirection * InputVector.X) + (RightDirection * InputVector.Y);
+		Input.Normalize();
+		//之前
+		// Input = InputActionValue.Get<FVector>();
 	}
 
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
@@ -147,7 +156,7 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 void ALrPlayerController::MoveCompleted(const FInputActionValue& InputActionValue)
 {
 	// 增强输入默认返回 FVector2D
-	const FVector2D Input = FVector2D::ZeroVector;
+	const FVector Input = FVector::ZeroVector;
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
 	{
 		ControlledPawn->UpdateMove(Input);

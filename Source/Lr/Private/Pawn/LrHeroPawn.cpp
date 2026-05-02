@@ -17,6 +17,8 @@
 #include "DefaultMovementSet/Modes/SmoothWalkingMode.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Mover/LrMoverComponent.h"
+#include "Mover/RealisticModes.h"
+#include "Mover/Air/LrAirMovementMode.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
 #include "Player/PS/LrPS.h"
@@ -80,8 +82,11 @@ ALrHeroPawn::ALrHeroPawn()
 	// LrMoverComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
 	// LrMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
 
-	CharacterMotionComponent = CreateDefaultSubobject<UCharacterMoverComponent>(TEXT("MoverComponent"));
+	CharacterMotionComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
 	CharacterMotionComponent->SetUpdatedComponent(LrCapsuleComponent);
+	// CharacterMotionComponent->SetPrimaryVisualComponent(LrSkeletalMeshComponent);
+	// CharacterMotionComponent->SmoothingMode = EMoverSmoothingMode::None;
+
 	// CharacterMotionComponent->SetIsReplicated(true);
 
 
@@ -96,7 +101,6 @@ ALrHeroPawn::ALrHeroPawn()
 	 * 2，NavMesh 生成 / 更新的参与者
 	 */
 	LrCapsuleComponent->SetCanEverAffectNavigation(true);
-
 	// =========================
 	// AI 设置
 	// =========================
@@ -120,18 +124,37 @@ void ALrHeroPawn::BeginPlay()
 {
 	Super::BeginPlay();
 	UE_LOG(LogTemp, Warning, TEXT("Controller = %s"), *GetNameSafe(GetController()));
-
+	
 	// if (LrMoverComponent)
 	// {
 	// 	// 添加特定的自定义移动模式
 	// 	LrMoverComponent->AddMovementModeFromClass(TEXT("LrWalk"), ULrWalkMovementMode::StaticClass());
 	// }
-	CharacterMotionComponent->AddMovementModeFromClass(TEXT("LrWalk"), USmoothWalkingMode::StaticClass());
-	// if (CharacterMotionComponent)
-	// {
-	// 	// 添加特定的自定义移动模式
-	// 	CharacterMotionComponent->AddMovementModeFromClass(TEXT("Walk"), UWalkingMode::StaticClass());
-	// }
+
+	if (CharacterMotionComponent)
+	{
+		// Очищаем старые, если были 清空旧模式（防止重复注册）
+		CharacterMotionComponent->MovementModes.Empty();
+
+		// 创建新的移动模式对象：行走模式、空中模式
+		// 使用 RealisticMovementDefines 中定义的键名（例如 RealisticModes::Walk）
+		// Создаем новые режимы. Используем имена из RealisticMovementDefines
+		CharacterMotionComponent->MovementModes.Add(RealisticModes::Walk, NewObject<ULrWalkMovementMode>(this));
+		CharacterMotionComponent->MovementModes.Add(RealisticModes::Air, NewObject<ULrAirMovementMode>(this));
+
+		// 清空显式的状态转换表（转换逻辑已内置于各移动模式内部）
+		// Удаляем явные переходы (Transitions), они теперь встроенны в логику режимов
+		CharacterMotionComponent->Transitions.Empty();
+
+		// 设置起始模式为空中模式（防止角色一开始就卡在地面下）
+		// 通常空中模式会在落地时自动切换到行走模式
+		// Устанавливаем стартовый режим
+		CharacterMotionComponent->QueueNextMode(RealisticModes::Air);
+	}
+
+	
+	// CharacterMotionComponent->AddMovementModeFromClass(TEXT("LrWalk"), USmoothWalkingMode::StaticClass());
+
 }
 
 void ALrHeroPawn::PostInitializeComponents()
