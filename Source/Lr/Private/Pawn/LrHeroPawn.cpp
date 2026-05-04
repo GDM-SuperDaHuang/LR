@@ -13,8 +13,6 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Data/LrGAListDA.h"
-#include "DefaultMovementSet/CharacterMoverComponent.h"
-#include "DefaultMovementSet/Modes/SmoothWalkingMode.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/RealisticModes.h"
@@ -133,14 +131,13 @@ void ALrHeroPawn::BeginPlay()
 
 	if (CharacterMotionComponent)
 	{
-		// Очищаем старые, если были 清空旧模式（防止重复注册）
+		//  清空旧模式（防止重复注册）
 		CharacterMotionComponent->MovementModes.Empty();
 
 		// 创建新的移动模式对象：行走模式、空中模式
-		// 使用 RealisticMovementDefines 中定义的键名（例如 RealisticModes::Walk）
-		// Создаем новые режимы. Используем имена из RealisticMovementDefines
-		CharacterMotionComponent->MovementModes.Add(RealisticModes::Walk, NewObject<ULrWalkMovementMode>(this));
-		CharacterMotionComponent->MovementModes.Add(RealisticModes::Air, NewObject<ULrAirMovementMode>(this));
+		// 使用 RealisticMovementDefines 中定义的键名（例如 RealisticModes::Walk
+		CharacterMotionComponent->MovementModes.Add(RealisticModes::Walk, NewObject<ULrWalkMovementMode>(CharacterMotionComponent));
+		CharacterMotionComponent->MovementModes.Add(RealisticModes::Air, NewObject<ULrAirMovementMode>(CharacterMotionComponent));
 
 		// 清空显式的状态转换表（转换逻辑已内置于各移动模式内部）
 		// Удаляем явные переходы (Transitions), они теперь встроенны в логику режимов

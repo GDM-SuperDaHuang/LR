@@ -116,7 +116,7 @@ void ULrNormalMeleeGATest::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	);
 
 	EventTask->ReadyForActivation();
-
+	 
 	FTimerHandle TimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(
 		TimerHandle,

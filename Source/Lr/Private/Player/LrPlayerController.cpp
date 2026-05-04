@@ -67,6 +67,9 @@ void ALrPlayerController::SetupInputComponent()
 	// 停止
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ALrPlayerController::MoveCompleted);
 
+	//跳
+	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALrPlayerController::Jump);
+
 	// 一键批量绑定所有“技能输入 Tag”到三个回调
 	AuraInputComponent->BindAbilityActions(
 		InputConfig, // 数据资产里配了 IA <-> Tag 表

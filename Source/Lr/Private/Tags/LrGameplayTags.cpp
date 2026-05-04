@@ -100,6 +100,10 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 	GameplayTags.InputTag_O = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("InputTag.O")),
 		FString("Input O"));
+	GameplayTags.InputTag_Jump = UGameplayTagsManager::Get().AddNativeGameplayTag(
+			FName(TEXT("InputTag.Jump")),
+			FString("InputTag Jump"));
+	
 	// ==========================================================================================
 
 

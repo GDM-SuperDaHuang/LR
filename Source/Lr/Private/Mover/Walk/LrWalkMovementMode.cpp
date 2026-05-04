@@ -69,7 +69,14 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
     float DeltaSeconds = TimeStep.StepMs * 0.001f;
     // 获取当前世界空间速度，并忽略垂直分量（步行只处理水平移动）
     FVector CurrentVelocity = SyncState->GetVelocity_WorldSpace();
-    CurrentVelocity.Z = 0.f;
+    double PreV = CurrentVelocity.Size();
+    if (GEngine)
+    {
+        FString DebugMsg = FString::Printf(TEXT("PreV: %.0f "),PreV);
+        GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::Cyan, DebugMsg);
+    }
+    
+    CurrentVelocity.Z = CurrentVelocity.Z*0.6f; //斜坡速度减速40%
 
     // 如果 SyncState 速度为 0 但上一帧有计算速度，使用上一帧的计算速度
     // 这避免了 Mover 插件同步状态延迟导致的速度为 0 问题
@@ -87,7 +94,7 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
     FVector MoveIntent = MoveInput.GetSafeNormal();
     // 计算脚下的表面摩擦力系数
     float SurfaceFriction = GetSurfaceFriction(GetMoverComponent()->GetUpdatedComponent(), GetWorld());
-    float Speed = CurrentVelocity.Size();// 当前水平速率
+    float Speed = CurrentVelocity.Size();// 上一帧结束时的速度,已经除去垂直度方向的速度
     bool bHasInput = !MoveIntent.IsNearlyZero(); // 是否有有效的输入方向
  
     // ---------- 计算相对于控制旋转（相机朝向）的前进/后退程度 ----------
@@ -152,27 +159,6 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
         // 有输入且不需要惩罚，保持满速
         CurrentAccelerationRamp = 1.0f;
     }
-
-    // ---------- 调试信息：显示当前状态、速度与最大速度 ----------
-    if (GEngine)
-    {
-        FString MoveState = TEXT("Run");
-        if (Inputs->bIsSprintPressed) MoveState = TEXT("SPRINT");
-        if (Inputs->bIsCrouchPressed) MoveState = TEXT("CROUCH");
-        if (ForwardDot < -0.5f) MoveState += TEXT(" (BACKWARDS)");
- 
-        // 显示同步状态速度（SyncSpeed）和计算后的目标速度（TargetSpeed）
-        FString DebugMsg = FString::Printf(TEXT("STATE: %s | SyncSpeed: %.0f | CalcSpeed: %.0f | Target: %.0f | Ramp: %.2f | Align: %.2f"),
-            *MoveState,
-            Speed,
-            CurrentVelocity.Size(),
-            Settings->MaxWalkSpeed * AccelerationRamp,
-            AccelerationRamp,
-            SpeedAlignment);
- 
-        GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::Cyan, DebugMsg);
-    }
-
  
     // ========== 1. 摩擦处理 ==========
     // 简单的速度衰减：根据地面摩擦系数和表面摩擦力计算每帧衰减因子
@@ -233,7 +219,7 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
         // 如果配置的推力小于所需推力，则自动提升到所需值的 1.2 倍（留有 20% 余量）
         if (PushForce < RequiredForce)
         {
-            PushForce = RequiredForce * 1.2f; // +20% запаса для ускорения
+            PushForce = RequiredForce * 1.2f; // 
         }
         // -------------------------------------------------------------
         // 推力也受表面摩擦力影响（粗糙表面需要更大的力才能加速）
@@ -273,8 +259,28 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
         OutProposedMove.LinearVelocity.Z = Settings->JumpImpulseForce / Settings->Mass;
     }
 
+
+    // ---------- 调试信息：显示当前状态、速度与最大速度 ----------
+    if (GEngine)
+    {
+        FString MoveState = TEXT("Run");
+        if (Inputs->bIsSprintPressed) MoveState = TEXT("SPRINT");
+        if (Inputs->bIsCrouchPressed) MoveState = TEXT("CROUCH");
+        if (ForwardDot < -0.5f) MoveState += TEXT(" (BACKWARDS)");
+ 
+        // 显示同步状态速度（SyncSpeed）和计算后的目标速度（TargetSpeed）
+        FString DebugMsg = FString::Printf(TEXT("STATE: %s | SyncSpeed: %.0f | CalcSpeed: %.0f | Target: %.0f | Ramp: %.2f | Align: %.2f"),
+            *MoveState,
+            Speed,
+            CurrentVelocity.Size(),//当前速度
+            Settings->MaxWalkSpeed * AccelerationRamp,
+            AccelerationRamp,
+            SpeedAlignment);
+ 
+        GEngine->AddOnScreenDebugMessage(2, 0.0f, FColor::Cyan, DebugMsg);
+    }
     // 保存当前计算的速度，用于下一帧
-    LastCalculatedVelocity = CurrentVelocity;
+    LastCalculatedVelocity = CurrentVelocity;//提议速度
 }
 
 
@@ -295,13 +301,14 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
 
     // 转换时间步长到秒
     float DeltaTime = Params.TimeStep.StepMs * 0.001f;
-    // 提议移动中的线性速度（通常由 GenerateMove 计算）
+    // 提议移动中的线性速度（由 GenerateMove 计算）
     FVector ProposedVelocity = Params.ProposedMove.LinearVelocity;
     // 获取移动方向意图（在 GenerateMove 中设置）
     FVector DirectionIntent = Params.ProposedMove.DirectionIntent;
     // 当前朝向的四元数
     FQuat CurrentRotation = StartingSyncState->GetOrientation_WorldSpace().Quaternion();
 
+    // ***************平滑旋转*************
     // 计算目标朝向：基于移动方向
     FQuat TargetRotation = CurrentRotation;  // 默认保持当前朝向
     if (!DirectionIntent.IsNearlyZero())
@@ -333,27 +340,31 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
         }
     }
 
+    
     // 如果垂直方向速度大于阈值（10.0），说明角色已经离地，应当立刻进入空中模式
-    if (ProposedVelocity.Z > 10.0f)
-    {
-        // 设置下一个移动模式为空中模式
-        OutputState.MovementEndState.NextModeName = RealisticModes::Air;
-        FHitResult Hit;
+    // 更可靠的做法：做一次向下的射线检测，看距离地面是否超过一定值（例如 20cm）
+    // ========== 离地判断（使用射线检测，而非单纯看 Z 速度） ==========
+    // if (ProposedVelocity.Z > 30.0f)
+    // {
+    //     // 设置下一个移动模式为空中模式
+    //     OutputState.MovementEndState.NextModeName = RealisticModes::Air;
+    //     FHitResult Hit;
+    //
+    //     // 尝试移动组件，处理可能的碰撞（只移动位置，不改变旋转）
+    //     Params.MovingComps.UpdatedComponent->MoveComponent(ProposedVelocity * DeltaTime, CurrentRotation, true, &Hit);
+    //     if (Hit.IsValidBlockingHit())// 如果碰撞到了物体，将速度投影到碰撞面以模拟滑行
+    //     {
+    //         FVector Slide = FVector::VectorPlaneProject(ProposedVelocity, Hit.Normal);
+    //         ProposedVelocity = Slide;
+    //     }
+    //
+    //     // 以当前位置、目标旋转、处理后的速度更新输出同步状态
+    //     OutputSyncState.SetTransforms_WorldSpace(Params.MovingComps.UpdatedComponent->GetComponentLocation(), TargetRotation.Rotator(), ProposedVelocity, FVector::ZeroVector);
+    //
+    //     return;
+    // }
 
-        // 尝试移动组件，处理可能的碰撞（只移动位置，不改变旋转）
-        Params.MovingComps.UpdatedComponent->MoveComponent(ProposedVelocity * DeltaTime, CurrentRotation, true, &Hit);
-        if (Hit.IsValidBlockingHit())// 如果碰撞到了物体，将速度投影到碰撞面以模拟滑行
-        {
-            FVector Slide = FVector::VectorPlaneProject(ProposedVelocity, Hit.Normal);
-            ProposedVelocity = Slide;
-        }
-
-        // 以当前位置、目标旋转、处理后的速度更新输出同步状态
-        OutputSyncState.SetTransforms_WorldSpace(Params.MovingComps.UpdatedComponent->GetComponentLocation(), TargetRotation.Rotator(), ProposedVelocity, FVector::ZeroVector);
-
-        return;
-    }
-
+    // ******************************** 正常地面移动 *********************************
     FHitResult Hit;
     // 只移动位置，不改变旋转，避免与 SyncState 的旋转冲突
     Params.MovingComps.UpdatedComponent->MoveComponent(ProposedVelocity * DeltaTime, CurrentRotation, true, &Hit);
@@ -366,28 +377,71 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
         MoveRecord.SetDeltaSeconds(DeltaTime);
         UMovementUtils::TryMoveToSlideAlongSurface(Params.MovingComps, ProposedVelocity * DeltaTime, 1.0f - Hit.Time, CurrentRotation, Hit.Normal, Hit, true, MoveRecord);
 
-        // 更新速度为滑动后的实际速度
+        // 更新速度为滑动后的实际速度,自动补偿z
         ProposedVelocity = MoveRecord.GetRelevantVelocity();
     }
 
     // 进行地面检测，确认脚下是否有可行走表面
     FFloorCheckResult FloorResult;
-    UFloorQueryUtils::FindFloor(Params.MovingComps, 50.0f, 0.71f, true, Params.MovingComps.UpdatedComponent->GetComponentLocation(), FloorResult);
+    UFloorQueryUtils::FindFloor(Params.MovingComps, 50.0f, 0.f, true, Params.MovingComps.UpdatedComponent->GetComponentLocation(), FloorResult);
 
-    // 如果脚下有可行走的地面
-    if (FloorResult.bWalkableFloor)
+    // 判断是否应该切换到空中模式
+    bool bShouldGoAir = false;
+    if (!FloorResult.bWalkableFloor || FloorResult.FloorDist > 10.0f) // 距离地面超过10cm则离地
     {
-        // 如果角色悬浮于地面之上（距离 > 0.1 单位），则向下移动以贴合地面
-        if (FloorResult.FloorDist > 0.1f) Params.MovingComps.UpdatedComponent->MoveComponent(FVector(0, 0, -FloorResult.FloorDist), CurrentRotation, true, nullptr);
+        bShouldGoAir = true;
     }
-    else
+    // 贴地处理（仅当有可行走地面且距离大于0.1cm时，将角色吸附到地面）
+    if (FloorResult.bWalkableFloor && FloorResult.FloorDist > 0.1f)
     {
-        // 没有可行走地面：设置下一模式为空中，意味着角色将开始下落
+        Params.MovingComps.UpdatedComponent->MoveComponent(FVector(0, 0, -FloorResult.FloorDist), CurrentRotation, true, nullptr);
+    }
+    // 根据离地状态设置下一模式
+    if (bShouldGoAir)
+    {
         OutputState.MovementEndState.NextModeName = RealisticModes::Air;
     }
+
+
+    // ========== 更新地面法线缓存（供下一帧 GenerateMove 使用） ==========
+    // if (FloorResult.bWalkableFloor)
+    // {
+    //     CachedFloorNormal = FloorResult.HitResult.Normal;
+    //     CachedFloorDistance = FloorResult.FloorDist;
+    //     bHasValidFloorCache = true;
+    //     float DotUp = CachedFloorNormal | FVector::UpVector;
+    //     CachedSlopeAngle = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(DotUp, -1.0f, 1.0f)));
+    // }
+    // else
+    // {
+    //     bHasValidFloorCache = false;
+    //     CachedSlopeAngle = 0.0f;
+    //     CachedFloorNormal = FVector::UpVector;
+    // }
+    
+    // 如果脚下有可行走的地面
+    // if (FloorResult.bWalkableFloor)
+    // {
+    //     // 如果角色悬浮于地面之上（距离 > 0.1 单位），则向下移动以贴合地面
+    //     if (FloorResult.FloorDist > 0.1f) Params.MovingComps.UpdatedComponent->MoveComponent(FVector(0, 0, -FloorResult.FloorDist), CurrentRotation, true, nullptr);
+    // }
+    // else
+    // {
+    //     // 没有可行走地面：设置下一模式为空中，意味着角色将开始下落
+    //     OutputState.MovementEndState.NextModeName = RealisticModes::Air;
+    // }
 
     // 最终将更新后的位置、旋转和速度写入输出状态
     // 使用 TargetRotation 作为最终旋转，让 Mover 插件处理平滑
     OutputSyncState.SetTransforms_WorldSpace(Params.MovingComps.UpdatedComponent->GetComponentLocation(), TargetRotation.Rotator(), ProposedVelocity, FVector::ZeroVector);
 
+    // ---------- 调试信息：显示当前状态、速度与最大速度 ----------
+    if (GEngine)
+    {
+  
+        // 显示同步状态速度（SyncSpeed）和计算后的目标速度（TargetSpeed）
+        FString DebugMsg = FString::Printf(TEXT(" ProposedVelocity: %.0f "),
+            ProposedVelocity.Size());
+        GEngine->AddOnScreenDebugMessage(3, 0.0f, FColor::Cyan, DebugMsg);
+    }
 }

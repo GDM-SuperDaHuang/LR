@@ -39,6 +39,7 @@ public:
 
 
 	/**************************************** 输入 相关 ************************/
+	FGameplayTag InputTag_Jump;
 	FGameplayTag InputTag_Move_WASD;
 	FGameplayTag InputTag_LMB;
 	FGameplayTag InputTag_RMB;

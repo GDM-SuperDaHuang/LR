@@ -115,7 +115,7 @@ void ULrAirMovementMode::SimulationTick_Implementation(const FSimulationTickPara
     {
         // 如果碰撞点的法线向上分量 >= 0.71（约 45° 以内），判定为“地面”
         // 0.71 是 cos(45°)，表示相对平坦的表面
-        if (Hit.Normal.Z >= 0.71f)
+        if (Hit.Normal.Z >= 0.7f)//(Hit.Normal.Z >= 0.71f)
         {
             // 触地 -> 切换到行走模式
             OutputState.MovementEndState.NextModeName = RealisticModes::Walk;
@@ -131,7 +131,7 @@ void ULrAirMovementMode::SimulationTick_Implementation(const FSimulationTickPara
     }
 
     // 最终更新输出状态：位置、旋转、速度（与提议速度一致，因为碰撞已经处理完毕）
-    OutputSyncState.SetTransforms_WorldSpace(
+     OutputSyncState.SetTransforms_WorldSpace(
         Params.MovingComps.UpdatedComponent->GetComponentLocation(),
         Params.MovingComps.UpdatedComponent->GetComponentRotation(),
         Params.ProposedMove.LinearVelocity,
