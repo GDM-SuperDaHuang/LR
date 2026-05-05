@@ -15,7 +15,7 @@ URealisticMovementSettings::URealisticMovementSettings()
 	BrakingDeceleration = 2048.0f;
 	GroundFriction = 8.0f;
 
-	JumpImpulseForce = 45000.0f;
+	JumpImpulseForce = 120000.0f;
 	SprintSpeedMult = 1.5f;
 	CrouchSpeedMult = 0.5f;
 	AirDragCoef = 0.1f;

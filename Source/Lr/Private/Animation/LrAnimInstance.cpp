@@ -4,6 +4,7 @@
 #include "Animation/LrAnimInstance.h"
 
 #include "DefaultMovementSet/CharacterMoverComponent.h"
+#include "Lib/LrCommonLibrary.h"
 #include "Mover/LrMoverComponent.h"
 
 void ULrAnimInstance::NativeUpdateAnimation(float DeltaSeconds)

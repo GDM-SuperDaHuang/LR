@@ -68,7 +68,7 @@ void ALrPlayerController::SetupInputComponent()
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ALrPlayerController::MoveCompleted);
 
 	//跳
-	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALrPlayerController::Jump);
+	// AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALrPlayerController::Jump);
 
 	// 一键批量绑定所有“技能输入 Tag”到三个回调
 	AuraInputComponent->BindAbilityActions(
@@ -174,7 +174,7 @@ void ALrPlayerController::MoveCompleted(const FInputActionValue& InputActionValu
 	// const FVector RightDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::Y);
 }
 
-void ALrPlayerController::Jump(const FInputActionValue& InputActionValue)
+void ALrPlayerController::Jump() const
 {
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
 	{

@@ -126,7 +126,8 @@ void ULrNormalMeleeGATest::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 			{
 				// EndAbility 时
 				ASC->RemoveLooseGameplayTag(LrGameplayTags.State_Block_Move);
-				EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+				// EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+				EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 			}
 		},
 		3.0f, // Montage 最大时间 + buffer

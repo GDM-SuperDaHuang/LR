@@ -4,6 +4,12 @@
 #include "ASC/GA/Jump/LrJumpGA.h"
 
 #include "Pawn/LrPawnBase.h"
+#include "Player/LrPlayerController.h"
+
+ULrJumpGA::ULrJumpGA()
+{
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalOnly;
+}
 
 void ULrJumpGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
@@ -22,7 +28,12 @@ void ULrJumpGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
 	}
-	
+	ALrPlayerController* PC = Cast<ALrPlayerController>(OwnerPawn->GetController());
+	if (PC)
+	{
+		PC->Jump();
+	}
+	EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
 }
 
 void ULrJumpGA::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
@@ -30,6 +41,3 @@ void ULrJumpGA::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGamep
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-void ULrJumpGA::OnMontageFinished()
-{
-}

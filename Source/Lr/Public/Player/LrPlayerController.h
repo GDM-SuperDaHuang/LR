@@ -49,7 +49,8 @@ private:
 	
 	void Move(const FInputActionValue& InputActionValue);
 	void MoveCompleted(const FInputActionValue& InputActionValue);
-	void Jump(const FInputActionValue& InputActionValue);
+public:
+	void Jump() const;
 
 
 	

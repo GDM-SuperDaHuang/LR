@@ -7,7 +7,7 @@
 #include "LrAirMovementMode.generated.h"
 
 /**
- * 
+ * 处理角色自由落体
  */
 UCLASS()
 class LR_API ULrAirMovementMode : public UBaseMovementMode

@@ -339,31 +339,7 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
             TargetRotation.Normalize();
         }
     }
-
     
-    // 如果垂直方向速度大于阈值（10.0），说明角色已经离地，应当立刻进入空中模式
-    // 更可靠的做法：做一次向下的射线检测，看距离地面是否超过一定值（例如 20cm）
-    // ========== 离地判断（使用射线检测，而非单纯看 Z 速度） ==========
-    // if (ProposedVelocity.Z > 30.0f)
-    // {
-    //     // 设置下一个移动模式为空中模式
-    //     OutputState.MovementEndState.NextModeName = RealisticModes::Air;
-    //     FHitResult Hit;
-    //
-    //     // 尝试移动组件，处理可能的碰撞（只移动位置，不改变旋转）
-    //     Params.MovingComps.UpdatedComponent->MoveComponent(ProposedVelocity * DeltaTime, CurrentRotation, true, &Hit);
-    //     if (Hit.IsValidBlockingHit())// 如果碰撞到了物体，将速度投影到碰撞面以模拟滑行
-    //     {
-    //         FVector Slide = FVector::VectorPlaneProject(ProposedVelocity, Hit.Normal);
-    //         ProposedVelocity = Slide;
-    //     }
-    //
-    //     // 以当前位置、目标旋转、处理后的速度更新输出同步状态
-    //     OutputSyncState.SetTransforms_WorldSpace(Params.MovingComps.UpdatedComponent->GetComponentLocation(), TargetRotation.Rotator(), ProposedVelocity, FVector::ZeroVector);
-    //
-    //     return;
-    // }
-
     // ******************************** 正常地面移动 *********************************
     FHitResult Hit;
     // 只移动位置，不改变旋转，避免与 SyncState 的旋转冲突
@@ -392,44 +368,16 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
         bShouldGoAir = true;
     }
     // 贴地处理（仅当有可行走地面且距离大于0.1cm时，将角色吸附到地面）
-    if (FloorResult.bWalkableFloor && FloorResult.FloorDist > 0.1f)
-    {
-        Params.MovingComps.UpdatedComponent->MoveComponent(FVector(0, 0, -FloorResult.FloorDist), CurrentRotation, true, nullptr);
-    }
+    // if (FloorResult.bWalkableFloor && FloorResult.FloorDist > 0.1f)
+    // {
+    //     Params.MovingComps.UpdatedComponent->MoveComponent(FVector(0, 0, -FloorResult.FloorDist), CurrentRotation, true, nullptr);
+    // }
+    
     // 根据离地状态设置下一模式
     if (bShouldGoAir)
     {
         OutputState.MovementEndState.NextModeName = RealisticModes::Air;
     }
-
-
-    // ========== 更新地面法线缓存（供下一帧 GenerateMove 使用） ==========
-    // if (FloorResult.bWalkableFloor)
-    // {
-    //     CachedFloorNormal = FloorResult.HitResult.Normal;
-    //     CachedFloorDistance = FloorResult.FloorDist;
-    //     bHasValidFloorCache = true;
-    //     float DotUp = CachedFloorNormal | FVector::UpVector;
-    //     CachedSlopeAngle = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(DotUp, -1.0f, 1.0f)));
-    // }
-    // else
-    // {
-    //     bHasValidFloorCache = false;
-    //     CachedSlopeAngle = 0.0f;
-    //     CachedFloorNormal = FVector::UpVector;
-    // }
-    
-    // 如果脚下有可行走的地面
-    // if (FloorResult.bWalkableFloor)
-    // {
-    //     // 如果角色悬浮于地面之上（距离 > 0.1 单位），则向下移动以贴合地面
-    //     if (FloorResult.FloorDist > 0.1f) Params.MovingComps.UpdatedComponent->MoveComponent(FVector(0, 0, -FloorResult.FloorDist), CurrentRotation, true, nullptr);
-    // }
-    // else
-    // {
-    //     // 没有可行走地面：设置下一模式为空中，意味着角色将开始下落
-    //     OutputState.MovementEndState.NextModeName = RealisticModes::Air;
-    // }
 
     // 最终将更新后的位置、旋转和速度写入输出状态
     // 使用 TargetRotation 作为最终旋转，让 Mover 插件处理平滑

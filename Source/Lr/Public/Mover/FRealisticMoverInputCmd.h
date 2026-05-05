@@ -10,11 +10,14 @@ struct FRealisticMoverInputCmd : public FCharacterDefaultInputs
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite, Category = Mover)
-	bool bIsCrouchPressed = false;
+	bool bIsCrouchPressed = false;//蹲伏
 
 	UPROPERTY(BlueprintReadWrite, Category = Mover)
-	bool bIsSprintPressed = false;
+	bool bIsSprintPressed = false;//冲刺
 
+	// UPROPERTY(BlueprintReadWrite, Category = Mover)
+	// bool bIsJumpPressed = false;//跳跃
+	
 	virtual FMoverDataStructBase* Clone() const override
 	{
 		return new FRealisticMoverInputCmd(*this);
@@ -31,6 +34,8 @@ struct FRealisticMoverInputCmd : public FCharacterDefaultInputs
 		{
 			bIsCrouchPressed = (Flags & (1 << 0)) != 0;
 			bIsSprintPressed = (Flags & (1 << 1)) != 0;
+			// bIsJumpPressed   = (Flags & (1 << 2)) != 0;
+
 		}
 
 		return true;

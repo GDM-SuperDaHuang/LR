@@ -183,6 +183,10 @@ void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdR
 		// 保持当前角色朝向（或使用控制器前向，取决于设计）
 		Inputs.OrientationIntent = GetActorForwardVector();
 	}
+
+	// 跳跃输入（一次性）
+	Inputs.bIsJumpPressed = bIsJumpJustPressed;
+	bIsJumpJustPressed = false;   //
 }
 
 
