@@ -21,23 +21,3 @@ const UInputAction* ULrInputConfigDA::FindAbilityInputActionForTag(const FGamepl
 	}
 	return nullptr;
 }
-
-void ULrInputConfigDA::InitBindInputFKey(UInputMappingContext* IMC) const
-{
-	if (!IMC) return;
-
-	for (const FLrDefaultBindInputFKey& BindInfo : LrBindInputFKeyList)
-	{
-		if (!BindInfo.InputAction) continue;
-
-		for (const FKey& Key : BindInfo.BoundKeys)
-		{
-			FEnhancedActionKeyMapping Mapping;
-			Mapping.Action = const_cast<UInputAction*>(BindInfo.InputAction);
-			Mapping.Key = Key;
-			// // 可选：设置触发条件（如按下、松开、按住）
-			// Mapping.Triggers.Add(NewObject<UInputTriggerPressed>());
-			// IMC->MapKey(BindInfo.InputAction,Key);
-		}
-	}
-}

@@ -10,7 +10,7 @@
 
 class UInputMappingContext;
 
-// 默认按键绑定
+// 默认 技能按键 绑定
 USTRUCT(BlueprintType)
 struct FLrDefaultBindInputFKey
 {
@@ -28,31 +28,33 @@ struct FLrDefaultBindInputFKey
 	TArray<FKey> BoundKeys;
 };
 
-// // 玩家自定义按键绑定
-// USTRUCT(BlueprintType)
-// struct FLrPlayerBindInputFKey
-// {
-// 	GENERATED_BODY()
-//
-// 	UPROPERTY(EditAnywhere)
-// 	FGameplayTag InputTag;
-//
-// 	UPROPERTY(EditAnywhere)
-// 	TArray<FKey> CustomKeys;
-// };
+USTRUCT(BlueprintType)
+struct FLrAxisKey
+{
+	GENERATED_BODY()
 
+	UPROPERTY(EditDefaultsOnly)
+	FKey BoundKey;
 
-// USTRUCT(BlueprintType)
-// struct FLrInputAction
-// {
-// 	GENERATED_BODY()
-//
-// 	UPROPERTY(EditDefaultsOnly)
-// 	const class UInputAction* InputAction = nullptr;
-//
-// 	UPROPERTY(EditDefaultsOnly)
-// 	FGameplayTag InputTag = FGameplayTag();
-// };
+	UPROPERTY(EditDefaultsOnly)
+	float Scale = 1.f; // +1 or -1
+
+	UPROPERTY(EditDefaultsOnly)
+	bool IsFU = true; // true:上下， fasle:左右
+};
+
+// 移动按键
+USTRUCT(BlueprintType)
+struct FLrAxisBindInputFKey
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly)
+	const UInputAction* InputAction = nullptr;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FLrAxisKey> LrAxisKeyList;
+};
 
 /**
  * 
@@ -64,11 +66,9 @@ class LR_API ULrInputConfigDA : public UDataAsset
 
 public:
 	const UInputAction* FindAbilityInputActionForTag(const FGameplayTag& InputTag, bool bLogNotFound = false) const;
-	void InitBindInputFKey(UInputMappingContext* IMC) const;
 
-
-	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	// TArray<FLrInputAction> AbilityInputActions;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FLrAxisBindInputFKey> LrAxisBindInputFKeyList;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FLrDefaultBindInputFKey> LrBindInputFKeyList;

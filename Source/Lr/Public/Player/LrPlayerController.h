@@ -42,7 +42,6 @@ private:
 	void AbilityInputTagReleased(FGameplayTag InputTag);
 	void AbilityInputTagHeld(FGameplayTag InputTag);
 
-
 	
 	void Move(const FInputActionValue& InputActionValue);
 	void MoveCompleted(const FInputActionValue& InputActionValue);

@@ -63,7 +63,15 @@ void ALrPlayerController::SetupInputComponent()
 	// 我们自定义的 UAuraInputComponent 在 BP 里已经挂载，直接强转
 	ULrInputComponent* AuraInputComponent = CastChecked<ULrInputComponent>(InputComponent);
 	check(AuraInputComponent);
-
+	// 一键批量绑定所有“技能输入 Tag”到三个回调
+	AuraInputComponent->BindAbilityActions(
+		InputConfig, // 数据资产里配了 IA <-> Tag 表
+		this,
+		LrIMC,
+		&ThisClass::AbilityInputTagPressed,
+		&ThisClass::AbilityInputTagReleased,
+		&ThisClass::AbilityInputTagHeld);
+	
 	/**
 	 * 普通移动轴绑定 
 	 * ETriggerEvent::Started:(按下：调用,只这一下)
@@ -80,14 +88,7 @@ void ALrPlayerController::SetupInputComponent()
 	//跳
 	// AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALrPlayerController::Jump);
 
-	// 一键批量绑定所有“技能输入 Tag”到三个回调
-	AuraInputComponent->BindAbilityActions(
-		InputConfig, // 数据资产里配了 IA <-> Tag 表
-		this,
-		LrIMC,
-		&ThisClass::AbilityInputTagPressed,
-		&ThisClass::AbilityInputTagReleased,
-		&ThisClass::AbilityInputTagHeld);
+	
 }
 
 // 按下

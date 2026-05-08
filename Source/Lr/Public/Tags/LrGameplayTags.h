@@ -23,7 +23,7 @@ public:
 	FGameplayTag As_Endurance; //耐力
 	FGameplayTag As_MaxEndurance; //耐力
 
-	
+
 	// 玩家被动属性 相关
 	FGameplayTag As_Attack; //攻击
 	FGameplayTag As_Defense; //防御
@@ -39,6 +39,11 @@ public:
 
 
 	/**************************************** 输入 相关 ************************/
+	FGameplayTag InputTag_Move_Forward; //上
+	FGameplayTag InputTag_Move_Backward; //下
+	FGameplayTag InputTag_Move_Left; //左
+	FGameplayTag InputTag_Move_Right; //右
+
 	FGameplayTag InputTag_Jump;
 	FGameplayTag InputTag_Move_WASD;
 	FGameplayTag InputTag_LMB;
@@ -188,8 +193,8 @@ public:
 	//
 
 	/**************************************** GameplayCue 相关 ************************/
-	FGameplayTag GameplayCue_Melee_Trail;//轨迹特效
-	FGameplayTag GameplayCue_Melee_Hit;// 命中特效
+	FGameplayTag GameplayCue_Melee_Trail; //轨迹特效
+	FGameplayTag GameplayCue_Melee_Hit; // 命中特效
 
 	// FGameplayTag GameplayCue_ShockBurst;
 	// FGameplayTag GameplayCue_ShockLoop;
@@ -197,7 +202,7 @@ public:
 	// FGameplayTag GameplayCue_FireBlast;
 	/**************************************** GameplayCue 相关 ************************/
 
-	
+
 	//
 	//        
 	//

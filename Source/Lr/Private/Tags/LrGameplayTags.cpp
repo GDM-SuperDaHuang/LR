@@ -60,14 +60,23 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 		FName(TEXT("As.Defense.Type.Magic")),
 		FString("Magic Defense"));
 	// ==========================================================================================
-	
+
 
 	// ==========================================================================================
 	// 输入 相关
 	// ==========================================================================================
-	GameplayTags.InputTag_Move_WASD = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("InputTag.Move.WASD")),
-		FString("Input Move WASD"));
+	GameplayTags.InputTag_Move_Forward = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("InputTag.Move.Forward")),
+		FString("Input Move Forward"));
+	GameplayTags.InputTag_Move_Backward = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("InputTag.Move.Backward")),
+		FString("Input Move Backward"));
+	GameplayTags.InputTag_Move_Left = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("InputTag.Move.Left")),
+		FString("Input Move Left"));
+	GameplayTags.InputTag_Move_Right = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("InputTag.Move.Right")),
+		FString("Input Move Right"));
 
 	GameplayTags.InputTag_LMB = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("InputTag.LMB")),
@@ -101,9 +110,9 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 		FName(TEXT("InputTag.O")),
 		FString("Input O"));
 	GameplayTags.InputTag_Jump = UGameplayTagsManager::Get().AddNativeGameplayTag(
-			FName(TEXT("InputTag.Jump")),
-			FString("InputTag Jump"));
-	
+		FName(TEXT("InputTag.Jump")),
+		FString("InputTag Jump"));
+
 	// ==========================================================================================
 
 
@@ -130,11 +139,11 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 	GameplayTags.GameplayCue_Melee_Trail = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GameplayCue.Melee.Trail")),
 		FString("GameplayCue Melee Attack Trail"));
-	
+
 	GameplayTags.GameplayCue_Melee_Hit = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GameplayCue.Melee.Hit")),
 		FString("GameplayCue Melee Attack Hit"));
-	
+
 	// ==========================================================================================
 
 
