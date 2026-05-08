@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "LrPlayerController.generated.h"
 
+class ULrSaveGame;
 class ULrASC;
 struct FGameplayTag;
 struct FInputActionValue;
@@ -32,14 +33,10 @@ private:
 	TObjectPtr<ULrInputConfigDA> InputConfig;
 
 	UPROPERTY(EditAnywhere, Category="Input")
-	TObjectPtr<UInputMappingContext> AuraContext;
+	TObjectPtr<UInputMappingContext> LrIMC;
 
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> MoveAction;
-
-	// UPROPERTY(EditAnywhere, Category="Input")
-	// TObjectPtr<UInputAction> ShiftAction;
-
 
 	void AbilityInputTagPressed(FGameplayTag InputTag);
 	void AbilityInputTagReleased(FGameplayTag InputTag);

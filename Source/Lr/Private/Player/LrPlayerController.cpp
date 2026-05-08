@@ -5,6 +5,8 @@
 
 #include "EnhancedInputSubsystems.h"
 #include "ASC/LrASC.h"
+#include "Game/LrGameInstance.h"
+#include "Kismet/GameplayStatics.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Pawn/LrHeroPawn.h"
 #include "Player/Input/LrInputComponent.h"
@@ -14,7 +16,7 @@ void ALrPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	//检查是否有绑定，失败则崩溃
-	check(AuraContext);
+	check(LrIMC);
 
 	// 拿到本地玩家的 EnhancedInput 子系统，用于动态挂/卸映射上下文
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
@@ -22,13 +24,21 @@ void ALrPlayerController::BeginPlay()
 	// 将输入映射上下文（AuraContext）添加到子系统，优先级为0（数值越小优先级越高）
 	if (Subsystem) //多人游戏
 	{
-		Subsystem->AddMappingContext(AuraContext, 0);
+		Subsystem->AddMappingContext(LrIMC, 0);
 	}
 
 
 	bShowMouseCursor = true; //显示鼠标光标
 	DefaultMouseCursor = EMouseCursor::Default; // 设置默认鼠标光标样式
 
+	ULrGameInstance* GI = GetGameInstance<ULrGameInstance>();
+	if (GI)
+	{
+		ULrInputComponent::ApplyPlayerKeyMappings(
+			InputConfig,
+			GI->InputSaveGame,
+			LrIMC);
+	}
 
 	// 输入模式：既响应游戏（WASD）也响应 UI（点击 Widget）
 	// FInputModeGameAndUI InputModeData;
@@ -74,6 +84,7 @@ void ALrPlayerController::SetupInputComponent()
 	AuraInputComponent->BindAbilityActions(
 		InputConfig, // 数据资产里配了 IA <-> Tag 表
 		this,
+		LrIMC,
 		&ThisClass::AbilityInputTagPressed,
 		&ThisClass::AbilityInputTagReleased,
 		&ThisClass::AbilityInputTagHeld);
