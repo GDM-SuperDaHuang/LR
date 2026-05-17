@@ -5,17 +5,17 @@
 #include "CoreMinimal.h"
 #include "MovementMode.h"
 #include "UObject/Object.h"
-#include "RealisticMovementSettings.generated.h"
+#include "LrMovementSettings.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class LR_API URealisticMovementSettings : public UObject, public IMovementSettingsInterface
+class LR_API ULrMovementSettings : public UObject, public IMovementSettingsInterface
 {
 	GENERATED_BODY()
 public:
-	URealisticMovementSettings();
+	ULrMovementSettings();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physics")
 	float Mass = 80.0f;

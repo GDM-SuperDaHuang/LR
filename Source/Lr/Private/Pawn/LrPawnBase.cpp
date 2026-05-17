@@ -3,9 +3,10 @@
 
 #include "Pawn/LrPawnBase.h"
 
+#include "Component/LrASComponent.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "Lib/LrCommonLibrary.h"
-#include "Mover/FRealisticMoverInputCmd.h"
+#include "Mover/FLrMoverInputCmd.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
 
@@ -40,6 +41,11 @@ ALrPawnBase::ALrPawnBase()
 	// AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	// AIControllerClass = AAIController::StaticClass();
 	// bUseControllerRotationYaw = false;
+
+	// =========================
+	// 属性 ui设置
+	// =========================
+	LrASComponent =CreateDefaultSubobject<ULrASComponent>(TEXT("LrASComponent"));
 }
 
 
@@ -153,7 +159,7 @@ void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdR
 
 	UWorld* World = this->GetWorld();
 
-	FRealisticMoverInputCmd& Inputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FRealisticMoverInputCmd>();
+	FLrMoverInputCmd& Inputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FLrMoverInputCmd>();
 
 	// 可选：检测地面物理材质，影响摩擦力（例如冰面）
 	float FrictionMult = 1.0f;

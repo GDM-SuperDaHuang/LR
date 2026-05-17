@@ -5,10 +5,10 @@
 
 #include "MoveLibrary/FloorQueryUtils.h"
 #include "MoveLibrary/MovementUtils.h"
-#include "Mover/FRealisticMoverInputCmd.h"
+#include "Mover/FLrMoverInputCmd.h"
 #include "Mover/LrMoverComponent.h"
-#include "Mover/RealisticModes.h"
-#include "Mover/RealisticMovementSettings.h"
+#include "Mover/LrAllModes.h"
+#include "Mover/LrMovementSettings.h"
 /**
  * 获取角色脚下的表面摩擦力系数
  * 从 UpdatedComponent 位置向下发射 150 单位射线，查询物理材质的 Friction，
@@ -50,17 +50,17 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
     // 获取同步状态（包含位置、速度、朝向等）
 	const FMoverDefaultSyncState* SyncState = StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
     // 获取当前帧的输入命令（移动方向、按键状态等）
-    const FRealisticMoverInputCmd* Inputs = StartState.InputCmd.InputCollection.FindDataByType<FRealisticMoverInputCmd>();
+    const FLrMoverInputCmd* Inputs = StartState.InputCmd.InputCollection.FindDataByType<FLrMoverInputCmd>();
     
     // 尝试获取自定义的真实感移动设置（优先从 LrMoverComponent 中读取）
-    const URealisticMovementSettings* Settings = nullptr;
+    const ULrMovementSettings* Settings = nullptr;
     if (const ULrMoverComponent* MyMover = Cast<ULrMoverComponent>(GetMoverComponent()))
     {
         Settings = MyMover->RealisticSettings;
     }
     
     // 如果没找到，则回退到共享设置
-    if (!Settings) Settings = GetMoverComponent()->FindSharedSettings<URealisticMovementSettings>();
+    if (!Settings) Settings = GetMoverComponent()->FindSharedSettings<ULrMovementSettings>();
 
     // 必要的指针检查，缺失任何一个都无法计算
     if (!SyncState || !Settings || !Inputs) return;
@@ -206,7 +206,7 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
             TargetMaxSpeed *= Settings->CrouchSpeedMult; // 0.5 -> 减速到一半
         }
         // 2. 冲刺：仅在未下蹲时生效
-        else if (Inputs->bIsSprintPressed)
+        else if (Inputs->bIsBlinkPressed)
         {
             float SprintMult = (Settings->SprintSpeedMult > 0.0f) ? Settings->SprintSpeedMult : 1.5f;
             TargetMaxSpeed *= SprintMult;
@@ -264,7 +264,7 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
     if (GEngine)
     {
         FString MoveState = TEXT("Run");
-        if (Inputs->bIsSprintPressed) MoveState = TEXT("SPRINT");
+        if (Inputs->bIsBlinkPressed) MoveState = TEXT("SPRINT");
         if (Inputs->bIsCrouchPressed) MoveState = TEXT("CROUCH");
         if (ForwardDot < -0.5f) MoveState += TEXT(" (BACKWARDS)");
  
@@ -376,7 +376,7 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
     // 根据离地状态设置下一模式
     if (bShouldGoAir)
     {
-        OutputState.MovementEndState.NextModeName = RealisticModes::Air;
+        OutputState.MovementEndState.NextModeName = LrAllModes::Air;
     }
 
     // 最终将更新后的位置、旋转和速度写入输出状态

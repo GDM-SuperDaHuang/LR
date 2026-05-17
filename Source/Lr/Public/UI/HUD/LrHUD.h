@@ -6,6 +6,10 @@
 #include "GameFramework/HUD.h"
 #include "LrHUD.generated.h"
 
+class ULrMPBarWidget;
+class ULrHPBarWidget;
+class ULrUIController;
+class ULrMVVMVBar;
 struct FLrWeaponConfig;
 class ALrWeaponBase;
 class ULrMainWidget;
@@ -23,10 +27,15 @@ public:
 	void HandleUnequipRequest(FLrWeaponConfig WeaponConfig);
 
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
+
 	// void HandleEquipRequest(ALrWeaponBase LrWeaponBase);
 
 	UPROPERTY()
 	TObjectPtr<UMVVMMainScreen> ViewModel;
+
+	UPROPERTY()
+	ULrMVVMVBar* HPViewModel;
 
 protected:
 
@@ -41,4 +50,14 @@ private:
 	TSubclassOf<ULrMainWidget> MainWidgetClass;
 	UPROPERTY()
 	TObjectPtr<ULrMainWidget> MainWidget;
+
+private:
+	UPROPERTY()
+	TObjectPtr<ULrUIController> UIController;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<ULrHPBarWidget> HPWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<ULrMPBarWidget> MPWidgetClass;
 };

@@ -6,18 +6,43 @@
 #include "MVVMGameSubsystem.h"
 #include "Blueprint/UserWidget.h"
 #include "Interface/LrEquipInterface.h"
+#include "Pawn/LrPawnBase.h"
+#include "UI/UIController/LrUIController.h"
 #include "UI/ViewModel/MVVMMainScreen.h"
 #include "UI/Widget/LrMainWidget.h"
+#include "UI/Widget/Bar/LrHPBarWidget.h"
+#include "UI/Widget/Bar/LrMPBarWidget.h"
 
 
 void ALrHUD::BeginPlay()
 {
 	Super::BeginPlay();
-	// APlayerController* PC = GetOwningPlayerController();
-	// if (!PC)
-	// {
-	// 	return;
-	// }
+	APlayerController* PC = GetOwningPlayerController();
+	if (!PC)
+	{
+		return;
+	}
+	ALrPawnBase* LrPawnBase = Cast<ALrPawnBase>(PC->GetPawn());
+	
+	UIController = NewObject<ULrUIController>(this);
+	UIController->Init(LrPawnBase->LrASComponent);
+
+	// 添加到屏幕
+	ULrHPBarWidget* HPWidget = CreateWidget<ULrHPBarWidget>(GetWorld(),HPWidgetClass.Get());
+	HPWidget->SetViewModel(UIController->HPVM);
+	// HPWidget->AddToViewport();
+
+	ULrMPBarWidget* MPWidget =CreateWidget<ULrMPBarWidget>(GetWorld(),MPWidgetClass.Get());
+	MPWidget->SetViewModel(UIController->MPVM);
+	// MPWidget->AddToViewport();
+
+
+
+
+
+
+
+	
 	// 1️⃣ 创建 Widget
 	MainWidget = CreateWidget<ULrMainWidget>(GetWorld(), MainWidgetClass);
 	if (!MainWidget)return;
@@ -40,6 +65,15 @@ void ALrHUD::BeginPlay()
 	// Context.ContextName = TEXT("MVVMMainScreen"); // 和 Widget Designer 完全一致
 	// bool bAdded = Collection->AddViewModelInstance(Context, ViewModel);
 	// check(bAdded);
+}
+
+void ALrHUD::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	if (UIController)
+	{
+		UIController->Tick(DeltaSeconds);
+	}
 }
 
 void ALrHUD::HandleEquipRequest(FLrWeaponConfig WeaponConfig)

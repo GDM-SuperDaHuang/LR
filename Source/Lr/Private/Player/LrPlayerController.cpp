@@ -87,7 +87,6 @@ void ALrPlayerController::SetupInputComponent()
 
 	//跳
 	// AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALrPlayerController::Jump);
-
 	
 }
 
@@ -134,6 +133,7 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 		if (LrASC == nullptr) return;
 	}
 	FVector Input;
+	// 停止移动
 	bool bIsBlockMove = LrASC->HasMatchingGameplayTag(FLrGameplayTags::Get().State_Block_Move);
 	if (bIsBlockMove)
 	{

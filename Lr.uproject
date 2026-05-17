@@ -16,7 +16,8 @@
 				"AIModule",
 				"ModelViewViewModel",
 				"UMG",
-				"CoreUObject"
+				"CoreUObject",
+				"CommonUI"
 			]
 		}
 	],
@@ -29,19 +30,23 @@
 			]
 		},
 		{
-			"Name": "Mover",
-			"Enabled": true
-		},
-		{
-			"Name": "MoverExamples",
-			"Enabled": true
-		},
-		{
 			"Name": "GameplayAbilities",
 			"Enabled": true
 		},
 		{
 			"Name": "ModelViewViewModel",
+			"Enabled": true
+		},
+		{
+			"Name": "Landmass",
+			"Enabled": true
+		},
+		{
+			"Name": "Water",
+			"Enabled": true
+		},
+		{
+			"Name": "CommonUI",
 			"Enabled": true
 		}
 	]

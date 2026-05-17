@@ -15,7 +15,7 @@
 #include "Data/LrGAListDA.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Mover/LrMoverComponent.h"
-#include "Mover/RealisticModes.h"
+#include "Mover/LrAllModes.h"
 #include "Mover/Air/LrAirMovementMode.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
@@ -136,8 +136,8 @@ void ALrHeroPawn::BeginPlay()
 
 		// 创建新的移动模式对象：行走模式、空中模式
 		// 使用 RealisticMovementDefines 中定义的键名（例如 RealisticModes::Walk
-		CharacterMotionComponent->MovementModes.Add(RealisticModes::Walk, NewObject<ULrWalkMovementMode>(CharacterMotionComponent));
-		CharacterMotionComponent->MovementModes.Add(RealisticModes::Air, NewObject<ULrAirMovementMode>(CharacterMotionComponent));
+		CharacterMotionComponent->MovementModes.Add(LrAllModes::Walk, NewObject<ULrWalkMovementMode>(CharacterMotionComponent));
+		CharacterMotionComponent->MovementModes.Add(LrAllModes::Air, NewObject<ULrAirMovementMode>(CharacterMotionComponent));
 
 		// 清空显式的状态转换表（转换逻辑已内置于各移动模式内部）
 		// Удаляем явные переходы (Transitions), они теперь встроенны в логику режимов
@@ -146,7 +146,7 @@ void ALrHeroPawn::BeginPlay()
 		// 设置起始模式为空中模式（防止角色一开始就卡在地面下）
 		// 通常空中模式会在落地时自动切换到行走模式
 		// Устанавливаем стартовый режим
-		CharacterMotionComponent->QueueNextMode(RealisticModes::Air);
+		CharacterMotionComponent->QueueNextMode(LrAllModes::Air);
 	}
 
 	

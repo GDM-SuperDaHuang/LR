@@ -26,6 +26,7 @@ void ULrAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bIsMoving = false;
 		return;
 	}
+	
 
 	VelocityWS = Mover->GetVelocity();
 	Speed = VelocityWS.Size();

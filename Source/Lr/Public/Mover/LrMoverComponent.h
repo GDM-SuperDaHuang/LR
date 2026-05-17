@@ -6,7 +6,7 @@
 #include "MoverComponent.h"
 #include "LrMoverComponent.generated.h"
 
-class URealisticMovementSettings;
+class ULrMovementSettings;
 /**
  * 
  */
@@ -19,7 +19,7 @@ public:
 	ULrMoverComponent();
 
 	UPROPERTY(EditAnywhere, Instanced, Category = "Realistic Movement")
-	TObjectPtr<URealisticMovementSettings> RealisticSettings;
+	TObjectPtr<ULrMovementSettings> RealisticSettings;
 	// virtual void InitializeComponent() override;
 public:
 	// virtual void OnRegister() override;

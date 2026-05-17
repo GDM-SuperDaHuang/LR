@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Mover/RealisticMovementSettings.h"
+#include "Mover/LrMovementSettings.h"
 
-URealisticMovementSettings::URealisticMovementSettings()
+ULrMovementSettings::ULrMovementSettings()
 {
 	Mass = 80.0f;
 

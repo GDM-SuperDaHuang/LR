@@ -9,6 +9,7 @@
 #include "GameFramework/Pawn.h"
 #include "LrPawnBase.generated.h"
 
+class ULrASComponent;
 class ULrMoverComponent;
 class UMotionWarpingComponent;
 class UAttributeSet;
@@ -39,6 +40,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	TObjectPtr<UMotionWarpingComponent> LrMotionWarpingComponent;
 
+	/** 角色移动组件（Mover系统的核心） */
+	UPROPERTY(Category = Movement, VisibleAnywhere, BlueprintReadOnly, Transient, meta = (AllowPrivateAccess = "true"))
+	// TObjectPtr<UCharacterMoverComponent> CharacterMotionComponent;
+	TObjectPtr<ULrMoverComponent> CharacterMotionComponent;
 	/** 武器 */
 	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	// TObjectPtr<USkeletalMeshComponent> WeaponSKM;
@@ -49,6 +54,11 @@ public:
 
 	FOnASCRegistered OnASCRegistered;
 
+	/** 属性UI组件 */
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<ULrASComponent> LrASComponent;
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -58,11 +68,6 @@ protected:
 	// TObjectPtr<ULrMoverComponent> LrMoverComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="LrNavMoverComponent")
 	TObjectPtr<ULrNavMovementComponent> LrNavMoverComponent;
-
-	/** 角色移动组件（Mover系统的核心） */
-	UPROPERTY(Category = Movement, VisibleAnywhere, BlueprintReadOnly, Transient, meta = (AllowPrivateAccess = "true"))
-	// TObjectPtr<UCharacterMoverComponent> CharacterMotionComponent;
-	TObjectPtr<ULrMoverComponent> CharacterMotionComponent;
 
 
 	/**

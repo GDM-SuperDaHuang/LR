@@ -3,22 +3,23 @@
 
 #include "Mover/LrMoverComponent.h"
 
-#include "Mover/RealisticModes.h"
-#include "Mover/RealisticMovementSettings.h"
+#include "Mover/LrAllModes.h"
+#include "Mover/LrMovementSettings.h"
 #include "Mover/Air/LrAirMovementMode.h"
+#include "Mover/Blink/LrBlinkMovementMode.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
 
 
 ULrMoverComponent::ULrMoverComponent()
 {
 	// Регистрируем режимы
-	MovementModes.Add(RealisticModes::Walk, CreateDefaultSubobject<ULrWalkMovementMode>(TEXT("LrWalkMovementMode")));
-	MovementModes.Add(RealisticModes::Air, CreateDefaultSubobject<ULrAirMovementMode>(TEXT("ULrAirMovementMode")));
+	MovementModes.Add(LrAllModes::Walk, CreateDefaultSubobject<ULrWalkMovementMode>(TEXT("LrWalkMovementMode")));
+	MovementModes.Add(LrAllModes::Air, CreateDefaultSubobject<ULrAirMovementMode>(TEXT("LrAirMovementMode")));
+	MovementModes.Add(LrAllModes::Blink, CreateDefaultSubobject<ULrBlinkMovementMode>(TEXT("LrBlinkMovementMode")));
 
 	// Стартовый режим
-	StartingMovementMode = RealisticModes::Air;
+	StartingMovementMode = LrAllModes::Air;
 
 	// Создаем настройки, чтобы они были видны в Blueprint
-	RealisticSettings = CreateDefaultSubobject<URealisticMovementSettings>(TEXT("RealisticSettings"));
-
+	RealisticSettings = CreateDefaultSubobject<ULrMovementSettings>(TEXT("RealisticSettings"));
 }

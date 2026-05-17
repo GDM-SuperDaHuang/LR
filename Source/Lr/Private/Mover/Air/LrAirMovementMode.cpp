@@ -3,15 +3,15 @@
 
 #include "Mover/Air/LrAirMovementMode.h"
 
-#include "Mover/FRealisticMoverInputCmd.h"
+#include "Mover/FLrMoverInputCmd.h"
 #include "Mover/LrMoverComponent.h"
-#include "Mover/RealisticModes.h"
-#include "Mover/RealisticMovementSettings.h"
+#include "Mover/LrAllModes.h"
+#include "Mover/LrMovementSettings.h"
 
 ULrAirMovementMode::ULrAirMovementMode()
 {
     // 构造函数：在创建此移动模式实例时，告知 Mover 系统需要加载 URealisticMovementSettings 类型的共享设置
-	SharedSettingsClasses.Add(URealisticMovementSettings::StaticClass());
+	SharedSettingsClasses.Add(ULrMovementSettings::StaticClass());
 }
 
 // 生成提议移动：根据当前状态（速度、输入）计算出本帧的预期速度（不实际移动，仅计算）
@@ -20,10 +20,10 @@ void ULrAirMovementMode::GenerateMove_Implementation(const FMoverTickStartData& 
     // 获取当前的同步状态（包含速度、位置等）
 	const FMoverDefaultSyncState* SyncState = StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
     // 获取当前的输入命令（移动方向、按键状态等）
-    const FRealisticMoverInputCmd* Inputs = StartState.InputCmd.InputCollection.FindDataByType<FRealisticMoverInputCmd>();
+    const FLrMoverInputCmd* Inputs = StartState.InputCmd.InputCollection.FindDataByType<FLrMoverInputCmd>();
 
     // 尝试从自定义的 Mover 组件中获取真实运动设置（优先使用组件自定义的实例）
-    const URealisticMovementSettings* Settings = nullptr;
+    const ULrMovementSettings* Settings = nullptr;
     if (const ULrMoverComponent* MyMover = Cast<ULrMoverComponent>(GetMoverComponent()))
     {
         Settings = MyMover->RealisticSettings;
@@ -31,7 +31,7 @@ void ULrAirMovementMode::GenerateMove_Implementation(const FMoverTickStartData& 
     // 如果组件没有自定义设置，则回退到共享的全局设置
     if (!Settings)
     {
-        Settings = GetMoverComponent()->FindSharedSettings<URealisticMovementSettings>();
+        Settings = GetMoverComponent()->FindSharedSettings<ULrMovementSettings>();
     }
 
     // 必要数据缺失则直接返回，不做移动
@@ -118,7 +118,7 @@ void ULrAirMovementMode::SimulationTick_Implementation(const FSimulationTickPara
         if (Hit.Normal.Z >= 0.7f)//(Hit.Normal.Z >= 0.71f)
         {
             // 触地 -> 切换到行走模式
-            OutputState.MovementEndState.NextModeName = RealisticModes::Walk;
+            OutputState.MovementEndState.NextModeName = LrAllModes::Walk;
         }
         else
         {
