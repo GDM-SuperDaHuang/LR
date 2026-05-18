@@ -80,7 +80,7 @@ ALrHeroPawn::ALrHeroPawn()
 	// LrMoverComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
 	// LrMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
 
-	CharacterMotionComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
+	// CharacterMotionComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
 	CharacterMotionComponent->SetUpdatedComponent(LrCapsuleComponent);
 	// CharacterMotionComponent->SetPrimaryVisualComponent(LrSkeletalMeshComponent);
 	// CharacterMotionComponent->SmoothingMode = EMoverSmoothingMode::None;

@@ -9,6 +9,13 @@
 #include "Mover/LrMoverComponent.h"
 #include "Mover/LrAllModes.h"
 #include "Mover/LrMovementSettings.h"
+
+ULrWalkMovementMode::ULrWalkMovementMode()
+{
+    // CacheMoverComponent = Cast<ULrMoverComponent>(GetMoverComponent());//ULrMoverComponent::CDO
+}
+
+
 /**
  * 获取角色脚下的表面摩擦力系数
  * 从 UpdatedComponent 位置向下发射 150 单位射线，查询物理材质的 Friction，
@@ -37,6 +44,8 @@ float GetSurfaceFriction(const USceneComponent* UpdatedComponent, UWorld* World)
 	}
 	return 1.0f;// 默认摩擦系数为1
 }
+
+
 
 /**
  * 不改位置，
@@ -375,9 +384,23 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
     
     // 根据离地状态设置下一模式
     if (bShouldGoAir)
-    {
-        OutputState.MovementEndState.NextModeName = LrAllModes::Air;
-    }
+		{
+			OutputState.MovementEndState.NextModeName = LrAllModes::Air;
+            if (CacheMoverComponent)
+            {
+                CacheMoverComponent->bJumpInitiated = true;
+            }
+            else
+            {
+                if (ULrMoverComponent* Mover = Cast<ULrMoverComponent>(GetMoverComponent()))
+                {
+                    CacheMoverComponent = Mover;
+                    Mover->bJumpInitiated = true;
+                    CacheMoverComponent->bJumpInitiated = true;
+                } 
+            }
+			
+		}
 
     // 最终将更新后的位置、旋转和速度写入输出状态
     // 使用 TargetRotation 作为最终旋转，让 Mover 插件处理平滑

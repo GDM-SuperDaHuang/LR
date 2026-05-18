@@ -21,6 +21,6 @@ public:
 	UPROPERTY(EditAnywhere, Instanced, Category = "Realistic Movement")
 	TObjectPtr<ULrMovementSettings> RealisticSettings;
 	// virtual void InitializeComponent() override;
-public:
-	// virtual void OnRegister() override;
+	bool bJumpInitiated = false;
+	// bool bIsAirborne = false;
 };

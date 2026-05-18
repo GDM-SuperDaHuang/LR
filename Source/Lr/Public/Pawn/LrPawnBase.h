@@ -9,6 +9,7 @@
 #include "GameFramework/Pawn.h"
 #include "LrPawnBase.generated.h"
 
+class ULrAnimationComponent;
 class ULrASComponent;
 class ULrMoverComponent;
 class UMotionWarpingComponent;
@@ -58,6 +59,9 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrASComponent> LrASComponent;
 
+	/** 动画相关组件 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<ULrAnimationComponent> LrAnimationComponent;
 
 protected:
 	// Called when the game starts or when spawned
@@ -101,11 +105,11 @@ public:
 
 	// 地面摩檫力物理
 	void CheckFloorPhysics(float& OutFrictionMult);
-
+public:
+	bool bIsJumpJustPressed = false; // 本帧刚刚按下
 private:
 	/** 帧更新，最后一次非零移动输入（用于维持朝向） */
 	// FVector2D CachedMoveInput = FVector2D::ZeroVector; // Movement input (intent or velocity) the last time we had one that wasn't zero
-	bool bIsJumpJustPressed = false; // 本帧刚刚按下
 	bool bIsJumpPressed = false; // 当前处于按住状态
 	FVector CachedMoveInput = FVector::ZeroVector; // Movement input (intent or velocity) the last time we had one that wasn't zero
 

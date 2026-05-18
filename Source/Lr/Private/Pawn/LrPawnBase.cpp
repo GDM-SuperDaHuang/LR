@@ -3,6 +3,7 @@
 
 #include "Pawn/LrPawnBase.h"
 
+#include "Component/LrAnimationComponent.h"
 #include "Component/LrASComponent.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "Lib/LrCommonLibrary.h"
@@ -27,7 +28,9 @@ ALrPawnBase::ALrPawnBase()
 	// LrMoverComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
 	// todo 交给子类做
 	// LrMoverComponent->SetUpdatedComponent(CapsuleComponent);
-
+	CharacterMotionComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
+	UE_LOG(LogTemp, Warning, TEXT("[ALrPawnBase init] on Mover=%p"),CharacterMotionComponent.Get());
+	
 	// =========================
 	// Nav → Mover 桥接
 	// =========================
@@ -45,7 +48,12 @@ ALrPawnBase::ALrPawnBase()
 	// =========================
 	// 属性 ui设置
 	// =========================
-	LrASComponent =CreateDefaultSubobject<ULrASComponent>(TEXT("LrASComponent"));
+	LrASComponent = CreateDefaultSubobject<ULrASComponent>(TEXT("LrASComponent"));
+
+	// =========================
+	// 动画相关
+	// =========================
+	LrAnimationComponent = CreateDefaultSubobject<ULrAnimationComponent>(TEXT("LrAnimationComponent"));
 }
 
 
@@ -67,7 +75,6 @@ void ALrPawnBase::BeginPlay()
 			MoverDataStructBase
 		);
 	}
-	
 }
 
 void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)
@@ -156,7 +163,6 @@ void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdCon
 
 void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdResult)
 {
-
 	UWorld* World = this->GetWorld();
 
 	FLrMoverInputCmd& Inputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FLrMoverInputCmd>();
@@ -171,9 +177,9 @@ void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdR
 	{
 		EffectiveInput *= 0.2f; // Скользкий лед
 	}
-	
+
 	// 填充输入数据
-	Inputs.ControlRotation = GetControlRotation();// 当前控制器旋转（相机朝向）
+	Inputs.ControlRotation = GetControlRotation(); // 当前控制器旋转（相机朝向）
 
 	if (!EffectiveInput.IsNearlyZero())
 	{
@@ -192,9 +198,8 @@ void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdR
 
 	// 跳跃输入（一次性）
 	Inputs.bIsJumpPressed = bIsJumpJustPressed;
-	bIsJumpJustPressed = false;   //
+	bIsJumpJustPressed = false; //
 }
-
 
 
 // ue的mover插件，客户端移动出现抖动，服务器的移动的画面没有问题
@@ -206,7 +211,7 @@ void ALrPawnBase::Tick(float DeltaTime)
 
 // Called to bind functionality to input
 void ALrPawnBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{ 
+{
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 

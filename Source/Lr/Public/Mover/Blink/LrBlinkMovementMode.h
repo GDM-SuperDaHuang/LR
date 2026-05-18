@@ -22,7 +22,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere)
-	float BlinkDistance = 120.f;// 闪现距离
+	float BlinkDistance = 1200.f;// 闪现距离
 
 	UPROPERTY(EditAnywhere)
 	float BlinkDuration = 0.15f;// 闪现持续时间

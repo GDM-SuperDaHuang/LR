@@ -11,7 +11,11 @@ public class Lr : ModuleRules
 		//关闭优化
 		OptimizeCode = CodeOptimization.Never;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "GameplayTasks", "Core", "CoreUObject", "Engine", "UnrealEd", "InputCore", "EnhancedInput", "Mover", "AIModule", "GameplayTags", "GameplayAbilities", "MotionWarping" });
+		PublicDependencyModuleNames.AddRange(new string[]
+		{
+			"GameplayTasks", "Core", "CoreUObject", "Engine", "UnrealEd", "InputCore", "EnhancedInput", "Mover", "AIModule", "GameplayTags", "GameplayAbilities", "MotionWarping", "AnimationBlueprintLibrary", "AnimGraphRuntime", "AIModule",
+			"NavigationSystem"
+		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "Engine", "Core", "NetCore", "Networking", "PacketHandler", "Niagara" });
 

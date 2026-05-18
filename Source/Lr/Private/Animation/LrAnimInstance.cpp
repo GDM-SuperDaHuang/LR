@@ -3,32 +3,40 @@
 
 #include "Animation/LrAnimInstance.h"
 
-#include "DefaultMovementSet/CharacterMoverComponent.h"
-#include "Lib/LrCommonLibrary.h"
+#include "Component/LrAnimationComponent.h"
 #include "Mover/LrMoverComponent.h"
+
+void ULrAnimInstance::NativeInitializeAnimation()
+{
+	Super::NativeInitializeAnimation();
+	APawn* Pawn = TryGetPawnOwner();
+	if (!Pawn)
+	{
+		return;
+	}
+	AnimationComponent = Pawn->FindComponentByClass<ULrAnimationComponent>();
+}
+
+void ULrAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
+{
+	Super::NativeThreadSafeUpdateAnimation(DeltaSeconds);
+	// if (!AnimationComponent)
+	// {
+	// 	return;
+	// }
+	// MovementData = AnimationComponent->GetMovementData();
+	// Speed = MovementData.Speed;
+
+	Speed = Speed2;
+}
 
 void ULrAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
-	APawn* Pawn = TryGetPawnOwner();
-	if (!Pawn)
+	if (!AnimationComponent)
 	{
-		Speed = 0.f;
-		bIsMoving = false;
 		return;
 	}
-
-	ULrMoverComponent* Mover = Pawn->FindComponentByClass<ULrMoverComponent>();
-
-	if (!Mover)
-	{
-		Speed = 0.f;
-		bIsMoving = false;
-		return;
-	}
-	
-
-	VelocityWS = Mover->GetVelocity();
-	Speed = VelocityWS.Size();
-	bIsMoving = Speed > 3.f;
+	MovementData = AnimationComponent->GetMovementData();
+	Speed2 = MovementData.Speed;
 }

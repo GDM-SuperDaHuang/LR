@@ -9,7 +9,6 @@
 
 class UNiagaraSystem;
 class ALrWeaponBase;
-class UNiagaraComponent;
 class UGameplayAbility;
 class USpringArmComponent;
 class UCameraComponent;
@@ -50,21 +49,7 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USpringArmComponent> CameraBoom;
 	/** 相机 弹簧臂*/
-	
 
-	/** 武器轨迹 */
-	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FX")
-	// TObjectPtr<UNiagaraComponent> WeaponComponent;
-	//
-	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FX")
-	// TObjectPtr<UNiagaraSystem> TrailNS; //可根据配置表动态加载设置
-	// /** 武器轨迹 */
-
-
-	/** 武器轨迹 */
-	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FX")
-	// TObjectPtr<UNiagaraComponent> WeaponTrailComponent;
-	/** 武器轨迹 */
 private:
 	// 技能列表
 	UPROPERTY(EditAnywhere, Category="Abilities")
