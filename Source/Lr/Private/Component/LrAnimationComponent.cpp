@@ -63,13 +63,13 @@ void ULrAnimationComponent::UpdateMovementData(float DeltaTime)
 	FName ModeName = CachedMover->GetMovementModeName();
 	MovementData.bIsBlink = ModeName.IsEqual(LrAllModes::Blink);
 	MovementData.bIsFalling = ModeName.IsEqual(LrAllModes::Air);
-	if (MovementData.bIsFalling)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[UpdateMovementData] CachedMover=%p "), CachedMover.Get());
-	}
+	// if (MovementData.bIsFalling)
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("[UpdateMovementData] CachedMover=%p "), CachedMover.Get());
+	// }
 	MovementData.bIsJumping = CachedMover->bJumpInitiated;
-	if (MovementData.bIsJumping)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[UpdateMovementData] CachedMover=%p "), CachedMover.Get());
-	}
+	// if (MovementData.bIsJumping)
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("[UpdateMovementData] CachedMover=%p "), CachedMover.Get());
+	// }
 }

@@ -215,6 +215,11 @@ void ALrPawnBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+FGenericTeamId ALrPawnBase::GetGenericTeamId() const
+{
+	return FGenericTeamId(TeamID);
+}
+
 
 /** 输入更新相关 */
 void ALrPawnBase::UpdateMove(FVector Input)

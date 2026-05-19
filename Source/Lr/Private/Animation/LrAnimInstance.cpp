@@ -17,19 +17,6 @@ void ULrAnimInstance::NativeInitializeAnimation()
 	AnimationComponent = Pawn->FindComponentByClass<ULrAnimationComponent>();
 }
 
-void ULrAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
-{
-	Super::NativeThreadSafeUpdateAnimation(DeltaSeconds);
-	// if (!AnimationComponent)
-	// {
-	// 	return;
-	// }
-	// MovementData = AnimationComponent->GetMovementData();
-	// Speed = MovementData.Speed;
-
-	Speed = Speed2;
-}
-
 void ULrAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
@@ -38,5 +25,4 @@ void ULrAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 	MovementData = AnimationComponent->GetMovementData();
-	Speed2 = MovementData.Speed;
 }

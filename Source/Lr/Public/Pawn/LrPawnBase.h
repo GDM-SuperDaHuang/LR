@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "GenericTeamAgentInterface.h"
 #include "MoverSimulationTypes.h"
-#include "GameFramework/NavMovementComponent.h"
 #include "GameFramework/Pawn.h"
 #include "LrPawnBase.generated.h"
 
@@ -22,7 +22,7 @@ class ULrNavMovementComponent;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnASCRegistered, UAbilitySystemComponent*);
 
 UCLASS()
-class LR_API ALrPawnBase : public APawn, public IMoverInputProducerInterface, public IAbilitySystemInterface
+class LR_API ALrPawnBase : public APawn, public IMoverInputProducerInterface, public IAbilitySystemInterface,public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -43,12 +43,9 @@ public:
 
 	/** 角色移动组件（Mover系统的核心） */
 	UPROPERTY(Category = Movement, VisibleAnywhere, BlueprintReadOnly, Transient, meta = (AllowPrivateAccess = "true"))
-	// TObjectPtr<UCharacterMoverComponent> CharacterMotionComponent;
 	TObjectPtr<ULrMoverComponent> CharacterMotionComponent;
+	
 	/** 武器 */
-	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
-	// TObjectPtr<USkeletalMeshComponent> WeaponSKM;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<UChildActorComponent> EquippedWeaponComponent;
 	/** 武器 */
@@ -63,17 +60,13 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<ULrAnimationComponent> LrAnimationComponent;
 
+	/** 导航组件 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="LrNavMoverComponent")
+	TObjectPtr<ULrNavMovementComponent> LrNavMoverComponent;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	/** 角色移动组件（Mover系统的核心） */
-	// UPROPERTY(Category = Movement, VisibleAnywhere, BlueprintReadOnly, Transient, meta = (AllowPrivateAccess = "true"))
-	// TObjectPtr<ULrMoverComponent> LrMoverComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="LrNavMoverComponent")
-	TObjectPtr<ULrNavMovementComponent> LrNavMoverComponent;
-
-
+	
 	/**
 	 * 输入生产入口点，不要重写！
 	 * 这是IMoverInputProducerInterface的核心实现，Mover系统每模拟帧调用一次
@@ -100,6 +93,13 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+
+	virtual FGenericTeamId GetGenericTeamId() const override;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Team")
+	uint8 TeamID = 1;
+	
 	void UpdateMove(FVector Input);
 	void UpdatePressedJump(bool Input);
 

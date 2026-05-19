@@ -6,6 +6,8 @@
 #include "Pawn/LrPawnBase.h"
 #include "LrEnemyPawn.generated.h"
 
+class ULrAIStateComponent;
+class ULrPatrolRouteComponent;
 class UCapsuleComponent;
 class ULrASC;
 class ULrAS;
@@ -28,32 +30,49 @@ public:
 	ALrEnemyPawn();
 
 	virtual void BeginPlay() override;
+	// virtual UPawnMovementComponent* GetMovementComponent() const override;
+	// virtual FVector GetNavAgentLocation() const override;
 
 	/** AIController 接管时初始化 GAS 并授予出生技能 */
 	virtual void PossessedBy(AController* NewController) override;
 
+	FORCEINLINE
+	ULrAIStateComponent* GetAIStateComponent() const
+	{
+		return AIStateComponent;
+	}
+	
+	FORCEINLINE
+	ULrPatrolRouteComponent* GetPatrolRoute() const
+	{
+		return PatrolRoute;
+	}
+
+	FVector GetHomeLocation() const;
+	
 	/** 获取该敌人配置的行为树资产 */
 	FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
 
-	/** 获取敌人能力系统组件 */
-	FORCEINLINE ULrASC* GetLrASC() const { return LrEnemyASC; }
 
 	/** 敌人死亡事件，广播给 AI 控制器和其他监听者 */
 	UPROPERTY(BlueprintAssignable, Category = "Combat")
 	FOnEnemyDeath OnEnemyDeath;
 
 protected:
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<ULrAIStateComponent> AIStateComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<ULrPatrolRouteComponent> PatrolRoute;
+
+	UPROPERTY()
+	FVector HomeLocation;
+	
 	/** 碰撞体，作为 AI 导航代理和 Mover 系统的根依赖 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PawnInfo")
 	TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
-
-	/** 能力系统组件，AI 敌人自行持有（不依赖 PlayerState） */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
-	TObjectPtr<ULrASC> LrEnemyASC;
-
-	/** 属性集，存储敌人的生命值、攻击力等数值 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
-	TObjectPtr<ULrAS> LrEnemyAS;
+	
 
 	/** AI 行为树资产，定义敌人的决策逻辑 */
 	UPROPERTY(EditDefaultsOnly, Category = "AI")

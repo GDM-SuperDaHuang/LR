@@ -3,17 +3,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/NavMovementComponent.h"
+#include "GameFramework/PawnMovementComponent.h"
 #include "LrNavMovementComponent.generated.h"
 
+class ALrPawnBase;
+class ULrMoverComponent;
 /**
  * 
  */
-UCLASS()
-class LR_API ULrNavMovementComponent : public UNavMovementComponent
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+class LR_API ULrNavMovementComponent : public UPawnMovementComponent
 {
 	GENERATED_BODY()
 
 public:
 	virtual void BeginPlay() override;
+
+	virtual void RequestDirectMove(const FVector& MoveVelocity, bool bForceMaxSpeed) override;
+	// virtual FVector GetActorFeetLocation() const override;
+	
+	UPROPERTY()
+	TObjectPtr<ALrPawnBase> LrEnemyPawn;
 };

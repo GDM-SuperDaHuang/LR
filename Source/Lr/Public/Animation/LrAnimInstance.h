@@ -20,19 +20,11 @@ class LR_API ULrAnimInstance : public UAnimInstance
 
 public:
 	virtual void NativeInitializeAnimation() override;
-	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
+
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	
 	UPROPERTY(BlueprintReadOnly, Category="Anim")
 	FLrAnimMovementData MovementData;
-
-	
-	UPROPERTY(BlueprintReadOnly)
-	float Speed = 0.f; //速度大小
-
-	UPROPERTY(BlueprintReadOnly)
-	float Speed2 = 0.f; //速度大小
-
 	
 	UPROPERTY(Transient)
 	TObjectPtr<ULrAnimationComponent> AnimationComponent;

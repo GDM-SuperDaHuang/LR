@@ -19,6 +19,8 @@
 #include "Mover/Air/LrAirMovementMode.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
 #include "Player/PS/LrPS.h"
 
 ALrHeroPawn::ALrHeroPawn()
@@ -41,7 +43,13 @@ ALrHeroPawn::ALrHeroPawn()
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false;
 
-
+	// =========================
+	// 感知组件
+	// =========================
+	StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
+	StimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
+	StimuliSource->RegisterWithPerceptionSystem();
+		
 	// =========================
 	// 骨骼 →碰撞体
 	// =========================
@@ -68,6 +76,7 @@ ALrHeroPawn::ALrHeroPawn()
 	// WeaponTrailComponent->SetAsset(LoadObject<UNiagaraSystem>(nullptr, TEXT("/Game/FX/NS_WeaponTrail.NS_WeaponTrail")));
 	// WeaponTrailComponent->SetAutoActivate(false);
 	// WeaponTrailComponent->bAutoDestroy = false;
+	
 	// =========================
 	// 运动扭曲 
 	// =========================
@@ -93,12 +102,13 @@ ALrHeroPawn::ALrHeroPawn()
 	// =========================
 	LrNavMoverComponent = CreateDefaultSubobject<ULrNavMovementComponent>(TEXT("NavMoverComponent"));
 	LrNavMoverComponent->UpdatedComponent = LrCapsuleComponent;
+
 	/**
 	 * true：这个组件，是否会被 NavigationSystem 考虑为：
 	 * 1，动态障碍
 	 * 2，NavMesh 生成 / 更新的参与者
 	 */
-	LrCapsuleComponent->SetCanEverAffectNavigation(true);
+	LrCapsuleComponent->SetCanEverAffectNavigation(false);
 	// =========================
 	// AI 设置
 	// =========================
@@ -148,7 +158,6 @@ void ALrHeroPawn::BeginPlay()
 		// Устанавливаем стартовый режим
 		CharacterMotionComponent->QueueNextMode(LrAllModes::Air);
 	}
-
 	
 	// CharacterMotionComponent->AddMovementModeFromClass(TEXT("LrWalk"), USmoothWalkingMode::StaticClass());
 

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 
+// AI 
 namespace LrBBKeys
 {
 	/** 当前检测到的目标 Actor */
@@ -12,6 +13,9 @@ namespace LrBBKeys
 	/** 随机巡逻/追击目标位置 */
 	static const FName MoveLocation = TEXT("MoveLocation");
 
-	/** 当前是否处于可攻击的战斗状态 */
-	static const FName CombatState = TEXT("CombatState");
+	const FName LastKnownLocation = TEXT("LastKnownLocation");
+
+	const FName AIState = TEXT("AIState");
+
+	const FName HomeLocation = TEXT("HomeLocation");
 };

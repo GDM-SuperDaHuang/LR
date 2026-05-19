@@ -17,7 +17,8 @@
 				"ModelViewViewModel",
 				"UMG",
 				"CoreUObject",
-				"CommonUI"
+				"CommonUI",
+				"DeveloperSettings"
 			]
 		}
 	],
