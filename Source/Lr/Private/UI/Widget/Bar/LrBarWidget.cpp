@@ -22,4 +22,5 @@ void ULrBarWidget::Refresh()
 
 	MainBar->SetPercent(ViewModel->Percent);
 	GhostBar->SetPercent(ViewModel->GhostPercent);
+
 }

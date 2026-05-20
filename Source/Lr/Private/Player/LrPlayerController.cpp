@@ -45,6 +45,7 @@ void ALrPlayerController::BeginPlay()
 	// InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock); // 不锁定鼠标到视口
 	// InputModeData.SetHideCursorDuringCapture(false); // 捕获输入时不隐藏光标
 	// SetInputMode(InputModeData); // 应用输入模式
+	
 }
 
 void ALrPlayerController::SetupInputComponent()

@@ -6,9 +6,10 @@
 #include "GameFramework/PawnMovementComponent.h"
 #include "LrNavMovementComponent.generated.h"
 
-class ALrPawnBase;
+class ALrEnemyPawn;
 class ULrMoverComponent;
 /**
+ *
  * 
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -23,5 +24,5 @@ public:
 	// virtual FVector GetActorFeetLocation() const override;
 	
 	UPROPERTY()
-	TObjectPtr<ALrPawnBase> LrEnemyPawn;
+	TObjectPtr<ALrEnemyPawn> LrEnemyPawn;
 };

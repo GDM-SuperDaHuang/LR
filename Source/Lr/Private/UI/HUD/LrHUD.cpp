@@ -36,12 +36,7 @@ void ALrHUD::BeginPlay()
 	MPWidget->SetViewModel(UIController->MPVM);
 	// MPWidget->AddToViewport();
 
-
-
-
-
-
-
+	
 	
 	// 1️⃣ 创建 Widget
 	MainWidget = CreateWidget<ULrMainWidget>(GetWorld(), MainWidgetClass);
@@ -57,14 +52,7 @@ void ALrHUD::BeginPlay()
 	// 监听 ViewModel 请求
 	ViewModel->OnEquipRequest.AddUObject(this, &ALrHUD::HandleEquipRequest);
 	ViewModel->OnUnequipRequest.AddUObject(this, &ALrHUD::HandleUnequipRequest);
-
-	// UMVVMGameSubsystem* MVVMGameSubsystem = GetGameInstance()->GetSubsystem<UMVVMGameSubsystem>();
-	// UMVVMViewModelCollectionObject* Collection = MVVMGameSubsystem->GetViewModelCollection();
-	// FMVVMViewModelContext Context;
-	// Context.ContextClass = UMVVMMainScreen::StaticClass();
-	// Context.ContextName = TEXT("MVVMMainScreen"); // 和 Widget Designer 完全一致
-	// bool bAdded = Collection->AddViewModelInstance(Context, ViewModel);
-	// check(bAdded);
+	
 }
 
 void ALrHUD::Tick(float DeltaSeconds)
@@ -75,6 +63,7 @@ void ALrHUD::Tick(float DeltaSeconds)
 		UIController->Tick(DeltaSeconds);
 	}
 }
+
 
 void ALrHUD::HandleEquipRequest(FLrWeaponConfig WeaponConfig)
 {

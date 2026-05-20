@@ -4,11 +4,11 @@
 #include "Mover/Nav/LrNavMovementComponent.h"
 
 #include "Mover/LrMoverComponent.h"
-#include "Pawn/LrPawnBase.h"
+#include "Pawn/LrEnemyPawn.h"
 
 void ULrNavMovementComponent::BeginPlay()
 {
-	LrEnemyPawn = Cast<ALrPawnBase>(GetOwner());
+	LrEnemyPawn = Cast<ALrEnemyPawn>(GetOwner());
 	NavAgentProps.AgentRadius = 34.f;
 	NavAgentProps.AgentHeight = 176;
 	NavAgentProps.bCanWalk = true;
@@ -42,25 +42,8 @@ void ULrNavMovementComponent::RequestDirectMove(const FVector& MoveVelocity, boo
 	// 转换成方向输入
 	const FVector MoveDirection = MoveVelocity.GetSafeNormal();
 	LrEnemyPawn->UpdateMove(MoveDirection);
+	// 面向移动方向
+	LrEnemyPawn->FaceToDirection(MoveDirection,GetWorld()->GetDeltaSeconds());
 	// Super::RequestDirectMove(MoveVelocity, bForceMaxSpeed);
 }
-
-// FVector ULrNavMovementComponent::GetActorFeetLocation() const
-// {
-// 	if (!UpdatedComponent)
-// 	{
-// 		return FVector::ZeroVector;
-// 	}
-//
-// 	FVector Location = UpdatedComponent->GetComponentLocation();
-//
-// 	const UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(UpdatedComponent);
-//
-// 	if (Primitive)
-// 	{
-// 		Location.Z -= Primitive->Bounds.BoxExtent.Z;
-// 	}
-//
-// 	return Location;
-// }
 

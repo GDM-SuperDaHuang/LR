@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "LrHUD.generated.h"
 
+class ULrWorldUIRoot;
 class ULrMPBarWidget;
 class ULrHPBarWidget;
 class ULrUIController;
@@ -60,4 +61,14 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<ULrMPBarWidget> MPWidgetClass;
+	
+public:
+	// 敌人UI
+	 // UPROPERTY(EditDefaultsOnly)
+	 // TSubclassOf<UUserWidget> WorldUIRootClass;
+	 // UPROPERTY()
+	 // ULrWorldUIRoot* WorldUIRoot;
+	/** AI相关 */ 
+	// FORCEINLINE
+	// ULrWorldUIRoot* CreateWorldUIRoot();
 };

@@ -6,6 +6,7 @@
 #include "Engine/DeveloperSettings.h"
 #include "LrAISettings.generated.h"
 
+class ULrWorldUIRoot;
 class ALrAIControllerBase;
 /**
  * 
@@ -14,13 +15,13 @@ UCLASS(Config=Game, DefaultConfig)
 class LR_API ULrAISettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
-public:
 
+public:
 	// 普通敌人 Controller
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category="AI")
 	TSoftClassPtr<ALrAIControllerBase> NormalAIControllerClass;
 
 	// Boss Controller
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category="AI")
-	TSoftClassPtr<ALrAIControllerBase> BossAIControllerClass;	
+	TSoftClassPtr<ALrAIControllerBase> BossAIControllerClass;
 };

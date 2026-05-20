@@ -6,6 +6,8 @@
 #include "Pawn/LrPawnBase.h"
 #include "LrEnemyPawn.generated.h"
 
+class ULrWorldWidgetComponent;
+class ULrBarWidget;
 class ULrAIStateComponent;
 class ULrPatrolRouteComponent;
 class UCapsuleComponent;
@@ -15,6 +17,8 @@ class UWidgetComponent;
 class UBehaviorTree;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDeath, ALrEnemyPawn*, DeadEnemy);
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float);
 
 /**
  * 敌方 Pawn 基类
@@ -33,15 +37,26 @@ public:
 	// virtual UPawnMovementComponent* GetMovementComponent() const override;
 	// virtual FVector GetNavAgentLocation() const override;
 
+
 	/** AIController 接管时初始化 GAS 并授予出生技能 */
 	virtual void PossessedBy(AController* NewController) override;
 
+	/** 面向相关 */
+	//面向移动方向
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float RotationInterpSpeed = 10.f;
+	void FaceToDirection(const FVector& Direction, float DeltaTime);
+	//面向目标
+	void FaceToTarget(const FVector& TargetLocation, float DeltaTime);
+	/** 面向相关 */
+
+	/** AI相关 */
 	FORCEINLINE
 	ULrAIStateComponent* GetAIStateComponent() const
 	{
 		return AIStateComponent;
 	}
-	
+
 	FORCEINLINE
 	ULrPatrolRouteComponent* GetPatrolRoute() const
 	{
@@ -49,17 +64,19 @@ public:
 	}
 
 	FVector GetHomeLocation() const;
-	
+
 	/** 获取该敌人配置的行为树资产 */
 	FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
+	/** AI相关 End */
 
 
 	/** 敌人死亡事件，广播给 AI 控制器和其他监听者 */
 	UPROPERTY(BlueprintAssignable, Category = "Combat")
 	FOnEnemyDeath OnEnemyDeath;
 
+	/** 敌人HP */
+	FOnHealthChanged OnHealthChanged;
 protected:
-
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrAIStateComponent> AIStateComponent;
 
@@ -68,11 +85,11 @@ protected:
 
 	UPROPERTY()
 	FVector HomeLocation;
-	
+
 	/** 碰撞体，作为 AI 导航代理和 Mover 系统的根依赖 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PawnInfo")
 	TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
-	
+
 
 	/** AI 行为树资产，定义敌人的决策逻辑 */
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
@@ -83,6 +100,8 @@ protected:
 	TArray<FGameplayTag> StartupAbilities;
 
 	/** 世界空间血条 UI 组件，悬浮在敌人头顶 */
-	UPROPERTY(VisibleAnywhere, Category = "UI")
-	TObjectPtr<UWidgetComponent> HealthBarWidget;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<ULrWorldWidgetComponent> HealthBarComponent;
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	TSubclassOf<UUserWidget> HealthBarWidgetClass;
 };

@@ -6,10 +6,10 @@
 #include "ASC/LrASC.h"
 #include "ASC/AS/LrAS.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/WidgetComponent.h"
 #include "MotionWarpingComponent.h"
 #include "AI/Controller/LrAIControllerBase.h"
 #include "AI/Subsystem/LrAIManagerSubsystem.h"
+#include "Alembic/AbcGeom/IFaceSet.h"
 #include "Component/LrAIStateComponent.h"
 #include "Component/LrPatrolRouteComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
@@ -18,6 +18,8 @@
 #include "Mover/Air/LrAirMovementMode.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
+#include "UI/Component/LrWorldWidgetComponent.h"
+#include "UI/Widget/Bar/WorldBar/LrWorldBarWidget.h"
 
 ALrEnemyPawn::ALrEnemyPawn()
 {
@@ -26,9 +28,9 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// =========================
 	// AI
 	// =========================
-	AIStateComponent =CreateDefaultSubobject<ULrAIStateComponent>(TEXT("AIStateComponent"));
-	PatrolRoute =CreateDefaultSubobject<ULrPatrolRouteComponent>(TEXT("PatrolRoute"));
-	
+	AIStateComponent = CreateDefaultSubobject<ULrAIStateComponent>(TEXT("AIStateComponent"));
+	PatrolRoute = CreateDefaultSubobject<ULrPatrolRouteComponent>(TEXT("PatrolRoute"));
+
 	// =========================
 	// 骨骼 →碰撞体
 	// =========================
@@ -36,14 +38,14 @@ ALrEnemyPawn::ALrEnemyPawn()
 	RootComponent = LrCapsuleComponent;
 	LrCapsuleComponent->InitCapsuleSize(34.f, 88.f);
 	LrCapsuleComponent->SetCollisionProfileName(TEXT("LrEnemyPawnCapsuleComponent"));
-	LrCapsuleComponent->SetCanEverAffectNavigation(true);
+	LrCapsuleComponent->SetCanEverAffectNavigation(false);
 
 	LrSkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrEnemyMesh"));
 	LrSkeletalMeshComponent->SetupAttachment(LrCapsuleComponent);
 	LrSkeletalMeshComponent->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
 	LrSkeletalMeshComponent->SetOnlyOwnerSee(false);
 	LrSkeletalMeshComponent->SetOwnerNoSee(false);
-	
+
 	// =========================
 	// 武器 →骨架
 	// =========================
@@ -65,21 +67,21 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// =========================
 	LrNavMoverComponent = CreateDefaultSubobject<ULrNavMovementComponent>(TEXT("EnemyNavMoverComponent"));
 	LrNavMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
-                   
+
 	LrASC = CreateDefaultSubobject<ULrASC>(TEXT("EnemyASC"));
 	LrASC->SetIsReplicated(true);
 	LrASC->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
 	LrAS = CreateDefaultSubobject<ULrAS>(TEXT("EnemyAS"));
 
-	// =========================
-	// UI
-	// =========================
-	HealthBarWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("EnemyHPBarWidget"));
-	HealthBarWidget->SetupAttachment(LrCapsuleComponent);
-	HealthBarWidget->SetRelativeLocation(FVector(0.f, 0.f, 120.f));
-	
 	bUseControllerRotationYaw = false;
+
+	// =========================
+	// 敌人UI
+	// =========================
+	HealthBarComponent = CreateDefaultSubobject<ULrWorldWidgetComponent>(TEXT("HealthBarComponent"));
+	HealthBarComponent->SetupAttachment(RootComponent);
+	HealthBarComponent->SetRelativeLocation(FVector(0, 0, 120.f));
 }
 
 void ALrEnemyPawn::BeginPlay()
@@ -93,7 +95,7 @@ void ALrEnemyPawn::BeginPlay()
 		return;
 	}
 
-	ULrAIManagerSubsystem* AISubsystem =World->GetSubsystem<ULrAIManagerSubsystem>();
+	ULrAIManagerSubsystem* AISubsystem = World->GetSubsystem<ULrAIManagerSubsystem>();
 	if (!AISubsystem)
 	{
 		return;
@@ -121,31 +123,31 @@ void ALrEnemyPawn::BeginPlay()
 		CharacterMotionComponent->QueueNextMode(LrAllModes::Air);
 	}
 
-	if (GetMovementComponent())
+	if (HealthBarWidgetClass)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Movement=%s]"), *GetMovementComponent()->GetName());
+		HealthBarComponent->SetWidgetClass(HealthBarWidgetClass);
 	}
+
+	HealthBarComponent->InitWidget();
+
+	ULrWorldBarWidget* BarWidget = Cast<ULrWorldBarWidget>(HealthBarComponent->GetUserWidgetObject());
+
+	if (BarWidget)
+	{
+		BarWidget->InitWidget(this);
+		//TODO
+		BarWidget->UpdateHealth(500);
+	}
+
+	OnHealthChanged.AddLambda(
+		[BarWidget](float NewPercent)
+		{
+			if (BarWidget)
+			{
+				BarWidget->UpdateHealth(NewPercent);
+			}
+		});
 }
-
-// UPawnMovementComponent* ALrEnemyPawn::GetMovementComponent() const
-// {
-// 	TCopyQualifiersFromTo_T<ULrNavMovementComponent, UPawnMovementComponent>* CopyQualifiersFromTo = Cast<UPawnMovementComponent>(LrNavMoverComponent);
-// 	if (!CopyQualifiersFromTo)
-// 	{
-// 		return nullptr;
-// 	}
-// 	return CopyQualifiersFromTo;
-// }
-
-// FVector ALrEnemyPawn::GetNavAgentLocation() const
-// {
-// 	if (LrCapsuleComponent)
-// 	{
-// 		return LrCapsuleComponent->GetComponentLocation();
-// 	}
-//
-// 	return GetActorLocation();
-// }
 
 void ALrEnemyPawn::PossessedBy(AController* NewController)
 {
@@ -158,6 +160,25 @@ void ALrEnemyPawn::PossessedBy(AController* NewController)
 		ULrASC* LrEnemyASC = CastChecked<ULrASC>(LrASC);
 		LrEnemyASC->AddGA(StartupAbilities);
 	}
+}
+
+void ALrEnemyPawn::FaceToDirection(const FVector& Direction, float DeltaTime)
+{
+	if (Direction.IsNearlyZero())
+	{
+		return;
+	}
+	const FRotator Current = GetActorRotation();
+	const FRotator Target = Direction.ToOrientationRotator();
+	const FRotator NewRot = FMath::RInterpTo(Current, Target, DeltaTime, RotationInterpSpeed);
+	SetActorRotation(NewRot);
+}
+
+void ALrEnemyPawn::FaceToTarget(const FVector& TargetLocation, float DeltaTime)
+{
+	FVector Direction = TargetLocation - GetActorLocation();
+	Direction.Z = 0.f;
+	FaceToDirection(Direction.GetSafeNormal(), DeltaTime);
 }
 
 FVector ALrEnemyPawn::GetHomeLocation() const
