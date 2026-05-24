@@ -18,12 +18,5 @@ public:
 	ULrBTTaskUpdateChase();
 
 	virtual EBTNodeResult::Type ExecuteTask( UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
-
-protected:
-
-	UPROPERTY(EditAnywhere, Category="Combat")
-	float AttackRange = 250.f;
-
-	UPROPERTY(EditAnywhere, Category="Combat")
-	float LoseTargetDistance = 3000.f;
+	
 };

@@ -7,6 +7,7 @@
 #include "GameFramework/PlayerState.h"
 #include "LrPS.generated.h"
 
+class ULrASC;
 class UAttributeSet;
 /**
  * 
@@ -26,8 +27,8 @@ public:
 
 protected:
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UAbilitySystemComponent> LrASC;
-	
+	TObjectPtr<ULrASC> LrASC;
+
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> LrAS;
 };

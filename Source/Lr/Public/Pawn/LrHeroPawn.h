@@ -63,6 +63,6 @@ protected:
 	
 private:
 	// 技能列表
-	UPROPERTY(EditAnywhere, Category="Abilities")
-	TArray<FGameplayTag> GATagListConfig;
+	// UPROPERTY(EditAnywhere, Category="Abilities")
+	// TArray<FGameplayTag> GATagListConfig;
 };

@@ -14,6 +14,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Data/LrGAListDA.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Lib/LrCommonLibrary.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/LrAllModes.h"
 #include "Mover/Air/LrAirMovementMode.h"
@@ -49,7 +50,7 @@ ALrHeroPawn::ALrHeroPawn()
 	StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
 	StimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
 	StimuliSource->RegisterWithPerceptionSystem();
-		
+
 	// =========================
 	// 骨骼 →碰撞体
 	// =========================
@@ -76,7 +77,7 @@ ALrHeroPawn::ALrHeroPawn()
 	// WeaponTrailComponent->SetAsset(LoadObject<UNiagaraSystem>(nullptr, TEXT("/Game/FX/NS_WeaponTrail.NS_WeaponTrail")));
 	// WeaponTrailComponent->SetAutoActivate(false);
 	// WeaponTrailComponent->bAutoDestroy = false;
-	
+
 	// =========================
 	// 运动扭曲 
 	// =========================
@@ -132,7 +133,7 @@ void ALrHeroPawn::BeginPlay()
 {
 	Super::BeginPlay();
 	UE_LOG(LogTemp, Warning, TEXT("Controller = %s"), *GetNameSafe(GetController()));
-	
+
 	// if (LrMoverComponent)
 	// {
 	// 	// 添加特定的自定义移动模式
@@ -158,9 +159,8 @@ void ALrHeroPawn::BeginPlay()
 		// Устанавливаем стартовый режим
 		CharacterMotionComponent->QueueNextMode(LrAllModes::Air);
 	}
-	
-	// CharacterMotionComponent->AddMovementModeFromClass(TEXT("LrWalk"), USmoothWalkingMode::StaticClass());
 
+	// CharacterMotionComponent->AddMovementModeFromClass(TEXT("LrWalk"), USmoothWalkingMode::StaticClass());
 }
 
 void ALrHeroPawn::PostInitializeComponents()
@@ -184,18 +184,15 @@ void ALrHeroPawn::PossessedBy(AController* NewController)
 	check(LrPS);
 	// 绑定 自身与ps 到ASC
 	LrPS->GetAbilitySystemComponent()->InitAbilityActorInfo(LrPS, this);
-
-	// AttributeSet = LrAS->GetAttributeSet();
-	// todo ???
-	LrASC = LrPS->GetAbilitySystemComponent();
 	
+	LrASC = Cast<ULrASC>(LrPS->GetAbilitySystemComponent());
 	//ASC 初始化成功委托
 	OnASCRegistered.Broadcast(LrASC);
 	LrAS = LrPS->GetAttributeSet();
 	// 初始技能
 	ULrASC* ASC = CastChecked<ULrASC>(LrASC);
-
-	ASC->AddGA(GATagListConfig);
+	FPawnTypeGAConfig LrDAConfig = ULrCommonLibrary::FindPawnTypeGAConfig(this, PawnType);
+	ASC->AddGA(LrDAConfig.GATagList);
 }
 
 void ALrHeroPawn::OnRep_PlayerState()
@@ -205,8 +202,7 @@ void ALrHeroPawn::OnRep_PlayerState()
 	check(LrPS);
 	// 绑定 自身与ps 到ASC
 	LrPS->GetAbilitySystemComponent()->InitAbilityActorInfo(LrPS, this);
-	LrASC = LrPS->GetAbilitySystemComponent();
-
+	LrASC = Cast<ULrASC>(LrPS->GetAbilitySystemComponent());
 }
 
 void ALrHeroPawn::EquipWeapon(FLrWeaponConfig WeaponConfig)
@@ -222,10 +218,10 @@ void ALrHeroPawn::EquipWeapon(FLrWeaponConfig WeaponConfig)
 	// 设置新武器
 	EquippedWeaponComponent->SetChildActorClass(WeaponConfig.WeaponClass);
 	// EquippedWeaponComponent->SetChildActorClass(ALrWeaponBase::StaticClass()); // 默认类，可后期覆盖
-	
+
 	if (ALrWeaponBase* NewWeapon = Cast<ALrWeaponBase>(EquippedWeaponComponent->GetChildActor()))
 	{
-		NewWeapon->OnEquipped(this,WeaponConfig);
+		NewWeapon->OnEquipped(this, WeaponConfig);
 	}
 	// 通知客户端（如果需要）
 	// MarkPackageDirty() 或用 RPC

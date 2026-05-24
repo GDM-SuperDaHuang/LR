@@ -9,39 +9,36 @@
 UENUM(BlueprintType)
 enum class ELrAIState : uint8
 {
-	Idle,
-	Patrol,
-	Search,
-	Suspicious,
-	Chase,//追
-	Combat,//斗
-	Attack,
-	Hit,
-	Dead,//死亡
-	ReturnHome //回家
+	Idle, //待机
+	Patrol, //巡逻
+	Search, //丢失目标搜索
+	Chase, //追击
+	Combat, //战斗（进入攻击范围）
+	Dead, //死亡
+	ReturnHome, //回家
 };
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAIStateChanged,ELrAIState,ELrAIState);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAIStateChanged, ELrAIState, ELrAIState);
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class LR_API ULrAIStateComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	// Sets default values for this component's properties
 	ULrAIStateComponent();
-	
-public:
 
+public:
 	void SetAIState(ELrAIState NewState);
 	UFUNCTION(BlueprintPure)
 	ELrAIState GetAIState() const { return CurrentState; }
-	bool IsCombatState() const;
-	
-	FOnAIStateChanged OnAIStateChanged;
-private:
 
+	bool IsCombatState() const;
+
+	FOnAIStateChanged OnAIStateChanged;
+
+private:
 	UPROPERTY(VisibleAnywhere)
 	ELrAIState CurrentState = ELrAIState::Idle;
 };

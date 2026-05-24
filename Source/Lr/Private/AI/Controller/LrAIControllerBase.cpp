@@ -7,6 +7,7 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Component/LrAIStateComponent.h"
+#include "Component/LrPatrolRouteComponent.h"
 #include "Lr/Lr.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Pawn/LrEnemyPawn.h"
@@ -17,18 +18,17 @@
 
 ALrAIControllerBase::ALrAIControllerBase()
 {
-
-	LrBlackboardComponent =  CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
+	// LrBlackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
 	// LrBehaviorTreeComponent = CreateDefaultSubobject<UBehaviorTreeComponent>(TEXT("BehaviorTreeComponent"));
 	// 创建感知组件，负责驱动所有配置的 AI 感官（视觉、听觉等）
 	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
-
+	
 	// 创建视觉感知配置，设定视野参数
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
-	SightConfig->SightRadius = 2000.f;                  // 完全可见范围（2000cm = 20m）
-	SightConfig->LoseSightRadius = 2500.f;              // 丢失视野范围（2500cm = 25m，提供 5m 的滞后区防抖动）
-	SightConfig->PeripheralVisionAngleDegrees = 90.f;   // 视野半角 90 度，即全视野 180 度
-	SightConfig->SetMaxAge(5.f);                        // 目标丢失后记忆 5 秒
+	SightConfig->SightRadius = 2000.f; // 完全可见范围（2000cm = 20m）
+	SightConfig->LoseSightRadius = 2500.f; // 丢失视野范围（2500cm = 25m，提供 5m 的滞后区防抖动）
+	SightConfig->PeripheralVisionAngleDegrees = 90.f; // 视野半角 90 度，即全视野 180 度
+	SightConfig->SetMaxAge(5.f); // 目标丢失后记忆 5 秒
 
 	// 启用对所有阵营的检测（敌人、中立、友方均可见）
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
@@ -38,7 +38,7 @@ ALrAIControllerBase::ALrAIControllerBase()
 	// 将视觉配置注册到感知组件，并设置为主导感官
 	PerceptionComponent->ConfigureSense(*SightConfig);
 	PerceptionComponent->SetDominantSense(UAISense_Sight::StaticClass());
-	
+
 	check(GetPathFollowingComponent());
 }
 
@@ -56,18 +56,31 @@ void ALrAIControllerBase::OnPossess(APawn* InPawn)
 	{
 		return;
 	}
-	// UBehaviorTree* BehaviorTree = LrBehaviorTreeComponent->GetRootTree()
-	if (TObjectPtr<UBlackboardData> BlackboardData = LrBlackboardComponent->GetBlackboardAsset())
-	{
-		UBlackboardComponent* BBPtr = LrBlackboardComponent;
-		UseBlackboard(BlackboardData,BBPtr);
-	}
-	
-	Blackboard->SetValueAsVector( LrBBKeys::HomeLocation, Enemy->GetHomeLocation());
-	RunBehaviorTree(Enemy->GetBehaviorTree());
 
-	// 绑定感知回调：当感知系统检测到或丢失目标时，触发 OnTargetDetected
-	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this,&ALrAIControllerBase::OnTargetDetected);
+	//生成巡逻点
+	ULrPatrolRouteComponent* Patrol = Enemy->GetPatrolRoute();
+	if (Patrol)
+	{
+		FVector Home = Enemy->GetActorLocation();
+		Patrol->SetHomeLocation(Home);
+		// 生成半径500，6个点的巡逻圈
+		Patrol->GenerateCircle(500.f, 6);
+	}
+
+	UBehaviorTree* BT = Enemy->GetBehaviorTree();
+	if (!BT)
+	{
+		return;
+	}
+	UBlackboardComponent* BBPtr = Blackboard;
+	UseBlackboard(BT->BlackboardAsset, BBPtr);
+	Blackboard->SetValueAsVector(LrBBKeys::HomeLocation, Enemy->GetHomeLocation());
+	RunBehaviorTree(Enemy->GetBehaviorTree());
+	BBPtr->SetValueAsEnum(LrBBKeys::AIState, static_cast<uint8>(ELrAIState::Idle));
+
+	// 先解开再重新绑定感知回调：当感知系统检测到或丢失目标时，触发 OnTargetDetected
+	PerceptionComponent->OnTargetPerceptionUpdated.RemoveDynamic(this, &ALrAIControllerBase::OnTargetDetected);
+	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ALrAIControllerBase::OnTargetDetected);
 }
 
 void ALrAIControllerBase::InitializeAI()
@@ -82,112 +95,45 @@ void ALrAIControllerBase::ShutdownAI()
 
 void ALrAIControllerBase::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
 {
-
-	if (!Stimulus.WasSuccessfullySensed())
-	{
-		return;
-	}
-	
-	ALrEnemyPawn* SelfPawn = Cast<ALrEnemyPawn>(GetPawn());
-	if (!SelfPawn)
-	{
-		return;
-	}
-
-	FGenericTeamId SelfTeamId = GetGenericTeamId();
-	IGenericTeamAgentInterface* OtherTeam = Cast<IGenericTeamAgentInterface>(Actor);
-	if ( !OtherTeam)
-	{
-		return;
-	}
-
-	// 是否是敌人
-	const bool bIsEnemy = SelfTeamId!= OtherTeam->GetGenericTeamId();
-	if (!bIsEnemy)
+	if (!Actor)
 	{
 		return;
 	}
 
 	UBlackboardComponent* BB = GetBlackboardComponent();
-	ULrAIStateComponent* AIState = SelfPawn->GetAIStateComponent();
-	if (!BB || !AIState)
+	if (!BB)
 	{
 		return;
 	}
-
 	if (Stimulus.WasSuccessfullySensed())
 	{
-		BB->SetValueAsObject( LrBBKeys::TargetActor, Actor);
-		BB->SetValueAsVector( LrBBKeys::LastKnownLocation, Actor->GetActorLocation());
-		AIState->SetAIState( ELrAIState::Chase);
-		BB->SetValueAsEnum( LrBBKeys::AIState, (uint8)ELrAIState::Chase);
+		BB->SetValueAsObject(LrBBKeys::TargetActor, Actor);
+		BB->SetValueAsVector(LrBBKeys::LastKnownLocation, Actor->GetActorLocation());
 	}
 	else
 	{
-		// 丢失目标
-		BB->ClearValue( LrBBKeys::TargetActor);
-		AIState->SetAIState( ELrAIState::Search);
-		BB->SetValueAsEnum( LrBBKeys::AIState, (uint8)ELrAIState::Search);
+		BB->ClearValue(LrBBKeys::TargetActor);
 	}
 }
 
-void ALrAIControllerBase::Tick(float DeltaSeconds)
+void ALrAIControllerBase::SetTargetActor(AActor* Target)
 {
-	Super::Tick(DeltaSeconds);
-	// if (!bIsChasing)
-	// {
-	// 	return;
-	// }
-	//
-	// if (!CurrentTarget)
-	// {
-	// 	StopChase();
-	// 	return;
-	// }
-	AActor* TargetActor = Cast<AActor>(GetBlackboardComponent()->GetValueAsObject(LrBBKeys::TargetActor));
-	if (!TargetActor)
+	UBlackboardComponent* BB = GetBlackboardComponent();
+	if (!BB)
 	{
 		return;
 	}
-	// MoveToActor(
-	// 	TargetActor,
-	// 	AcceptanceRadius,
-	// 	true,
-	// 	true,
-	// 	true,
-	// 	nullptr,
-	// 	true);
-
-	FAIMoveRequest Request;
-	Request.SetGoalActor(TargetActor);
-	Request.SetAcceptanceRadius(100.f);
-
-	FNavPathSharedPtr Path;
-	FPathFollowingRequestResult PathFollowingRequestResult = MoveTo(Request, &Path);
-	UE_LOG(LogTemp, Warning,TEXT("MoveTo Result: %d"),(int32)PathFollowingRequestResult);
-
-	UNavigationSystemV1* NavSys =FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-	UE_LOG(LogTemp, Warning, TEXT("NavSys=%s"), *GetNameSafe(NavSys));
-	
-
-	FNavLocation NavLoc;
-	bool bOnNavMesh =NavSys->ProjectPointToNavigation(TargetActor->GetActorLocation(),NavLoc);
-	UE_LOG(LogTemp, Warning, TEXT("OnNavMesh=%d"), bOnNavMesh);
+	BB->SetValueAsObject(LrBBKeys::TargetActor,Target);
+	if (Target)
+	{
+		BB->SetValueAsVector(LrBBKeys::LastKnownLocation, Target->GetActorLocation());
+	}
 }
 
-// void ALrAIControllerBase::StartChase(AActor* InTarget)
-// {
-// 	if (!InTarget)
-// 	{
-// 		return;
-// 	}
-// 	CurrentTarget = InTarget;
-// 	bIsChasing = true;
-// }
-//
-// void ALrAIControllerBase::StopChase()
-// {
-// 	bIsChasing = false;
-// 	StopMovement();
-// 	CurrentTarget = nullptr;
-// }
+void ALrAIControllerBase::ClearTargetActor()
+{
+	if (UBlackboardComponent* BB = GetBlackboardComponent())
+	{
+		BB->ClearValue(LrBBKeys::TargetActor);
+	}
+}

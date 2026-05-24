@@ -26,10 +26,7 @@ public:
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
-	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
+	virtual void OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, EBTNodeResult::Type TaskResult) override;
 
-	/** 要激活的技能 GameplayTag（例如 "Ability.Attack.Melee"） */
-	UPROPERTY(EditAnywhere, Category = "Ability")
-	FGameplayTag AbilityTag;
-	bool bWaitingAbilityEnd = false;
+	void ApplyDamage(AActor* Target);
 };

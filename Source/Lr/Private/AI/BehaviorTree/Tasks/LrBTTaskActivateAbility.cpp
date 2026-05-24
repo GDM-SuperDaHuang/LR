@@ -6,6 +6,11 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "Component/LrCombatComponent.h"
+#include "Data/LrBuffDA.h"
+#include "Lib/LrCommonLibrary.h"
+#include "Lr/Lr.h"
 
 ULrBTTaskActivateAbility::ULrBTTaskActivateAbility()
 {
@@ -22,31 +27,48 @@ EBTNodeResult::Type ULrBTTaskActivateAbility::ExecuteTask(UBehaviorTreeComponent
 		return EBTNodeResult::Failed;
 	}
 
-	// 通过 GAS 蓝图库获取 Pawn 上的 AbilitySystemComponent
-	// 不直接 Cast 是因为 ASC 可能在 PlayerState 或 Pawn 上，蓝图库会统一查找
-	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Pawn);
-	if (!ASC)
+	ULrCombatComponent* Combat = Pawn->FindComponentByClass<ULrCombatComponent>();
+	if (!Combat)
 	{
 		return EBTNodeResult::Failed;
 	}
 
-	// 尝试激活所有匹配 AbilityTag 的技能
-	// 如果有多个技能共享同一标签，它们都会被尝试激活
-	const bool bActivated = ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AbilityTag));
-	if (!bActivated)
+	//是否可以攻击
+	AActor* Target = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(LrBBKeys::TargetActor));
+	if (!Combat->CanAttack(Target))
 	{
 		return EBTNodeResult::Failed;
 	}
-	bWaitingAbilityEnd = true;
+
+	//是否开始攻击
+	if (!Combat->StartAttack())
+	{
+		return EBTNodeResult::Failed;
+	}
 	return EBTNodeResult::Succeeded;
 }
 
-void ULrBTTaskActivateAbility::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+void ULrBTTaskActivateAbility::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, EBTNodeResult::Type TaskResult)
 {
-	Super::TickTask(OwnerComp, NodeMemory, DeltaSeconds);
+	Super::OnTaskFinished(OwnerComp, NodeMemory, TaskResult);
+}
 
-	if (!bWaitingAbilityEnd)
+void ULrBTTaskActivateAbility::ApplyDamage(AActor* Target)
+{
+	if (!Target) return;
+
+	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target);
+	if (!TargetASC) return;
+
+	FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
+	Context.AddSourceObject(this);
+	
+	const ULrBuffDA* LrBuffDA = ULrCommonLibrary::GetGEDA(this);
+	// 创建GE
+	FGameplayEffectSpecHandle Spec = TargetASC->MakeOutgoingSpec(LrBuffDA->MeleeAttackEffectClass, 1.0f, Context);
+
+	if (Spec.IsValid())
 	{
-		FinishLatentTask( OwnerComp, EBTNodeResult::Succeeded);
+		TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 	}
 }

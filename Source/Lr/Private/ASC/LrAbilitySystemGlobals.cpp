@@ -3,3 +3,9 @@
 
 #include "ASC/LrAbilitySystemGlobals.h"
 
+#include "ASC/GE/LrGEContext.h"
+
+FGameplayEffectContext* ULrAbilitySystemGlobals::AllocGameplayEffectContext() const
+{
+	return new FLrGameplayEffectContext();
+}

@@ -6,6 +6,7 @@
 #include "BehaviorTree/Services/BTService_BlackboardBase.h"
 #include "LrBTServiceUpdateCombat.generated.h"
 
+enum class ELrAIState : uint8;
 /**
  * 战斗状态更新服务
  * 定期更新黑板中的 DistanceToTarget 和 CombatState 键值
@@ -34,5 +35,13 @@ protected:
 private:
 	/** 判定可攻击的最大距离（单位：厘米，默认 250 = 2.5m） */
 	UPROPERTY(EditDefaultsOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
-	float AttackRange = 250.f;
+	float AttackRange = 400.f;
+	// 是否需要视线
+	UPROPERTY(EditAnywhere, Category="AI")
+	bool bRequireLineOfSight = true;
+	// 追击距离
+	UPROPERTY(EditAnywhere, Category="AI")
+	float ChaseRange = 600.f;
+
+	void SetAIState(UBehaviorTreeComponent& OwnerComp, ELrAIState NewState);
 };

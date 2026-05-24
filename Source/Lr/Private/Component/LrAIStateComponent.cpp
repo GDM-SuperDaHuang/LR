@@ -26,6 +26,5 @@ void ULrAIStateComponent::SetAIState(ELrAIState NewState)
 
 bool ULrAIStateComponent::IsCombatState() const
 {
-	return CurrentState == ELrAIState::Combat
-		|| CurrentState == ELrAIState::Attack;
+	return CurrentState == ELrAIState::Combat;
 }

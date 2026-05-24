@@ -31,6 +31,19 @@ struct FLrGAConfig
 	USoundBase* ImpactSound = nullptr;
 };
 
+//生物对应的技能
+USTRUCT(BlueprintType)
+struct FPawnTypeGAConfig
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly)
+	uint16 PawnType = 0; //生物类型
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FGameplayTag> GATagList;
+};
+
 // 特效配置
 USTRUCT(BlueprintType)
 struct FLrNSConfig
@@ -73,6 +86,9 @@ public:
 	TArray<FLrGAConfig> GAConfigList;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FPawnTypeGAConfig> PawnTypeGAConfigList;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FLrNSConfig> NSConfigList;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -81,4 +97,5 @@ public:
 	const FLrGAConfig* FindGAByTag(const FGameplayTag& GATag) const;
 	const FLrNSConfig* FindNSByTag(const FGameplayTag& Tag) const;
 	const FLrWeaponConfig* FindWeaponByID(const int32 WeaponID) const;
+	const FPawnTypeGAConfig* FindPawnTypeGA(const uint16 PawnType) const;
 };

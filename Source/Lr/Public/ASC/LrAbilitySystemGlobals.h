@@ -13,5 +13,6 @@ UCLASS()
 class LR_API ULrAbilitySystemGlobals : public UAbilitySystemGlobals
 {
 	GENERATED_BODY()
-	
+public:
+	virtual FGameplayEffectContext* AllocGameplayEffectContext() const override;
 };

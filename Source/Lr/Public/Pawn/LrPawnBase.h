@@ -9,26 +9,29 @@
 #include "GameFramework/Pawn.h"
 #include "LrPawnBase.generated.h"
 
-class ULrAnimationComponent;
 class ULrASComponent;
+class ULrASC;
+class ULrAnimationComponent;
 class ULrMoverComponent;
 class UMotionWarpingComponent;
 class UAttributeSet;
-class UAbilitySystemComponent;
 class UCharacterMoverComponent;
 // class ULrMoverComponent;
 class ULrNavMovementComponent;
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnASCRegistered, UAbilitySystemComponent*);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnASCRegistered, ULrASC*);
 
 UCLASS()
-class LR_API ALrPawnBase : public APawn, public IMoverInputProducerInterface, public IAbilitySystemInterface,public IGenericTeamAgentInterface
+class LR_API ALrPawnBase : public APawn, public IMoverInputProducerInterface, public IAbilitySystemInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this pawn's properties
 	ALrPawnBase();
+
+	UPROPERTY(EditAnywhere)
+	uint16 PawnType; //生物类型
 
 	// virtual void TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
 
@@ -44,7 +47,7 @@ public:
 	/** 角色移动组件（Mover系统的核心） */
 	UPROPERTY(Category = Movement, VisibleAnywhere, BlueprintReadOnly, Transient, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<ULrMoverComponent> CharacterMotionComponent;
-	
+
 	/** 武器 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<UChildActorComponent> EquippedWeaponComponent;
@@ -63,10 +66,11 @@ public:
 	/** 导航组件 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="LrNavMoverComponent")
 	TObjectPtr<ULrNavMovementComponent> LrNavMoverComponent;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
+
 	/**
 	 * 输入生产入口点，不要重写！
 	 * 这是IMoverInputProducerInterface的核心实现，Mover系统每模拟帧调用一次
@@ -83,7 +87,7 @@ protected:
 	virtual void OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdResult);
 
 	UPROPERTY()
-	TObjectPtr<UAbilitySystemComponent> LrASC;
+	TObjectPtr<ULrASC> LrASC;
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> LrAS;
 
@@ -96,15 +100,16 @@ public:
 
 
 	virtual FGenericTeamId GetGenericTeamId() const override;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category="Team")
 	uint8 TeamID = 1;
-	
+
 	void UpdateMove(FVector Input);
 	void UpdatePressedJump(bool Input);
 
 	// 地面摩檫力物理
 	void CheckFloorPhysics(float& OutFrictionMult);
+
 public:
 	bool bIsJumpJustPressed = false; // 本帧刚刚按下
 private:

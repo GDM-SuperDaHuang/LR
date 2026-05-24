@@ -21,6 +21,8 @@ public:
 	virtual void BeginPlay() override;
 
 	virtual void RequestDirectMove(const FVector& MoveVelocity, bool bForceMaxSpeed) override;
+	// 重写停止激活移动的函数
+	virtual void StopActiveMovement() override;
 	// virtual FVector GetActorFeetLocation() const override;
 	
 	UPROPERTY()

@@ -4,13 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Data/LrGAListDA.h"
+#include "Game/LrGameModeBase.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "LrCommonLibrary.generated.h"
 
+class ULrBuffDA;
 struct FLrNSConfig;
 class UAbilitySystemComponent;
 struct FGameplayTag;
 struct FLrGAConfig;
+
 /**
  * 
  */
@@ -22,10 +25,14 @@ class LR_API ULrCommonLibrary : public UBlueprintFunctionLibrary
 public:
 	UFUNCTION(BlueprintPure, Category = Ability, Meta=(DefaultToSelf = "Actor"))
 	static UAbilitySystemComponent* GetASC(AActor* Actor);
+	static ALrGameModeBase* GetLrGameModeBase(const UObject* WorldContextObject);
 
 	// 根据标签查找技能配置
 	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))
 	static const FLrGAConfig& FindGAByTag(const UObject* WorldContextObject, const FGameplayTag& GATag);
+
+	// UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))
+	static const FPawnTypeGAConfig& FindPawnTypeGAConfig(const UObject* WorldContextObject, const uint16 PawnType);
 
 	// 根据标签查找特效NS
 	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))
@@ -35,7 +42,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))
 	static FLrWeaponConfig FindWeaponByID(const UObject* WorldContextObject, const int32 WeaponID);
 
+	// 根据GE配置
+	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|GE", meta=(DefaultToSelf = "WorldContextObject"))
+	static const ULrBuffDA* GetGEDA(const UObject* WorldContextObject);
+
 
 	// 打印信息
-	static void PrintLog(const UObject* WorldContextObject,const APlayerController* PC);
+	static void PrintLog(const UObject* WorldContextObject, const APlayerController* PC);
 };

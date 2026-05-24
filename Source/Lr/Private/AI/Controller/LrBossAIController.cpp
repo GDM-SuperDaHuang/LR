@@ -6,8 +6,4 @@
 void ALrBossAIController::InitializeAI()
 {
 	Super::InitializeAI();
-	if (LrBehaviorTree)
-	{
-		RunBehaviorTree(LrBehaviorTree);
-	}
 }

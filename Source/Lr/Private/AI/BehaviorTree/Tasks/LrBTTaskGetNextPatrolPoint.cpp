@@ -17,23 +17,41 @@ ULrBTTaskGetNextPatrolPoint::ULrBTTaskGetNextPatrolPoint()
 
 EBTNodeResult::Type ULrBTTaskGetNextPatrolPoint::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	ALrEnemyPawn* Enemy = Cast<ALrEnemyPawn>( OwnerComp.GetAIOwner()->GetPawn());
-
+	ALrEnemyPawn* Enemy = Cast<ALrEnemyPawn>(OwnerComp.GetAIOwner()->GetPawn());
 	if (!Enemy)
 	{
 		return EBTNodeResult::Failed;
 	}
 
 	ULrPatrolRouteComponent* Patrol = Enemy->GetPatrolRoute();
-
 	if (!Patrol)
 	{
 		return EBTNodeResult::Failed;
 	}
 
-	const FVector Location = Patrol->GetNextPatrolPoint();
+	const FVector NextPoint = Patrol->GetNextPatrolPoint();
+	if (NextPoint.IsNearlyZero())
+	{
+		return EBTNodeResult::Failed;
+	}
+	UBlackboardComponent* BB = OwnerComp.GetBlackboardComponent();
 
-	OwnerComp.GetBlackboardComponent()->SetValueAsVector(LrBBKeys::MoveLocation,Location);
-
+	if (!BB)
+	{
+		return EBTNodeResult::Failed;
+	}
+	BB->SetValueAsVector(LrBBKeys::MoveLocation, NextPoint);
+	
+	// 画点
+	DrawDebugSphere(
+		GetWorld(),
+		NextPoint,
+		100.f,
+		16,
+		FColor::Magenta,
+		false,
+		10.f,
+		0,
+		3.f);
 	return EBTNodeResult::Succeeded;
 }

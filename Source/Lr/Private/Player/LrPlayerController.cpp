@@ -126,7 +126,7 @@ void ALrPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 
 void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 {
-	ULrCommonLibrary::PrintLog(GetWorld(), this);
+	// ULrCommonLibrary::PrintLog(GetWorld(), this);
 	if (LrASC == nullptr)
 	{
 		TObjectPtr<APawn> tPawn = GetPawn();

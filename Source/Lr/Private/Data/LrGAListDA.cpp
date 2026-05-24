@@ -39,3 +39,17 @@ const FLrWeaponConfig* ULrGAListDA::FindWeaponByID(const int32 WeaponID) const
 	}
 	return nullptr;
 }
+
+const FPawnTypeGAConfig* ULrGAListDA::FindPawnTypeGA(const uint16 PawnType) const
+{
+	for (const FPawnTypeGAConfig& PawnTypeGAConfig : PawnTypeGAConfigList)
+	{
+		if (PawnTypeGAConfig.PawnType == PawnType)
+		{
+			return &PawnTypeGAConfig;
+		}
+	}
+	return nullptr;
+}
+
+

@@ -130,6 +130,70 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 	GameplayTags.GA_3 = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GA.3")),
 		FString("GA 3"));
+	
+	GameplayTags.GA_4 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.4")),
+		FString("GA_4"));
+	
+	GameplayTags.GA_5 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.5")),
+		FString("GA 5"));
+	
+	GameplayTags.GA_6 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.6")),
+		FString("GA 6"));
+
+	GameplayTags.GA_7 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.7")),
+		FString("GA 7"));
+
+	GameplayTags.GA_8 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.8")),
+		FString("GA 8"));
+
+	GameplayTags.GA_9 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.9")),
+		FString("GA 9"));
+	// ==========================================================================================
+
+
+	// ==========================================================================================
+	// 伤害类型 相关
+	// ==========================================================================================
+	GameplayTags.Damage_Base = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("Damage.Base")),
+		FString("Damage Base"));
+
+	// ==========================================================================================
+
+
+	// ==========================================================================================
+	// Start Debuff 相关
+	// ==========================================================================================
+	GameplayTags.Debuff_SpeedCut = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("Debuff.SpeedCut")),
+		FString("Debuff SpeedCut"));
+
+	GameplayTags.Debuff_Vertigo = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("Debuff.Vertigo")),
+		FString("Debuff Vertigo"));
+
+	GameplayTags.Debuff_Burn = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("Debuff.Burn")),
+		FString("Debuff Burn"));
+
+	GameplayTags.Debuff_Frozen = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("Debuff.Frozen")),
+		FString("Debuff Frozen"));
+
+	GameplayTags.Debuff_Poison = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("Debuff.Poison")),
+		FString("Debuff Poison"));
+
+	GameplayTags.Debuff_Stiffness = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("Debuff.Stiffness")),
+		FString("Debuff Stiffness"));
+
 	// ==========================================================================================
 
 
@@ -143,6 +207,30 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 	GameplayTags.GameplayCue_Melee_Hit = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GameplayCue.Melee.Hit")),
 		FString("GameplayCue Melee Attack Hit"));
+
+	GameplayTags.GameplayCue_Debuff_SpeedCut = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GameplayCue.Debuff.SpeedCut")),
+		FString("GameplayCue Debuff SpeedCut"));
+
+	GameplayTags.GameplayCue_Debuff_Vertigo = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName(TEXT("GameplayCue.Debuff.Vertigo")),
+	FString("GameplayCue Debuff Vertigo"));
+
+	GameplayTags.GameplayCue_Debuff_Burn = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName(TEXT("GameplayCue.Debuff.Burn")),
+	FString("GameplayCue Debuff Burn"));
+
+	GameplayTags.GameplayCue_Debuff_Frozen = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName(TEXT("GameplayCue.Debuff.Frozen")),
+	FString("GameplayCue Debuff Frozen"));
+
+	GameplayTags.GameplayCue_Debuff_Poison = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName(TEXT("GameplayCue.Debuff.Poison")),
+	FString("GameplayCue Debuff Poison"));
+
+	GameplayTags.GameplayCue_Debuff_Stiffness = UGameplayTagsManager::Get().AddNativeGameplayTag(
+	FName(TEXT("GameplayCue.Debuff.Stiffness")),
+	FString("GameplayCue Debuff Stiffness"));
 
 	// ==========================================================================================
 

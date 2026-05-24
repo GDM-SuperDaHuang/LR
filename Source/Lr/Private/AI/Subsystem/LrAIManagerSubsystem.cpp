@@ -105,6 +105,6 @@ ALrAIControllerBase* ULrAIManagerSubsystem::SpawnController(ALrEnemyPawn* Enemy,
 	}
 
 	NewController->Possess(Enemy);
-
+	// Enemy->PossessedBy(NewController);
 	return NewController;
 }

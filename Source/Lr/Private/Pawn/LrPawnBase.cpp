@@ -3,13 +3,11 @@
 
 #include "Pawn/LrPawnBase.h"
 
+#include "ASC/LrASC.h"
 #include "Component/LrAnimationComponent.h"
 #include "Component/LrASComponent.h"
-#include "DefaultMovementSet/CharacterMoverComponent.h"
-#include "Lib/LrCommonLibrary.h"
 #include "Mover/FLrMoverInputCmd.h"
 #include "Mover/LrMoverComponent.h"
-#include "Mover/Nav/LrNavMovementComponent.h"
 
 // Sets default values
 ALrPawnBase::ALrPawnBase()
@@ -180,7 +178,6 @@ void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdR
 
 	// 填充输入数据
 	Inputs.ControlRotation = GetControlRotation(); // 当前控制器旋转（相机朝向）
-
 	if (!EffectiveInput.IsNearlyZero())
 	{
 		// 设置移动意图类型为方向性意图，并传入移动方向
@@ -190,6 +187,7 @@ void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdR
 	}
 	else
 	{
+		// UE_LOG(LogTemp, Warning, TEXT("OnProduceInput : %f"), CachedMoveInput.Length());
 		// 无移动输入：移动意图为零向量
 		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent, FVector::ZeroVector);
 		// 保持当前角色朝向（或使用控制器前向，取决于设计）
@@ -199,8 +197,9 @@ void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdR
 	// 跳跃输入（一次性）
 	Inputs.bIsJumpPressed = bIsJumpJustPressed;
 	bIsJumpJustPressed = false; //
+	// CachedMoveInput = FVector::ZeroVector;
 }
-
+	
 
 // ue的mover插件，客户端移动出现抖动，服务器的移动的画面没有问题
 // Called every frame

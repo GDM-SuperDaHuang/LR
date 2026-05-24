@@ -16,7 +16,7 @@ void ULrASC::AddGA(const TArray<FGameplayTag>& GATagList)
 		FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(GetOwner(), GATag);
 		// 创建技能规格（Spec），Level 1，默认不给予输入
 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(LrDAConfig.GAClass, 1);
-		AbilitySpec.GetDynamicSpecSourceTags().AddTag(LrDAConfig.InputTag);
+		AbilitySpec.GetDynamicSpecSourceTags().AddTag(LrDAConfig.GATag);
 		/**
 		* GiveAbility
 		* 1. 生成全局唯一 Handle （通常一种技能一个）

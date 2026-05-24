@@ -61,140 +61,51 @@ public:
 	FGameplayTag GA_1;
 	FGameplayTag GA_2;
 	FGameplayTag GA_3;
+	FGameplayTag GA_4;
+	FGameplayTag GA_5;
+	FGameplayTag GA_6;
+	FGameplayTag GA_7;
+	FGameplayTag GA_8;
+	FGameplayTag GA_9;
+
 	/**************************************** 技能自身 相关 ************************/
 
 
+
 	//
-	// FGameplayTag Attributes_Secondary_Armor;
-	// FGameplayTag Attributes_Secondary_ArmorPenetration;
-	// FGameplayTag Attributes_Secondary_BlockChance;
-	// FGameplayTag Attributes_Secondary_CriticalHitChance;
-	// FGameplayTag Attributes_Secondary_CriticalHitDamage;
-	// FGameplayTag Attributes_Secondary_CriticalHitResistance;
-	// FGameplayTag Attributes_Secondary_HealthRegeneration;
-	// FGameplayTag Attributes_Secondary_ManaRegeneration;
-	//
-	// FGameplayTag Attributes_Secondary_MaxHealth;
-	// FGameplayTag Attributes_Secondary_MaxMana;
-	//
-	//
-	//
-	//
-	//
-	// FGameplayTag Attributes_Meta_IncomingXp;
-	//
-	//
-	//
-	// FGameplayTag InputTag_LMB;
-	// FGameplayTag InputTag_RMB;
-	// FGameplayTag InputTag_1;
-	// FGameplayTag InputTag_2;
-	// FGameplayTag InputTag_3;
-	// FGameplayTag InputTag_4;
-	// FGameplayTag InputTag_Passive_1;
-	// FGameplayTag InputTag_Passive_2;
-	//
-	//
-	// //蒙太奇事件通知标签
-	// FGameplayTag Event_Montage_FireBolt;
-	// FGameplayTag Event_Montage_Electrocute;
-	// FGameplayTag Event_Montage_ArcaneShards;
-	//
-	//
-	//
-	// // FGameplayTag Event_Montage_Attack_Melee;
-	// // CombatSocket_Weapon
-	// FGameplayTag CombatSocket_Weapon;
-	// FGameplayTag CombatSocket_RightHand;
-	// FGameplayTag CombatSocket_LeftHand;
-	// FGameplayTag CombatSocket_Tail;
-	//
-	//
-	// // Montage tag
-	// FGameplayTag Montage_Attack_1;
-	// FGameplayTag Montage_Attack_2;
-	// FGameplayTag Montage_Attack_3;
-	// FGameplayTag Montage_Attack_4;
-	//
-	//
-	// //伤害类型
-	// FGameplayTag Damage;
+	/**************************************** 伤害类型 相关 ************************/
+	FGameplayTag Damage_Base;
 	// FGameplayTag Damage_Fire;
 	// FGameplayTag Damage_Lightning;
 	// FGameplayTag Damage_Arcane;
 	// FGameplayTag Damage_Physical;
-	//
-	//
-	// //伤害抗性
-	// FGameplayTag Attributes_Resilience_Fire;
-	// FGameplayTag Attributes_Resilience_Lightning;
-	// FGameplayTag Attributes_Resilience_Arcane;
-	// FGameplayTag Attributes_Resilience_Physical;
-	//
-	// // debuff
-	// FGameplayTag Debuff_Burn;
-	// FGameplayTag Debuff_Stun;
-	// FGameplayTag Debuff_Arcane;
-	// FGameplayTag Debuff_Physical;
-	//
-	// FGameplayTag Debuff_Chance;
-	// FGameplayTag Debuff_Damage;
-	// FGameplayTag Debuff_Duration;
-	// FGameplayTag Debuff_Frequency;
-	//
-	//
-	// // 被动
-	// FGameplayTag Abilities_Passive_HaloOfProtection;
-	// FGameplayTag Abilities_Passive_LifeSiphon;
-	// FGameplayTag Abilities_Passive_ManaSiphon;
-	//
-	//
-	//
-	// FGameplayTag Abilities_None;
-	// FGameplayTag Abilities_Attack;
-	// FGameplayTag Abilities_Summon;
-	//
-	//
-	//
-	// FGameplayTag Abilities_HitReact;
-	//
-	// FGameplayTag Abilities_Status_Locked;
-	// FGameplayTag Abilities_Status_Eligible;
-	// FGameplayTag Abilities_Status_Unlocked;
-	// FGameplayTag Abilities_Status_Equipped;
-	//
-	// FGameplayTag Abilities_Type_Offensive;
-	// FGameplayTag Abilities_Type_Passive;
-	// FGameplayTag Abilities_Type_None;
-	//
-	//
-	//
-	// FGameplayTag Abilities_Fire_FireBolt;
-	// FGameplayTag Abilities_Fire_FireBlast;	
-	// FGameplayTag Abilities_Lightning_Electrocute;
-	// FGameplayTag Abilities_Arcane_ArcaneShards;
-	//
-	//
-	//
-	// FGameplayTag Cooldown_Fire_FireBolt;
-	// FGameplayTag Cooldown_Lighting_Electrocute;
-	// FGameplayTag Cooldown_Arcane_ArcaneShards;
-	// FGameplayTag Cooldown_Fire_FireBlast;
-	//
-	//
-	//
-	//
+	/**************************************** 伤害类型 相关 ************************/
+	
 	// TMap<FGameplayTag, FGameplayTag> DamageTypesToResilience;
 	// // TArray<FGameplayTag> DamageTypes;
 	// TMap<FGameplayTag, FGameplayTag> DamageTypesToDebuffs;
 	//
-	//
-	// FGameplayTag Effects_HitReact;
-	//
+
+
+	/**************************************** Debuff 相关 ************************/
+	FGameplayTag Debuff_SpeedCut;
+	FGameplayTag Debuff_Vertigo;
+	FGameplayTag Debuff_Burn;
+	FGameplayTag Debuff_Frozen;
+	FGameplayTag Debuff_Poison;
+	FGameplayTag Debuff_Stiffness;
+	/**************************************** Debuff 相关 ************************/
 
 	/**************************************** GameplayCue 相关 ************************/
 	FGameplayTag GameplayCue_Melee_Trail; //轨迹特效
 	FGameplayTag GameplayCue_Melee_Hit; // 命中特效
+	
+	FGameplayTag GameplayCue_Debuff_SpeedCut;
+	FGameplayTag GameplayCue_Debuff_Vertigo;
+	FGameplayTag GameplayCue_Debuff_Burn;
+	FGameplayTag GameplayCue_Debuff_Frozen;
+	FGameplayTag GameplayCue_Debuff_Poison;
+	FGameplayTag GameplayCue_Debuff_Stiffness;
 
 	// FGameplayTag GameplayCue_ShockBurst;
 	// FGameplayTag GameplayCue_ShockLoop;

@@ -33,15 +33,6 @@ public:
 	ALrAIControllerBase();
 	virtual FGenericTeamId GetGenericTeamId() const override;
 	virtual void ShutdownAI();
-
-	UPROPERTY(EditDefaultsOnly)
-	TObjectPtr<UBehaviorTree> LrBehaviorTree;
-	
-	UPROPERTY(EditDefaultsOnly)
-	TObjectPtr<UBlackboardComponent> LrBlackboardComponent;
-
-	// UPROPERTY(EditDefaultsOnly)
-	// TObjectPtr<UBehaviorTreeComponent> LrBehaviorTreeComponent;
 protected:
 	/**
 	 * 接管 Pawn 时的初始化逻辑
@@ -51,7 +42,7 @@ protected:
 	 */
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void InitializeAI();
-	
+
 	/**
 	 * 感知系统检测到目标的回调
 	 * @param Actor   被感知到的 Actor
@@ -62,19 +53,16 @@ protected:
 	 */
 	UFUNCTION()
 	void OnTargetDetected(AActor* Actor, FAIStimulus Stimulus);
-	
-	virtual void Tick(float DeltaSeconds) override;
-	void StartChase(AActor* InTarget);
-
-	void StopChase();
+	void SetTargetActor(AActor* Target);
+	void ClearTargetActor();
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Team")
-	uint8 TeamID = 1;
-	
+	uint8 TeamID = 1; //敌我id
+
 	// UPROPERTY()
 	// TObjectPtr<AActor> CurrentTarget;
-	//
+	
 	// bool bIsChasing = false;
 	UPROPERTY(EditDefaultsOnly)
 	float AcceptanceRadius = 120.f;

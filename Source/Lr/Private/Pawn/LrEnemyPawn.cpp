@@ -11,8 +11,10 @@
 #include "AI/Subsystem/LrAIManagerSubsystem.h"
 #include "Alembic/AbcGeom/IFaceSet.h"
 #include "Component/LrAIStateComponent.h"
+#include "Component/LrCombatComponent.h"
 #include "Component/LrPatrolRouteComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "Lib/LrCommonLibrary.h"
 #include "Mover/LrAllModes.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/Air/LrAirMovementMode.h"
@@ -29,8 +31,10 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// AI
 	// =========================
 	AIStateComponent = CreateDefaultSubobject<ULrAIStateComponent>(TEXT("AIStateComponent"));
-	PatrolRoute = CreateDefaultSubobject<ULrPatrolRouteComponent>(TEXT("PatrolRoute"));
+	LrCombatComponent = CreateDefaultSubobject<ULrCombatComponent>(TEXT("LrCombatComponent"));
 
+	PatrolRoute = CreateDefaultSubobject<ULrPatrolRouteComponent>(TEXT("PatrolRoute"));
+	AutoPossessAI = EAutoPossessAI::Disabled; //禁止自动Possess,自己直接调用
 	// =========================
 	// 骨骼 →碰撞体
 	// =========================
@@ -152,14 +156,17 @@ void ALrEnemyPawn::BeginPlay()
 void ALrEnemyPawn::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-
 	LrASC->InitAbilityActorInfo(this, this);
 	OnASCRegistered.Broadcast(LrASC);
-	if (StartupAbilities.Num() > 0)
-	{
-		ULrASC* LrEnemyASC = CastChecked<ULrASC>(LrASC);
-		LrEnemyASC->AddGA(StartupAbilities);
-	}
+	FPawnTypeGAConfig LrDAConfig = ULrCommonLibrary::FindPawnTypeGAConfig(this, PawnType);
+	LrASC->AddGA(LrDAConfig.GATagList);
+}
+
+void ALrEnemyPawn::GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const
+{
+	// Super::GetActorEyesViewPoint(OutLocation, OutRotation);
+	OutLocation = GetActorLocation() + FVector(0.f, 0.f, 60.f);
+	OutRotation = GetActorRotation();
 }
 
 void ALrEnemyPawn::FaceToDirection(const FVector& Direction, float DeltaTime)
