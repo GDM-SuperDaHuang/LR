@@ -6,23 +6,23 @@
 #include "Blueprint/UserWidget.h"
 #include "LrWorldBarWidget.generated.h"
 
+struct FGameplayTag;
 class ALrEnemyPawn;
 class UTextBlock;
 class UProgressBar;
 /**
- * 敌人血条
+ * 敌人UI血条
  */
 UCLASS()
 class LR_API ULrWorldBarWidget : public UUserWidget
 {
 	GENERATED_BODY()
-public:
 
+public:
 	void InitWidget(ALrEnemyPawn* InEnemy);
 
-	void UpdateHealth(float Percent);
+	void UpdateHealth(FGameplayTag GameplayTag, float Percent) const;
 	virtual void NativeConstruct() override;
-
 
 protected:
 	// 主进度条
@@ -31,12 +31,11 @@ protected:
 	// 虚幻进度条
 	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
 	TObjectPtr<UProgressBar> GhostBar;
-	
+
 	UPROPERTY()
 	TObjectPtr<ALrEnemyPawn> OwnerEnemy;
-	
+
 	// 数值显示
 	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
 	TObjectPtr<UTextBlock> TextHP;
-	
 };

@@ -4,8 +4,10 @@
 #include "Pawn/LrPawnBase.h"
 
 #include "ASC/LrASC.h"
+#include "ASC/AS/LrAS.h"
 #include "Component/LrAnimationComponent.h"
-#include "Component/LrASComponent.h"
+#include "Data/LrExcelConfig.h"
+#include "Lib/LrCommonLibrary.h"
 #include "Mover/FLrMoverInputCmd.h"
 #include "Mover/LrMoverComponent.h"
 
@@ -27,8 +29,8 @@ ALrPawnBase::ALrPawnBase()
 	// todo 交给子类做
 	// LrMoverComponent->SetUpdatedComponent(CapsuleComponent);
 	CharacterMotionComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
-	UE_LOG(LogTemp, Warning, TEXT("[ALrPawnBase init] on Mover=%p"),CharacterMotionComponent.Get());
-	
+	UE_LOG(LogTemp, Warning, TEXT("[ALrPawnBase init] on Mover=%p"), CharacterMotionComponent.Get());
+
 	// =========================
 	// Nav → Mover 桥接
 	// =========================
@@ -46,7 +48,7 @@ ALrPawnBase::ALrPawnBase()
 	// =========================
 	// 属性 ui设置
 	// =========================
-	LrASComponent = CreateDefaultSubobject<ULrASComponent>(TEXT("LrASComponent"));
+	// LrASComponent = CreateDefaultSubobject<ULrASComponent>(TEXT("LrASComponent"));
 
 	// =========================
 	// 动画相关
@@ -59,6 +61,32 @@ UAbilitySystemComponent* ALrPawnBase::GetAbilitySystemComponent() const
 {
 	// 使得 UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor)可以拿到ASC
 	return LrASC;
+}
+
+ULrCombatComponentBase* ALrPawnBase::GetCombatComponent() const
+{
+	return LrCombatComponent;
+}
+
+
+uint8 ALrPawnBase::GetTeamID() const
+{
+	return TeamID;
+}
+
+bool ALrPawnBase::IsDead() const
+{
+	return false;
+}
+
+ULrASC* ALrPawnBase::GetASC() const
+{
+	return LrASC;
+}
+
+ULrAS* ALrPawnBase::GetAS() const
+{
+	return LrAS;
 }
 
 // Called when the game starts or when spawned
@@ -84,80 +112,6 @@ void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdCon
 	// IMoverInputProducerInterface::ProduceInput_Implementation(SimTimeMs, InputCmdResult);
 	OnProduceInput(SimTimeMs, InputCmdResult);
 }
-
-// void ALrPawnBase::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction)
-// {
-// 	Super::TickActor(DeltaTime, TickType, ThisTickFunction);
-// 	FMoverInputCmdContext MoverInputCmdContext = CharacterMotionComponent->GetLastInputCmd();
-// 	if (FMoverDataStructBase* MoverDataStructBase = MoverInputCmdContext.InputCollection.FindDataByType(FCharacterDefaultInputs::StaticStruct()))
-// 	{
-// 		FCharacterDefaultInputs::StaticStruct()->CopyScriptStruct(
-// 			&CharacterDefaultInputsPre,
-// 			MoverDataStructBase
-// 		);
-// 	}
-// }
-
-
-// void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdResult)
-// {
-// 	// CharacterMotionComponent.
-// 	// 1️⃣ 清空“蓝图里的 InputDataCollection”
-// 	// InputDataCollection.Empty();
-// 	// CharacterDefaultInputsPre.SetMoveInput(EMoveInputType::DirectionalIntent, CachedMoveInput);
-// 	// CharacterDefaultInputsPre.OrientationIntent = CachedMoveInput;
-// 	// InputDataCollection.AddDataByCopy(&CharacterDefaultInputsPre);
-// 	// InputCmdResult.InputCollection.AddDataByCopy(&CharacterDefaultInputsPre);
-// 	// InputCmdResult.InputCollection = InputDataCollection;
-//
-// 	// FMoverDataCollection,K2_AddDataToCollection
-// 	// CharacterDefaultInputsPre
-// 	/**
-// 	  * 关键步骤1：获取输入数据结构
-// 	  * FCharacterDefaultInputs是派生自FMoverDataStructBase的结构
-// 	  * 使用FindOrAddMutableDataByType获取或创建，存储在InputCollection中
-// 	  * 生命周期：仅属于这一帧的InputCmd，模拟帧结束后丢弃
-// 	  */
-// 	// FLrDefaultInputs& Inputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FLrDefaultInputs>();
-// 	UWorld* World = this->GetWorld();
-//
-// 	// ************************************************************************************************
-// 	FCharacterDefaultInputs& Inputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FCharacterDefaultInputs>();
-// 	const FVector RawMove = CachedMoveInput;
-// 	FVector MoveIntentLocal(RawMove.Y, RawMove.X, 0.f);
-// 	
-// 	if (!MoveIntentLocal.IsNearlyZero())
-// 	{
-// 		if (World->IsNetMode(NM_ListenServer))
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("Server===%s"), *CachedMoveInput.ToString());
-// 		}
-// 		else if (World->IsNetMode(NM_Client))
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("Client==%s"), *CachedMoveInput.ToString());
-// 		}
-//
-// 		
-// 		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent, MoveIntentLocal.GetClampedToMaxSize(1.f));
-// 		Inputs.OrientationIntent = MoveIntentLocal.GetSafeNormal();
-// 		Inputs.SuggestedMovementMode = DefaultModeNames::Walking;
-// 		if (World->IsNetMode(NM_ListenServer))
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("Server*****%s"), *Inputs.OrientationIntent.ToString());
-// 		}
-// 		else if (World->IsNetMode(NM_Client))
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("Client*********%s"), *Inputs.OrientationIntent.ToString());
-// 		}
-// 	}
-// 	else
-// 	{
-// 		// ⭐ 正确的“停下”
-// 		Inputs.SetMoveInput(EMoveInputType::DirectionalIntent, FVector::ZeroVector);
-// 		// Inputs.OrientationIntent = FVector::ZeroVector;
-// 		// Inputs.SuggestedMovementMode = NAME_None;
-// 	}
-// }
 
 void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdResult)
 {
@@ -199,7 +153,7 @@ void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdR
 	bIsJumpJustPressed = false; //
 	// CachedMoveInput = FVector::ZeroVector;
 }
-	
+
 
 // ue的mover插件，客户端移动出现抖动，服务器的移动的画面没有问题
 // Called every frame
@@ -249,6 +203,32 @@ void ALrPawnBase::CheckFloorPhysics(float& OutFrictionMult)
 		if (Hit.PhysMaterial.IsValid())
 		{
 			OutFrictionMult = Hit.PhysMaterial->Friction;
+		}
+	}
+}
+
+
+void ALrPawnBase::InitAS() const
+{
+	ALrGameModeBase* LrGameModeBase = ULrCommonLibrary::GetLrGameModeBase(GetWorld());
+	TObjectPtr<ULrExcelConfig> LrExcelConfig = LrGameModeBase->LrExcelConfig;
+	if (!LrExcelConfig) return;
+	TArray<FLrInitASRow*> LrInitAsRows = LrExcelConfig->FindAllAS();
+	for (const FLrInitASRow* Row : LrInitAsRows)
+	{
+		if (!Row)
+		{
+			continue;
+		}
+		if (!Row->ASTag.IsValid())
+		{
+			continue;
+		}
+		FAttributeFuncPtr* Find = LrAS->TagsASMap.Find(Row->ASTag);
+		if (Find)
+		{
+			FGameplayAttribute GameplayAttribute = (*Find)();
+			LrASC->SetNumericAttributeBase(GameplayAttribute, Row->BaseValue);
 		}
 	}
 }

@@ -3,21 +3,22 @@
 
 #include "UI/UIController/LrUIController.h"
 
-#include "Component/LrASComponent.h"
+#include "GameplayTagContainer.h"
+#include "Tags/LrGameplayTags.h"
 #include "UI/ViewModel/LrMVVMVBar.h"
 
-void ULrUIController::Init(ULrASComponent* InASComponent)
+void ULrUIController::Init()
 {
-	ASComponent = InASComponent;
+	// ASComponent = InASComponent;
 
 	HPVM = NewObject<ULrMVVMVBar>(this);
 	MPVM = NewObject<ULrMVVMVBar>(this);
 
-	InASComponent->OnHealthChanged.AddUObject(this,&ULrUIController::OnHPChanged);
-	InASComponent->OnManaChanged.AddUObject(this,&ULrUIController::OnMPChanged);
+	// InASComponent->OnHealthChanged.AddUObject(this, &ULrUIController::OnHPChanged);
+	// InASComponent->OnManaChanged.AddUObject(this, &ULrUIController::OnMPChanged);
 
-	OnHPChanged(InASComponent->GetHealth(),InASComponent->GetMaxHealth());
-	OnMPChanged(InASComponent->GetMana(),InASComponent->GetMaxMana());
+	// OnHPChanged(InASComponent->GetHealth(), InASComponent->GetMaxHealth());
+	// OnMPChanged(InASComponent->GetMana(), InASComponent->GetMaxMana());
 }
 
 void ULrUIController::Tick(float DeltaTime)
@@ -30,6 +31,19 @@ void ULrUIController::Tick(float DeltaTime)
 	if (MPVM)
 	{
 		MPVM->Tick(DeltaTime);
+	}
+}
+
+void ULrUIController::OnASChanged(FGameplayTag ASTag, float Current, float Max)
+{
+	FLrGameplayTags LrTags = FLrGameplayTags::Get();
+	if (ASTag == LrTags.As_HP)
+	{
+		OnHPChanged(Current, Max);
+	}
+	else if (ASTag == LrTags.As_MP)
+	{
+		OnMPChanged(Current, Max);
 	}
 }
 

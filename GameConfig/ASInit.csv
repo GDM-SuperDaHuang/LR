@@ -1,0 +1,7 @@
+---,ASTag,BaseValue
+1,(TagName="As.MaxHP"),200
+2,(TagName="As.MaxMP"),150
+3,(TagName="As.MaxEndurance"),150
+4,(TagName="As.HP"),100
+5,(TagName="As.MP"),100
+6,(TagName="As.Endurance"),100

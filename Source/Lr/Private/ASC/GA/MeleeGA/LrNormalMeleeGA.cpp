@@ -3,21 +3,18 @@
 
 #include "ASC/GA/MeleeGA/LrNormalMeleeGA.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "MotionWarpingComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "ASC/LrASC.h"
+#include "Component/Combat/LrPlayerCombatComponent.h"
 #include "Data/LrGAListDA.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Pawn/LrPawnBase.h"
-#include "Tags/LrGameplayTags.h"
 
-
-// ULrNormalMeleeGA::ULrNormalMeleeGA()
-// {
-// 	InputTag = FLrGameplayTags::Get().InputTag_J;
-// }
 
 void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
@@ -58,10 +55,7 @@ void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 
 
 	// ================== 2. 播放 Montage ==================
-	FLrGameplayTags LrGameplayTags = FLrGameplayTags::Get();
-
-	FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(OwnerPawn, LrGameplayTags.GA_1);
-
+	FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(OwnerPawn, GetAssetTags().First());
 	TArray<UAnimMontage*> AnimMontages = LrDAConfig.MontageList;
 	int32 Length = AnimMontages.Num();
 	if (Length <= 0)
@@ -108,15 +102,10 @@ void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	// ========== 4. 等待攻击真正生效通知 ==========
 	UAbilityTask_WaitGameplayEvent* EventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
 		this,
-		LrGameplayTags.Montage_Event_Attack_GA1
+		LrDAConfig.MontageEvent
 	);
 
-
-	EventTask->EventReceived.AddDynamic(
-		this,
-		&ULrNormalMeleeGA::OnAttackEvent
-	);
-
+	EventTask->EventReceived.AddDynamic(this, &ULrNormalMeleeGA::OnAttackEvent);
 	EventTask->ReadyForActivation();
 
 	// ========== 7. 能力结束时机 ==========
@@ -145,6 +134,13 @@ void ULrNormalMeleeGA::EndAbility(const FGameplayAbilitySpecHandle Handle, const
 void ULrNormalMeleeGA::OnMontageFinished()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo())))
+	{
+		if (ULrCombatComponentBase* Combat = GetAvatarActorFromActorInfo()->FindComponentByClass<ULrCombatComponentBase>())
+		{
+			LrASC->ApplyDamageToTarget(Combat->CachedTargetActor.Get(), DamageEffectParams);
+		}
+	}
 }
 
 

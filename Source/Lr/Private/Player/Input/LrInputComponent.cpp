@@ -23,12 +23,11 @@ void ULrInputComponent::ApplyPlayerKeyMappings(const ULrInputConfigDA* InputConf
 			continue;
 		}
 		// 查找玩家自定义按键
-		const FLrPlayerKeyMapping* PlayerMapping =
-			SaveGame->KeyMappings.FindByPredicate(
-				[&](const FLrPlayerKeyMapping& Data)
-				{
-					return Data.InputTag == Row.InputTag;
-				});
+		const FLrPlayerKeyMapping* PlayerMapping = SaveGame->KeyMappings.FindByPredicate(
+			[&](const FLrPlayerKeyMapping& Data)
+			{
+				return Data.InputTag == Row.InputTag;
+			});
 
 		// 玩家自定义
 		if (PlayerMapping)
@@ -68,15 +67,13 @@ void ULrInputComponent::ApplyPlayerKeyMappings(const ULrInputConfigDA* InputConf
 				Swizzle->Order = EInputAxisSwizzle::YXZ;
 				Mapping.Modifiers.Add(Swizzle);
 			}
-			
+
 			// --------------------------------
 			// 方向
 			// --------------------------------
 			if (Key.Scale < 0.f)
 			{
-				UInputModifierNegate* Negate =
-					NewObject<UInputModifierNegate>();
-
+				UInputModifierNegate* Negate = NewObject<UInputModifierNegate>();
 				// 前后移动反转 Y
 				if (Key.IsFU)
 				{

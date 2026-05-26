@@ -34,10 +34,7 @@ void ALrPlayerController::BeginPlay()
 	ULrGameInstance* GI = GetGameInstance<ULrGameInstance>();
 	if (GI)
 	{
-		ULrInputComponent::ApplyPlayerKeyMappings(
-			InputConfig,
-			GI->InputSaveGame,
-			LrIMC);
+		ULrInputComponent::ApplyPlayerKeyMappings(InputConfig, GI->InputSaveGame, LrIMC);
 	}
 
 	// 输入模式：既响应游戏（WASD）也响应 UI（点击 Widget）
@@ -45,7 +42,6 @@ void ALrPlayerController::BeginPlay()
 	// InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock); // 不锁定鼠标到视口
 	// InputModeData.SetHideCursorDuringCapture(false); // 捕获输入时不隐藏光标
 	// SetInputMode(InputModeData); // 应用输入模式
-	
 }
 
 void ALrPlayerController::SetupInputComponent()
@@ -72,7 +68,7 @@ void ALrPlayerController::SetupInputComponent()
 		&ThisClass::AbilityInputTagPressed,
 		&ThisClass::AbilityInputTagReleased,
 		&ThisClass::AbilityInputTagHeld);
-	
+
 	/**
 	 * 普通移动轴绑定 
 	 * ETriggerEvent::Started:(按下：调用,只这一下)
@@ -86,9 +82,11 @@ void ALrPlayerController::SetupInputComponent()
 	// 停止
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ALrPlayerController::MoveCompleted);
 
+	// AuraInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ALrPlayerController::Jump);
+
+
 	//跳
 	// AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALrPlayerController::Jump);
-	
 }
 
 // 按下
@@ -110,7 +108,15 @@ void ALrPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
 		if (LrASC == nullptr) return;
 	}
-	LrASC->AbilityInputTagReleased(InputTag);
+	//可能不触发ASC
+	if (InputTag == FLrGameplayTags::Get().InputTag_Jump)
+	{
+		Jump();
+	}	
+	else
+	{
+		LrASC->AbilityInputTagReleased(InputTag);
+	}
 }
 
 // 一直按

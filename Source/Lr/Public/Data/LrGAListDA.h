@@ -19,10 +19,13 @@ struct FLrGAConfig
 	TSubclassOf<UGameplayAbility> GAClass; //技能
 
 	UPROPERTY(EditDefaultsOnly)
-	FGameplayTag GATag = FGameplayTag(); // 技能本身
+	FGameplayTag GATag = FGameplayTag(); // 技能本身，AssetTag
 
 	UPROPERTY(EditDefaultsOnly)
-	FGameplayTag InputTag = FGameplayTag(); // 触发技的标签。
+	FGameplayTag MontageEvent = FGameplayTag(); // 蒙太奇事件结束触发技的标签。
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag InputTag = FGameplayTag(); // 输入触发标签。
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<UAnimMontage*> MontageList;
@@ -77,7 +80,7 @@ struct FLrWeaponConfig
  * 
  */
 UCLASS()
-class LR_API ULrGAListDA : public UDataAsset
+class LR_API ULrGAListDA : public UDataAsset 
 {
 	GENERATED_BODY()
 
@@ -93,9 +96,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FLrWeaponConfig> LrWeaponConfigList;
-
+	
 	const FLrGAConfig* FindGAByTag(const FGameplayTag& GATag) const;
 	const FLrNSConfig* FindNSByTag(const FGameplayTag& Tag) const;
 	const FLrWeaponConfig* FindWeaponByID(const int32 WeaponID) const;
 	const FPawnTypeGAConfig* FindPawnTypeGA(const uint16 PawnType) const;
+
 };

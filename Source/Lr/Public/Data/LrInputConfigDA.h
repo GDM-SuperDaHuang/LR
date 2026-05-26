@@ -10,12 +10,12 @@
 
 class UInputMappingContext;
 
-// 默认 技能按键 绑定
+// 默认 技能按键 绑定，没有wasd移动
 USTRUCT(BlueprintType)
 struct FLrDefaultBindInputFKey
 {
 	GENERATED_BODY()
-
+	//输入事件
 	UPROPERTY(EditDefaultsOnly)
 	const class UInputAction* InputAction = nullptr;
 
@@ -65,7 +65,7 @@ class LR_API ULrInputConfigDA : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	const UInputAction* FindAbilityInputActionForTag(const FGameplayTag& InputTag, bool bLogNotFound = false) const;
+	// const UInputAction* FindAbilityInputActionForTag(const FGameplayTag& InputTag, bool bLogNotFound = false) const;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FLrAxisBindInputFKey> LrAxisBindInputFKeyList;

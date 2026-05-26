@@ -22,10 +22,10 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere)
-	float BlinkDistance = 1200.f;// 闪现距离
+	float BlinkDistance = 500.f;// 闪现距离
 
 	UPROPERTY(EditAnywhere)
-	float BlinkDuration = 0.15f;// 闪现持续时间
+	float BlinkDuration = 0.2f;// 闪现持续时间
 
 	UPROPERTY(EditAnywhere)
 	bool bIgnoreGravity = true;// 是否无视重力

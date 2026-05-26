@@ -37,6 +37,7 @@ public:
 	// 客户端
 	virtual void OnRep_PlayerState() override;
 
+	virtual ULrAS* GetAS() const override;
 
 protected:
 	// 装备武器

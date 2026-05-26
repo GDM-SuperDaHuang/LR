@@ -29,6 +29,6 @@ class LR_API ULrSaveGame : public USaveGame
 public:
 
 	UPROPERTY()
-	TArray<FLrPlayerKeyMapping> KeyMappings;
+	TArray<FLrPlayerKeyMapping> KeyMappings;//历史记录
 	
 };

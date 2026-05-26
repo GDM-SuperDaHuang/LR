@@ -3,6 +3,7 @@
 
 #include "UI/Widget/Bar/WorldBar/LrWorldBarWidget.h"
 
+#include "GameplayTagContainer.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 
@@ -11,7 +12,7 @@ void ULrWorldBarWidget::InitWidget(ALrEnemyPawn* InEnemy)
 	OwnerEnemy = InEnemy;
 }
 
-void ULrWorldBarWidget::UpdateHealth(float Percent)
+void ULrWorldBarWidget::UpdateHealth(FGameplayTag GameplayTag,float Percent) const
 {
 	if (MainBar)
 	{

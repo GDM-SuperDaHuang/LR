@@ -3,11 +3,12 @@
 
 #include "ASC/GA/MeleeGA/LrGAEnemyMeleeAttack.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "Component/LrCombatComponent.h"
+#include "ASC/LrASC.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Pawn/LrPawnBase.h"
-#include "Tags/LrGameplayTags.h"
+
 
 void ULrGAEnemyMeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
@@ -19,10 +20,9 @@ void ULrGAEnemyMeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
 	}
-	
+
 	//选择一个Montage
-	FLrGameplayTags LrGameplayTags = FLrGameplayTags::Get();
-	FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(OwnerPawn, LrGameplayTags.GA_1);
+	FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(OwnerPawn, GetAssetTags().First());
 	TArray<UAnimMontage*> AnimMontages = LrDAConfig.MontageList;
 	int32 Length = AnimMontages.Num();
 	if (Length <= 0)
@@ -45,7 +45,7 @@ void ULrGAEnemyMeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
-
+	
 	// Montage 正常结束
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnMontageCompleted);
 
@@ -65,13 +65,13 @@ void ULrGAEnemyMeleeAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, 
 	{
 		return;
 	}
-	ULrCombatComponent* Combat = Pawn->FindComponentByClass<ULrCombatComponent>();
+	ULrCombatComponentBase* Combat = Pawn->FindComponentByClass<ULrCombatComponentBase>();
 	if (!Combat)
 	{
 		return;
 	}
 
-	Combat->FinishAttack();
+	// Combat->FinishAttack();
 }
 
 void ULrGAEnemyMeleeAttack::OnMontageCancelled()
@@ -82,4 +82,11 @@ void ULrGAEnemyMeleeAttack::OnMontageCancelled()
 void ULrGAEnemyMeleeAttack::OnMontageCompleted()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo())))
+	{
+		if (ULrCombatComponentBase* Combat = GetAvatarActorFromActorInfo()->FindComponentByClass<ULrCombatComponentBase>())
+		{
+			LrASC->ApplyDamageToTarget(Combat->CachedTargetActor.Get(), DamageEffectParams);
+		}
+	}
 }

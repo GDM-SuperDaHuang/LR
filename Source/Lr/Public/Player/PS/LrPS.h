@@ -7,8 +7,8 @@
 #include "GameFramework/PlayerState.h"
 #include "LrPS.generated.h"
 
+class ULrAS;
 class ULrASC;
-class UAttributeSet;
 /**
  * 
  */
@@ -19,16 +19,18 @@ class LR_API ALrPS : public APlayerState, public IAbilitySystemInterface
 
 public:
 	ALrPS();
-
+	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	FORCEINLINE UAttributeSet* GetAttributeSet() const { return LrAS; }
+	FORCEINLINE ULrAS* GetAttributeSet() const { return LrAS; }
+
+
+
 
 protected:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrASC> LrASC;
-
 	UPROPERTY()
-	TObjectPtr<UAttributeSet> LrAS;
+	TObjectPtr<ULrAS> LrAS;
 };

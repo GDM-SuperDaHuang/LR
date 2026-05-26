@@ -4,25 +4,28 @@
 
 #include "CoreMinimal.h"
 #include "ASC/GA/LrGABase.h"
+#include "ASC/GE/LrGEContext.h"
 #include "LrNormalMeleeGATest.generated.h"
 
 class ALrPawnBase;
 /**
- * 
+ * 普通近战攻击
  */
 UCLASS()
 class LR_API ULrNormalMeleeGATest : public ULrGABase
 {
 	GENERATED_BODY()
 public:
-	// ULrNormalMeleeGA();
+	UPROPERTY(BlueprintReadWrite, meta=(ExposeOnSpawn = true))
+	FDamageEffectParams DamageEffectParams;
+	
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 	
+
 	UFUNCTION()
 	void OnMontageFinished();
-
 
 	UFUNCTION()
 	void OnAttackEvent(FGameplayEventData Payload);

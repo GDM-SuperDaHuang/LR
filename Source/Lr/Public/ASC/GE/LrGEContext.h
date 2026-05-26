@@ -6,18 +6,50 @@
 #include "GameplayEffectTypes.h"
 #include "LrGEContext.generated.h" // 必须最后 include
 
+class UGameplayEffect;
+
 //设置 Flags |= Burn;
-enum EDamageFlags : uint8
+UENUM(BlueprintType)
+enum class EDamageFlags : uint8
 {
-	None = 0,
-	Critical = 1 << 0, // 00000001 是否暴击
-	SpeedCut = 1 << 1, // 00000001 是否减速
-	Vertigo = 1 << 2, // 00000010 眩晕
-	Burn = 1 << 3, //  燃烧
-	Frozen = 1 << 4, //  冻硬
-	Poison = 1 << 5, //  中毒
-	Repel = 1 << 6, //  击退
-	Stiffness = 1 << 7, //  僵直
+	None = 0 UMETA(Hidden),
+	Critical = 1 << 0,
+	SpeedCut = 1 << 1,
+	Vertigo = 1 << 2,
+	Burn = 1 << 3,
+	Frozen = 1 << 4,
+	Poison = 1 << 5,
+	Repel = 1 << 6,
+	Stiffness = 1 << 7,
+};
+
+ENUM_CLASS_FLAGS(EDamageFlags)
+
+USTRUCT(BlueprintType)
+struct FDamageEffectParams
+{
+	GENERATED_BODY()
+
+	FDamageEffectParams()
+	{
+	}
+
+	UPROPERTY()
+	EDamageFlags Flags = EDamageFlags::None;
+	//////////
+	/// 减速
+	//////////
+	UPROPERTY()
+	float SpeedCutRate = 0.0f; //减速效率
+	UPROPERTY()
+	float Duration = 0.0f; //持续时间
+	UPROPERTY()
+	float DamageValue = 0.0f; //每秒伤害
+	//////////
+	/// 击退
+	//////////
+	UPROPERTY()
+	FVector RepelVector = FVector::ZeroVector; //击退位置
 };
 
 /**
@@ -27,59 +59,27 @@ USTRUCT()
 struct FLrGameplayEffectContext : public FGameplayEffectContext
 {
 	GENERATED_BODY()
+
 public:
 	UPROPERTY()
-	uint8 Flags = 0;
+	EDamageFlags Flags = EDamageFlags::None;
 
 	//////////
 	/// 减速
 	//////////
 	UPROPERTY()
 	float SpeedCutRate = 0.0f; //减速效率
-	UPROPERTY()
-	float SpeedCutDuration = 0.0f; //减速时间
 
-	//////////
-	/// 眩晕
-	//////////
 	UPROPERTY()
-	float VertigoDuration = 0.0f; //眩晕时间
+	float Duration = 0.0f; //持续时间
 
-	//////////
-	/// 燃烧
-	//////////
 	UPROPERTY()
-	float BurnValue = 0.0f; //每秒燃烧
-	UPROPERTY()
-	float BurnDuration = 0.0f; //Burn时间
-
-	//////////
-	/// 冰冻
-	//////////
-	UPROPERTY()
-	float FrozenDuration = 0.0f; //冰冻时间
-
-
-	//////////
-	/// 中毒
-	//////////
-	UPROPERTY()
-	float PoisonValue = 0.0f; //每秒中毒
-	UPROPERTY()
-	float PoisonDuration = 0.0f; //中毒时间
-	
+	float DamageValue = 0.0f; //每秒伤害
 	//////////
 	/// 击退
 	//////////
 	UPROPERTY()
 	FVector RepelVector = FVector::ZeroVector; //击退位置
-
-	//////////
-	/// 僵直
-	//////////
-	UPROPERTY()
-	float StiffnessDuration = 0.0f; //僵直时间
-	
 public:
 	/**
 	 * 需要通过网络复制（服务器→客户端）时，请按我规定的格式打包/解包，否则默认序列化会漏掉我扩展的成员变量
@@ -107,7 +107,12 @@ public:
 	//是否命中
 	FORCEINLINE bool HasFlag(EDamageFlags InFlag) const
 	{
-		return (Flags & InFlag) != 0;
+		return EnumHasAnyFlags(Flags, InFlag);
+	}
+
+	FORCEINLINE bool HasFlag(EDamageFlags InFlag1, EDamageFlags InFlag2) const
+	{
+		return EnumHasAnyFlags(InFlag1, InFlag2);
 	}
 
 	//添加标志
@@ -121,7 +126,6 @@ public:
 	{
 		Flags &= ~InFlag;
 	}
-
 };
 
 // 注册到引擎

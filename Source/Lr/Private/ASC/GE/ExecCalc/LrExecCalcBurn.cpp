@@ -4,6 +4,7 @@
 #include "ASC/GE/ExecCalc/LrExecCalcBurn.h"
 
 #include "ASC/AS/LrAS.h"
+#include "Lr/Lr.h"
 #include "Tags/LrGameplayTags.h"
 
 
@@ -50,6 +51,12 @@ void ULrExecCalcBurn::Execute_Implementation(const FGameplayEffectCustomExecutio
 	int32 StackCount = Spec.GetStackCount();
 	// 每层增加伤害
 	Damage *= StackCount;
+
+
+	uint8 Flags = Spec.GetSetByCallerMagnitude(LrGEKeys::Flags, false);
+	float SpeedCutRate = Spec.GetSetByCallerMagnitude(LrGEKeys::SpeedCutRate, false);
+	float Duration = Spec.GetSetByCallerMagnitude(LrGEKeys::Duration, false);
+	float DamageValue = Spec.GetSetByCallerMagnitude(LrGEKeys::DamageValue, false);
 
 	//防御
 	float Defense = 0.f;

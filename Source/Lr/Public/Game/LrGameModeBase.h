@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "LrGameModeBase.generated.h"
 
+class ULrExcelConfig;
 class ULrBuffDA;
 class ULrGAListDA;
 /**
@@ -22,4 +23,7 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Character Class Defaults")
 	TObjectPtr<ULrBuffDA> LrBuffDA;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Character Class Defaults")
+	TObjectPtr<ULrExcelConfig> LrExcelConfig;
 };

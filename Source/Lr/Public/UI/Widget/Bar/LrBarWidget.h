@@ -29,7 +29,7 @@ class LR_API ULrBarWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void SetViewModel(ULrMVVMVBar* InViewModel);
+	void SetViewModel(FName ViewModelName,ULrMVVMVBar* InViewModel);
 protected:
 	// 主进度条
 	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
@@ -46,7 +46,4 @@ protected:
 	// VM
 	UPROPERTY()
 	TObjectPtr<ULrMVVMVBar> ViewModel;
-
-private:
-	void Refresh();
 };

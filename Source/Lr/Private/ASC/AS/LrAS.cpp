@@ -26,10 +26,10 @@ ULrAS::ULrAS()
 	TagsASMap.Add(GameplayTags.As_Endurance, GetEnduranceAttribute);
 	TagsASMap.Add(GameplayTags.As_MaxEndurance, GetMaxEnduranceAttribute);
 
-
-	// TagsToAttributes.Add(GameplayTags.Attributes_Primary_Intelligence, GetIntelligenceAttribute);
-	// TagsToAttributes.Add(GameplayTags.Attributes_Primary_Resilience, GetResilienceAttribute);
-	// TagsToAttributes.Add(GameplayTags.Attributes_Primary_Vigor, GetVigorAttribute);
+	/* 标签关联绑定  */
+	TagsASMaxTags.Add(GameplayTags.As_HP, GameplayTags.As_MaxHP);
+	TagsASMaxTags.Add(GameplayTags.As_MP, GameplayTags.As_MaxMP);
+	TagsASMaxTags.Add(GameplayTags.As_Endurance, GameplayTags.As_MaxEndurance);
 }
 
 void ULrAS::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -66,18 +66,26 @@ void ULrAS::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewVa
 	if (Attribute == GetHPAttribute())
 	{
 		// 限制Health在0到MaxHealth之间
-		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHP());
-		// UE_LOG(LogTemp, Warning, TEXT("Health=%f"), NewValue);
+		if (GetMaxHP()!=0)
+		{
+			NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHP());
+		}
 	}
 
 	if (Attribute == GetMPAttribute())
 	{
-		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxMP());
+		if (GetMaxMP()!=0)
+		{
+			NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxMP());
+		}
 	}
 
 	if (Attribute == GetEnduranceAttribute())
 	{
-		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxEndurance());
+		if (GetMaxEndurance()!=0)
+		{
+			NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxEndurance());
+		}
 	}
 }
 
@@ -126,7 +134,7 @@ void ULrAS::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackDat
 		const FLrGameplayEffectContext* LrGEContext = static_cast<const FLrGameplayEffectContext*>(Props.EffectContextHandle.Get());
 		if (LrGEContext)
 		{
-			if (LrGEContext->HasFlag(Burn))
+			if (LrGEContext->HasFlag(EDamageFlags::Burn))
 			{
 				ApplyDebuff(*LrGEContext, Props);
 			}
@@ -190,42 +198,6 @@ void ULrAS::OnRepEndurance(const FGameplayAttributeData& OldValue) const
 
 void ULrAS::ApplyDebuff(const FLrGameplayEffectContext& LrGEContext, const FEffectProperties& Props)
 {
-	// FLrGameplayTags GameplayTags = FLrGameplayTags::Get();
-	// FGameplayEffectContextHandle EffectContext = Props.SourceASC->MakeEffectContext();
-	// EffectContext.AddSourceObject(Props.SourceAvatarActor);
-	// // todo 
-	// UGameplayEffect* Effect = NewObject<UGameplayEffect>(GetTransientPackage(), FName("DebuffName"));
-	// // 3. 配置GE属性
-	// Effect->DurationPolicy = EGameplayEffectDurationType::HasDuration; // 持续型
-	// Effect->Period = 1; // 周期触发
-	// Effect->DurationMagnitude = FScalableFloat(LrGEContext.BurnDuration); // 总时长
-	// // 4. 【关键】添加Modifier，这才是周期伤害的来源！
-	// // 使用SetByCallerMagnitude，这样每次周期都能动态获取伤害值
-	// FInheritedTagContainer TagContainer = FInheritedTagContainer();
-	// UTargetTagsGameplayEffectComponent& Component = Effect->FindOrAddComponent<UTargetTagsGameplayEffectComponent>();
-	// TagContainer.Added.AddTag(GameplayTags.Debuff_Burn);
-	// Component.SetAndApplyTargetTagChanges(TagContainer);
-	// Effect->InheritableOwnedTagsContainer.AddTag(GameplayTags.Debuff_Burn);
-	//
-	// // 5. 配置堆叠规则
-	// Effect->StackingType = EGameplayEffectStackingType::AggregateBySource;
-	// Effect->StackLimitCount = 1;//同一来源只能存在一个实例，刷新持续时间而非叠加多层。
-	// int32 Index = Effect->Modifiers.Num();
-	// Effect->Modifiers.Add(FGameplayModifierInfo());
-	// FGameplayModifierInfo& ModifierInfo = Effect->Modifiers[Index];
-	// // 6. 【核心】添加伤害Modifier
-	// ModifierInfo.ModifierMagnitude = FScalableFloat(LrGEContext.BurnValue); // 伤害值
-	// ModifierInfo.ModifierOp = EGameplayModOp::Additive; // 累加操作
-	// ModifierInfo.Attribute = ULrAS::GetIncomingDamageAttribute(); // 目标属性
-	//
-	// // 7. 【最终应用】将GE应用到目标！
-	// if (FGameplayEffectSpec* MutableSpec = new FGameplayEffectSpec(Effect, EffectContext, 1.f))
-	// {
-	// 	// 8. 真正应用周期伤害GE（服务器执行）
-	// 	FActiveGameplayEffectHandle ApplyGameplayEffectSpecToSelf = Props.TargetASC->ApplyGameplayEffectSpecToSelf(*MutableSpec);
-	// }
-
-
 	if (!Props.SourceASC || !Props.TargetASC)
 	{
 		return;
@@ -243,11 +215,11 @@ void ULrAS::ApplyDebuff(const FLrGameplayEffectContext& LrGEContext, const FEffe
 	TSubclassOf<UGameplayEffect> EffectClass = nullptr;
 
 	// 根据 Debuff 类型选择 GE
-	if (LrGEContext.HasFlag(Burn))
+	if (LrGEContext.HasFlag(EDamageFlags::Burn))
 	{
 		EffectClass = LrBuffDA->BurnEffectClass;
 	}
-	else if (LrGEContext.HasFlag(Poison))
+	else if (LrGEContext.HasFlag(EDamageFlags::Poison))
 	{
 		EffectClass = LrBuffDA->PoisonEffectClass;
 	}
@@ -272,13 +244,13 @@ void ULrAS::ApplyDebuff(const FLrGameplayEffectContext& LrGEContext, const FEffe
 	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(
 		SpecHandle,
 		GameplayTags.Damage_Base,
-		LrGEContext.BurnValue);
+		LrGEContext.DamageValue);
 
 	// 设置持续时间
 	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(
 		SpecHandle,
 		GameplayTags.Damage_Base,
-		LrGEContext.BurnDuration);
+		LrGEContext.Duration);
 
 	// Apply 到目标
 	Props.TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());

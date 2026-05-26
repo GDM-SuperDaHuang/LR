@@ -4,17 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "GameplayEffect.h"
 #include "GenericTeamAgentInterface.h"
 #include "MoverSimulationTypes.h"
+#include "Component/Combat/LrCombatComponentBase.h"
 #include "GameFramework/Pawn.h"
+#include "Interface/LrCombatInterface.h"
 #include "LrPawnBase.generated.h"
 
-class ULrASComponent;
 class ULrASC;
 class ULrAnimationComponent;
 class ULrMoverComponent;
 class UMotionWarpingComponent;
-class UAttributeSet;
 class UCharacterMoverComponent;
 // class ULrMoverComponent;
 class ULrNavMovementComponent;
@@ -22,7 +23,7 @@ class ULrNavMovementComponent;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnASCRegistered, ULrASC*);
 
 UCLASS()
-class LR_API ALrPawnBase : public APawn, public IMoverInputProducerInterface, public IAbilitySystemInterface, public IGenericTeamAgentInterface
+class LR_API ALrPawnBase : public APawn, public IMoverInputProducerInterface, public IAbilitySystemInterface, public IGenericTeamAgentInterface, public ILrCombatInterface
 {
 	GENERATED_BODY()
 
@@ -32,10 +33,19 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	uint16 PawnType; //生物类型
-
-	// virtual void TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
+	UPROPERTY(EditDefaultsOnly, Category="Team")
+	uint8 TeamID = 1;
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	virtual ULrCombatComponentBase* GetCombatComponent() const override;
+	virtual uint8 GetTeamID() const override;
+	virtual bool IsDead() const override;
+	virtual ULrASC* GetASC() const override;
+	virtual ULrAS* GetAS() const override;
+
+	/** 战斗组件 */
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<ULrCombatComponentBase> LrCombatComponent;
 
 	/** 身体骨骼 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
@@ -56,8 +66,8 @@ public:
 	FOnASCRegistered OnASCRegistered;
 
 	/** 属性UI组件 */
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<ULrASComponent> LrASComponent;
+	// UPROPERTY(VisibleAnywhere)
+	// TObjectPtr<ULrASComponent> LrASComponent;
 
 	/** 动画相关组件 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -89,7 +99,7 @@ protected:
 	UPROPERTY()
 	TObjectPtr<ULrASC> LrASC;
 	UPROPERTY()
-	TObjectPtr<UAttributeSet> LrAS;
+	TObjectPtr<ULrAS> LrAS;
 
 public:
 	// Called every frame
@@ -98,17 +108,14 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-
 	virtual FGenericTeamId GetGenericTeamId() const override;
-
-	UPROPERTY(EditDefaultsOnly, Category="Team")
-	uint8 TeamID = 1;
 
 	void UpdateMove(FVector Input);
 	void UpdatePressedJump(bool Input);
 
 	// 地面摩檫力物理
 	void CheckFloorPhysics(float& OutFrictionMult);
+	void InitAS() const;
 
 public:
 	bool bIsJumpJustPressed = false; // 本帧刚刚按下

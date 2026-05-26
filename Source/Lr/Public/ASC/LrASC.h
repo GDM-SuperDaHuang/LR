@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
+#include "GE/LrGEContext.h"
 #include "LrASC.generated.h"
 
 /**
@@ -24,5 +25,6 @@ public:
 	void AbilityInputTagReleased(const FGameplayTag& InputTags);
 	/**************************************** 按钮 技能触发相关 相关 ************************/
 
-	void ApplyDamageToTarget(AActor* Target, const FHitResult& Hit);
+	// void ApplyDamageToTarget(AActor* Target, const FHitResult& Hit);
+	void ApplyDamageToTarget(AActor* Target, FDamageEffectParams DamageEffectParams) const;
 };

@@ -7,9 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Component/LrCombatComponent.h"
-#include "Data/LrBuffDA.h"
-#include "Lib/LrCommonLibrary.h"
+#include "Component/Combat/LrAICombatComponent.h"
 #include "Lr/Lr.h"
 
 ULrBTTaskActivateAbility::ULrBTTaskActivateAbility()
@@ -27,7 +25,7 @@ EBTNodeResult::Type ULrBTTaskActivateAbility::ExecuteTask(UBehaviorTreeComponent
 		return EBTNodeResult::Failed;
 	}
 
-	ULrCombatComponent* Combat = Pawn->FindComponentByClass<ULrCombatComponent>();
+	ULrAICombatComponent* Combat = Pawn->FindComponentByClass<ULrAICombatComponent>();
 	if (!Combat)
 	{
 		return EBTNodeResult::Failed;
@@ -53,22 +51,3 @@ void ULrBTTaskActivateAbility::OnTaskFinished(UBehaviorTreeComponent& OwnerComp,
 	Super::OnTaskFinished(OwnerComp, NodeMemory, TaskResult);
 }
 
-void ULrBTTaskActivateAbility::ApplyDamage(AActor* Target)
-{
-	if (!Target) return;
-
-	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target);
-	if (!TargetASC) return;
-
-	FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
-	Context.AddSourceObject(this);
-	
-	const ULrBuffDA* LrBuffDA = ULrCommonLibrary::GetGEDA(this);
-	// 创建GE
-	FGameplayEffectSpecHandle Spec = TargetASC->MakeOutgoingSpec(LrBuffDA->MeleeAttackEffectClass, 1.0f, Context);
-
-	if (Spec.IsValid())
-	{
-		TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-	}
-}

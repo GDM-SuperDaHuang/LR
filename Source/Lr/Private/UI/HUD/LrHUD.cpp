@@ -3,7 +3,10 @@
 
 #include "UI/HUD/LrHUD.h"
 
-#include "MVVMGameSubsystem.h"
+#include "AttributeSet.h"
+#include "GameplayEffectTypes.h"
+#include "ASC/LrASC.h"
+#include "ASC/AS/LrAS.h"
 #include "Blueprint/UserWidget.h"
 #include "Interface/LrEquipInterface.h"
 #include "Pawn/LrPawnBase.h"
@@ -23,27 +26,31 @@ void ALrHUD::BeginPlay()
 		return;
 	}
 	ALrPawnBase* LrPawnBase = Cast<ALrPawnBase>(PC->GetPawn());
-	
+
 	UIController = NewObject<ULrUIController>(this);
-	UIController->Init(LrPawnBase->LrASComponent);
+	UIController->Init();
 
 	// 添加到屏幕
-	ULrHPBarWidget* HPWidget = CreateWidget<ULrHPBarWidget>(GetWorld(),HPWidgetClass.Get());
-	HPWidget->SetViewModel(UIController->HPVM);
-	// HPWidget->AddToViewport();
+	// ULrHPBarWidget* HPWidget = CreateWidget<ULrHPBarWidget>(GetWorld(), HPWidgetClass.Get());
+	// HPWidget->SetViewModel(UIController->HPVM);
+	// UE_LOG(LogTemp, Warning, TEXT("MVVM: %p"), UIController->HPVM.Get());
 
-	ULrMPBarWidget* MPWidget =CreateWidget<ULrMPBarWidget>(GetWorld(),MPWidgetClass.Get());
-	MPWidget->SetViewModel(UIController->MPVM);
-	// MPWidget->AddToViewport();
 
-	
-	
+	// ULrMPBarWidget* MPWidget = CreateWidget<ULrMPBarWidget>(GetWorld(), MPWidgetClass.Get());
+	// MPWidget->SetViewModel(UIController->MPVM);
+	// UE_LOG(LogTemp, Warning, TEXT("MVVM: %p"), UIController->MPVM.Get());
+
 	// 1️⃣ 创建 Widget
 	MainWidget = CreateWidget<ULrMainWidget>(GetWorld(), MainWidgetClass);
 	if (!MainWidget)return;
-
+	// 直接给自动创建好的子 UI 绑定 ViewModel
+	MainWidget->HPBarWidget->SetViewModel(TEXT("HPVM"),UIController->HPVM);
+	MainWidget->MPBarWidget->SetViewModel(TEXT("MPVM"),UIController->MPVM);
+	
 	// 2️⃣ 加到屏幕（关键！）
 	MainWidget->AddToViewport();
+
+	
 
 	// 动态创建 GetTransientPackage()
 	ViewModel = NewObject<UMVVMMainScreen>(GetWorld(), FName("UMVVMMainScreen"));
@@ -52,7 +59,29 @@ void ALrHUD::BeginPlay()
 	// 监听 ViewModel 请求
 	ViewModel->OnEquipRequest.AddUObject(this, &ALrHUD::HandleEquipRequest);
 	ViewModel->OnUnequipRequest.AddUObject(this, &ALrHUD::HandleUnequipRequest);
-	
+
+	// 获取监听的 GAS 属性
+	ULrAS* LrAs = LrPawnBase->GetAS();
+	for (TPair<FGameplayTag, FGameplayAttribute(*)()> Pair : LrAs->TagsASMap)
+	{
+		LrPawnBase->GetASC()->GetGameplayAttributeValueChangeDelegate(Pair.Value()).AddLambda(
+			[this,Pair,LrAs](const FOnAttributeChangeData& Data)
+			{
+				const FGameplayTag* TagsAsMaxTag = LrAs->TagsASMaxTags.Find(Pair.Key);
+				float Max = 0;
+				if (TagsAsMaxTag)
+				{
+					FAttributeFuncPtr* Find = LrAs->TagsASMap.Find(*TagsAsMaxTag);
+					if (Find)
+					{
+						FGameplayAttribute MaxAttribute = (*Find)();
+						Max = MaxAttribute.GetNumericValue(LrAs);
+					}
+				}
+				UIController->OnASChanged(Pair.Key, Pair.Value().GetNumericValue(LrAs), Max);
+			});
+	}
+	LrPawnBase->InitAS();
 }
 
 void ALrHUD::Tick(float DeltaSeconds)

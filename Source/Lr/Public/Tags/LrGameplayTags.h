@@ -58,18 +58,15 @@ public:
 
 
 	/**************************************** 技能自身 相关 ************************/
-	FGameplayTag GA_1;
-	FGameplayTag GA_2;
-	FGameplayTag GA_3;
-	FGameplayTag GA_4;
-	FGameplayTag GA_5;
+	FGameplayTag GA_Blink;
+	FGameplayTag GA_Melee_1;
+	FGameplayTag GA_Melee_2;
+	FGameplayTag GA_Melee_3;
 	FGameplayTag GA_6;
 	FGameplayTag GA_7;
 	FGameplayTag GA_8;
 	FGameplayTag GA_9;
-
 	/**************************************** 技能自身 相关 ************************/
-
 
 
 	//
@@ -80,7 +77,7 @@ public:
 	// FGameplayTag Damage_Arcane;
 	// FGameplayTag Damage_Physical;
 	/**************************************** 伤害类型 相关 ************************/
-	
+
 	// TMap<FGameplayTag, FGameplayTag> DamageTypesToResilience;
 	// // TArray<FGameplayTag> DamageTypes;
 	// TMap<FGameplayTag, FGameplayTag> DamageTypesToDebuffs;
@@ -99,7 +96,7 @@ public:
 	/**************************************** GameplayCue 相关 ************************/
 	FGameplayTag GameplayCue_Melee_Trail; //轨迹特效
 	FGameplayTag GameplayCue_Melee_Hit; // 命中特效
-	
+
 	FGameplayTag GameplayCue_Debuff_SpeedCut;
 	FGameplayTag GameplayCue_Debuff_Vertigo;
 	FGameplayTag GameplayCue_Debuff_Burn;

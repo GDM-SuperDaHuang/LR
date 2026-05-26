@@ -10,7 +10,9 @@
 #include "NiagaraSystem.h"
 #include "Actor/Weapon/LrWeaponBase.h"
 #include "ASC/LrASC.h"
+#include "ASC/AS/LrAS.h"
 #include "Camera/CameraComponent.h"
+#include "Component/Combat/LrPlayerCombatComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Data/LrGAListDA.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -26,6 +28,8 @@
 
 ALrHeroPawn::ALrHeroPawn()
 {
+	LrCombatComponent = CreateDefaultSubobject<ULrPlayerCombatComponent>(TEXT("LrCombatComponent"));
+
 	PrimaryActorTick.bCanEverTick = true;
 	LrCapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
 	RootComponent = LrCapsuleComponent;
@@ -159,8 +163,6 @@ void ALrHeroPawn::BeginPlay()
 		// Устанавливаем стартовый режим
 		CharacterMotionComponent->QueueNextMode(LrAllModes::Air);
 	}
-
-	// CharacterMotionComponent->AddMovementModeFromClass(TEXT("LrWalk"), USmoothWalkingMode::StaticClass());
 }
 
 void ALrHeroPawn::PostInitializeComponents()
@@ -184,7 +186,7 @@ void ALrHeroPawn::PossessedBy(AController* NewController)
 	check(LrPS);
 	// 绑定 自身与ps 到ASC
 	LrPS->GetAbilitySystemComponent()->InitAbilityActorInfo(LrPS, this);
-	
+
 	LrASC = Cast<ULrASC>(LrPS->GetAbilitySystemComponent());
 	//ASC 初始化成功委托
 	OnASCRegistered.Broadcast(LrASC);
@@ -203,6 +205,12 @@ void ALrHeroPawn::OnRep_PlayerState()
 	// 绑定 自身与ps 到ASC
 	LrPS->GetAbilitySystemComponent()->InitAbilityActorInfo(LrPS, this);
 	LrASC = Cast<ULrASC>(LrPS->GetAbilitySystemComponent());
+}
+
+ULrAS* ALrHeroPawn::GetAS() const
+{
+	ALrPS* LrPS = GetPlayerState<ALrPS>();
+	return LrPS->GetAttributeSet();
 }
 
 void ALrHeroPawn::EquipWeapon(FLrWeaponConfig WeaponConfig)

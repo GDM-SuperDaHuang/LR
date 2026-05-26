@@ -19,3 +19,11 @@ namespace LrBBKeys
 
 	const FName HomeLocation = TEXT("HomeLocation");
 };
+
+namespace LrGEKeys
+{
+	static const FName Flags = TEXT("1");
+	static const FName SpeedCutRate = TEXT("2");
+	static const FName Duration = TEXT("3");
+	static const FName DamageValue = TEXT("4");
+};

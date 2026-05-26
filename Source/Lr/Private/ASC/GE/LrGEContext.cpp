@@ -106,27 +106,13 @@ bool FLrGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bool
 	//-----------------------------------
 	// 固定局部状态（重点）
 	//-----------------------------------
-	const bool bHasSpeedCut =
-		(Flags & SpeedCut) != 0;
-
-	const bool bHasVertigo =
-		(Flags & Vertigo) != 0;
-
-	const bool bHasBurn =
-		(Flags & Burn) != 0;
-
-	const bool bHasFrozen =
-		(Flags & Frozen) != 0;
-
-	const bool bHasPoison =
-		(Flags & Poison) != 0;
-
-	const bool bHasRepel =
-		(Flags & Repel) != 0;
-
-	const bool bHasStiffness =
-		(Flags & Stiffness) != 0;
-
+	const bool bHasSpeedCut = EnumHasAnyFlags(Flags, EDamageFlags::SpeedCut);
+	const bool bHasVertigo = EnumHasAnyFlags(Flags, EDamageFlags::Vertigo);
+	const bool bHasBurn = EnumHasAnyFlags(Flags, EDamageFlags::Burn);
+	const bool bHasFrozen = EnumHasAnyFlags(Flags, EDamageFlags::Frozen);
+	const bool bHasPoison = EnumHasAnyFlags(Flags, EDamageFlags::Poison);
+	const bool bHasRepel = EnumHasAnyFlags(Flags, EDamageFlags::Repel);
+	const bool bHasStiffness = EnumHasAnyFlags(Flags, EDamageFlags::Stiffness);
 	//-----------------------------------
 	// Debuff数据
 	//-----------------------------------
@@ -134,29 +120,29 @@ bool FLrGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bool
 	if (bHasSpeedCut)
 	{
 		Ar << SpeedCutRate;
-		Ar << SpeedCutDuration;
+		Ar << Duration;
 	}
 
 	if (bHasVertigo)
 	{
-		Ar << VertigoDuration;
+		Ar << Duration;
 	}
 
 	if (bHasBurn)
 	{
-		Ar << BurnValue;
-		Ar << BurnDuration;
+		Ar << DamageValue;
+		Ar << Duration;
 	}
 
 	if (bHasFrozen)
 	{
-		Ar << FrozenDuration;
+		Ar << Duration;
 	}
 
 	if (bHasPoison)
 	{
-		Ar << PoisonValue;
-		Ar << PoisonDuration;
+		Ar << DamageValue;
+		Ar << Duration;
 	}
 
 	if (bHasRepel)
@@ -166,7 +152,7 @@ bool FLrGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bool
 
 	if (bHasStiffness)
 	{
-		Ar << StiffnessDuration;
+		Ar << Duration;
 	}
 
 	//-----------------------------------
@@ -175,7 +161,7 @@ bool FLrGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bool
 
 	if (Ar.IsLoading())
 	{
-		AddInstigator(Instigator.Get(),EffectCauser.Get());
+		AddInstigator(Instigator.Get(), EffectCauser.Get());
 	}
 
 	bOutSuccess = true;

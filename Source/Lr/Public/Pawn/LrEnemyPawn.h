@@ -6,7 +6,6 @@
 #include "Pawn/LrPawnBase.h"
 #include "LrEnemyPawn.generated.h"
 
-class ULrCombatComponent;
 class ULrWorldWidgetComponent;
 class ULrBarWidget;
 class ULrAIStateComponent;
@@ -19,7 +18,7 @@ class UBehaviorTree;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDeath, ALrEnemyPawn*, DeadEnemy);
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float);
+// DECLARE_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float);
 
 /**
  * 敌方 Pawn 基类
@@ -35,14 +34,12 @@ public:
 	ALrEnemyPawn();
 
 	virtual void BeginPlay() override;
-	// virtual UPawnMovementComponent* GetMovementComponent() const override;
-	// virtual FVector GetNavAgentLocation() const override;
-
-
+	
 	/** AIController 接管时初始化 GAS 并授予出生技能 */
 	virtual void PossessedBy(AController* NewController) override;
 
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
+	
 	/** 面向相关 */
 	//面向移动方向
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -76,13 +73,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Combat")
 	FOnEnemyDeath OnEnemyDeath;
 
-	/** 敌人HP */
-	FOnHealthChanged OnHealthChanged;
 protected:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrAIStateComponent> AIStateComponent;
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<ULrCombatComponent> LrCombatComponent;
 	
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrPatrolRouteComponent> PatrolRoute;
@@ -99,9 +92,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	TObjectPtr<UBehaviorTree> BehaviorTree;
 	
-	/** 世界空间血条 UI 组件，悬浮在敌人头顶 */
+	/** 世界空间血条 UI 组件，悬浮在敌人头顶,飘字等 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<ULrWorldWidgetComponent> HealthBarComponent;
+	TObjectPtr<ULrWorldWidgetComponent> LrWidgetComponent;
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UUserWidget> HealthBarWidgetClass;
 };

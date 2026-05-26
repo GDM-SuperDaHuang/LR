@@ -3,14 +3,15 @@
 
 #include "UI/ViewModel/LrMVVMVBar.h"
 
-void ULrMVVMVBar::SetValue( float InCurrent,float InMax)
+void ULrMVVMVBar::SetValue(float InCurrent, float InMax)
 {
 	CurrentValue = InCurrent;
 	MaxValue = InMax;
-
+	UE_LOG(LogTemp, Warning, TEXT("MVVM: %p"), this);
+	
 	const float NewPercent = MaxValue <= 0.f ? 0.f : CurrentValue / MaxValue;
 
-	UE_MVVM_SET_PROPERTY_VALUE(Percent,NewPercent);//修改值+只会通知 UI
+	UE_MVVM_SET_PROPERTY_VALUE(Percent, NewPercent); //修改值+只会通知 UI
 
 	TargetPercent = NewPercent;
 
@@ -22,11 +23,11 @@ void ULrMVVMVBar::SetValue( float InCurrent,float InMax)
 
 	// UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CurrentValue);
 	// UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(MaxValue);
-	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(ValueText);//不会修改值,只会通知 UI
+	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(ValueText); //不会修改值,只会通知 UI
 }
 
 void ULrMVVMVBar::Tick(float DeltaTime)
 {
-	const float NewGhost =FMath::FInterpTo(GhostPercent,TargetPercent,DeltaTime,InterpSpeed);
-	UE_MVVM_SET_PROPERTY_VALUE(GhostPercent,NewGhost);
+	const float NewGhost = FMath::FInterpTo(GhostPercent, TargetPercent, DeltaTime, InterpSpeed);
+	UE_MVVM_SET_PROPERTY_VALUE(GhostPercent, NewGhost);
 }

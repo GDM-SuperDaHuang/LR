@@ -31,7 +31,7 @@ void ULrJumpGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 	ALrPlayerController* PC = Cast<ALrPlayerController>(OwnerPawn->GetController());
 	if (PC)
 	{
-		PC->Jump();
+		// PC->Jump();
 	}
 	EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
 }

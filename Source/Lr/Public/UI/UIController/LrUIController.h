@@ -6,8 +6,9 @@
 #include "UObject/Object.h"
 #include "LrUIController.generated.h"
 
-class ULrASComponent;
+struct FGameplayTag;
 class ULrMVVMVBar;
+
 /**
  * 
  */
@@ -15,13 +16,15 @@ UCLASS()
 class LR_API ULrUIController : public UObject
 {
 	GENERATED_BODY()
-public:
 
-	void Init(ULrASComponent* InASComponent);
+public:
+	void Init();
 
 	void Tick(float DeltaTime);
 
 public:
+	void OnASChanged(FGameplayTag ASTag, float Current, float Max);
+
 
 	UPROPERTY()
 	TObjectPtr<ULrMVVMVBar> HPVM;
@@ -30,13 +33,11 @@ public:
 	TObjectPtr<ULrMVVMVBar> MPVM;
 
 private:
-
-	UPROPERTY()
-	TObjectPtr<ULrASComponent> ASComponent;
+	// UPROPERTY()
+	// TObjectPtr<ULrASComponent> ASComponent;
 
 private:
+	void OnHPChanged(float Current, float Max);
 
-	void OnHPChanged(float Current,float Max);
-
-	void OnMPChanged(float Current,float Max);
+	void OnMPChanged(float Current, float Max);
 };

@@ -16,6 +16,11 @@ ALrPS::ALrPS()
 	LrAS = CreateDefaultSubobject<ULrAS>("AttributeSet");
 }
 
+void ALrPS::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
 void ALrPS::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

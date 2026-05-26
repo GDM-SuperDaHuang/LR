@@ -2,15 +2,10 @@
 
 
 #include "ASC/GA/Blink/LrBlinkGA.h"
-
-#include "Component/LrAnimationComponent.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/LrAllModes.h"
 #include "Pawn/LrPawnBase.h"
 
-ULrBlinkGA::ULrBlinkGA()
-{
-}
 
 void ULrBlinkGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {

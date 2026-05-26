@@ -43,7 +43,6 @@ DECLARE_DELEGATE_RetVal(FGameplayAttribute, FAttributeSignature);
 typedef TBaseStaticDelegateInstance<FGameplayAttribute(), FDefaultDelegateUserPolicy>::FFuncPtr FAttributeFuncPtr;
 
 
-
 USTRUCT()
 struct FEffectProperties
 {
@@ -51,6 +50,7 @@ struct FEffectProperties
 	FEffectProperties()
 	{
 	}
+
 	FGameplayEffectContextHandle EffectContextHandle; // 效果上下文句柄，存储效果元数据
 
 	// 源（施加效果的对象）相关信息
@@ -87,7 +87,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "DA")
 	TObjectPtr<ULrBuffDA> LrBuffDA;
-	
+
 	// 网络复制支持：定义哪些属性需要复制到客户端
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;;
 
@@ -98,6 +98,8 @@ public:
 	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
 
 	TMap<FGameplayTag, FAttributeFuncPtr> TagsASMap; //<标签,Get属性函数指针>
+	TMap<FGameplayTag, FGameplayTag> TagsASMaxTags; //<标签,Max标签>
+
 	// TMap<FGameplayTag, FAttributeFuncPtr<FGameplayAttribute()>> TagsASMap;
 
 	/*

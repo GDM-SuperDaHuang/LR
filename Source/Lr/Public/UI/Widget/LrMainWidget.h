@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "LrMainWidget.generated.h"
 
+class ULrMPBarWidget;
+class ULrHPBarWidget;
 class ULrButtonInfo;
 class UMVVMViewModelBase;
 class UMVVMMainScreen;
@@ -26,6 +28,12 @@ public:
 	UPROPERTY()
 	UMVVMMainScreen* MainViewModel;
 
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	TObjectPtr<ULrHPBarWidget> HPBarWidget; // 变量名需与蓝图中的组件名完全一致
+
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	TObjectPtr<ULrMPBarWidget> MPBarWidget;
+	
 	UFUNCTION()
 	void OnAnyWearButtonClicked(ULrButtonInfo* Button);
 

@@ -38,6 +38,11 @@ private:
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> MoveAction;
 
+	// UPROPERTY(EditAnywhere, Category="Input")
+	// TObjectPtr<UInputAction> JumpAction;
+
+
+	
 	void AbilityInputTagPressed(FGameplayTag InputTag);
 	void AbilityInputTagReleased(FGameplayTag InputTag);
 	void AbilityInputTagHeld(FGameplayTag InputTag);
@@ -45,9 +50,6 @@ private:
 	
 	void Move(const FInputActionValue& InputActionValue);
 	void MoveCompleted(const FInputActionValue& InputActionValue);
-public:
 	void Jump() const;
 
-
-	
 };

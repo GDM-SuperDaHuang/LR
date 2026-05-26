@@ -119,25 +119,21 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 	// ==========================================================================================
 	// 技能 相关
 	// ==========================================================================================
-	GameplayTags.GA_1 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.1")),
-		FString("GA 1"));
-
-	GameplayTags.GA_2 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.2")),
-		FString("GA 2"));
-
-	GameplayTags.GA_3 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.3")),
-		FString("GA 3"));
+	GameplayTags.GA_Blink = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.Blink")),
+		FString("GA Blink"));
 	
-	GameplayTags.GA_4 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.4")),
-		FString("GA_4"));
+	GameplayTags.GA_Melee_1 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.Melee.1")),
+		FString("GA Melee 1"));
 	
-	GameplayTags.GA_5 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.5")),
-		FString("GA 5"));
+	GameplayTags.GA_Melee_2 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.Melee.2")),
+		FString("GA Melee 2"));
+	
+	GameplayTags.GA_Melee_3 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.Melee.3")),
+		FString("GA Melee 3"));
 	
 	GameplayTags.GA_6 = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GA.6")),

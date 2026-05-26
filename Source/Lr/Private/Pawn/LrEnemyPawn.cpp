@@ -11,8 +11,9 @@
 #include "AI/Subsystem/LrAIManagerSubsystem.h"
 #include "Alembic/AbcGeom/IFaceSet.h"
 #include "Component/LrAIStateComponent.h"
-#include "Component/LrCombatComponent.h"
+#include "Component/Combat/LrPlayerCombatComponent.h"
 #include "Component/LrPatrolRouteComponent.h"
+#include "Component/Combat/LrAICombatComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Mover/LrAllModes.h"
@@ -31,7 +32,7 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// AI
 	// =========================
 	AIStateComponent = CreateDefaultSubobject<ULrAIStateComponent>(TEXT("AIStateComponent"));
-	LrCombatComponent = CreateDefaultSubobject<ULrCombatComponent>(TEXT("LrCombatComponent"));
+	LrCombatComponent = CreateDefaultSubobject<ULrAICombatComponent>(TEXT("LrCombatComponent"));
 
 	PatrolRoute = CreateDefaultSubobject<ULrPatrolRouteComponent>(TEXT("PatrolRoute"));
 	AutoPossessAI = EAutoPossessAI::Disabled; //禁止自动Possess,自己直接调用
@@ -83,9 +84,9 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// =========================
 	// 敌人UI
 	// =========================
-	HealthBarComponent = CreateDefaultSubobject<ULrWorldWidgetComponent>(TEXT("HealthBarComponent"));
-	HealthBarComponent->SetupAttachment(RootComponent);
-	HealthBarComponent->SetRelativeLocation(FVector(0, 0, 120.f));
+	LrWidgetComponent = CreateDefaultSubobject<ULrWorldWidgetComponent>(TEXT("HealthBarComponent"));
+	LrWidgetComponent->SetupAttachment(RootComponent);
+	LrWidgetComponent->SetRelativeLocation(FVector(0, 0, 120.f));
 }
 
 void ALrEnemyPawn::BeginPlay()
@@ -129,28 +130,32 @@ void ALrEnemyPawn::BeginPlay()
 
 	if (HealthBarWidgetClass)
 	{
-		HealthBarComponent->SetWidgetClass(HealthBarWidgetClass);
+		LrWidgetComponent->SetWidgetClass(HealthBarWidgetClass);
 	}
 
-	HealthBarComponent->InitWidget();
+	LrWidgetComponent->InitWidget();
 
-	ULrWorldBarWidget* BarWidget = Cast<ULrWorldBarWidget>(HealthBarComponent->GetUserWidgetObject());
+	ULrWorldBarWidget* BarWidget = Cast<ULrWorldBarWidget>(LrWidgetComponent->GetUserWidgetObject());
 
 	if (BarWidget)
 	{
 		BarWidget->InitWidget(this);
 		//TODO
-		BarWidget->UpdateHealth(500);
-	}
-
-	OnHealthChanged.AddLambda(
-		[BarWidget](float NewPercent)
+		// BarWidget->UpdateHealth(500);
+		// 属性委托绑定
+		for (TPair<FGameplayTag, FGameplayAttribute(*)()> Pair : LrAS->TagsASMap)
 		{
-			if (BarWidget)
-			{
-				BarWidget->UpdateHealth(NewPercent);
-			}
-		});
+			LrASC->GetGameplayAttributeValueChangeDelegate(Pair.Value()).AddLambda(
+				[this,Pair,BarWidget](const FOnAttributeChangeData& Data)
+				{
+					FGameplayAttribute Attribute = Pair.Value();
+					FGameplayTag GameplayTag = Pair.Key;
+					float ASValue = Attribute.GetNumericValue(LrAS);
+					BarWidget->UpdateHealth(Pair.Key, ASValue);
+				});
+		}
+	}
+	InitAS();
 }
 
 void ALrEnemyPawn::PossessedBy(AController* NewController)

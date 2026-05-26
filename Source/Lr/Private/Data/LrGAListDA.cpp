@@ -52,4 +52,3 @@ const FPawnTypeGAConfig* ULrGAListDA::FindPawnTypeGA(const uint16 PawnType) cons
 	return nullptr;
 }
 
-

@@ -3,33 +3,28 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
-#include "Components/ActorComponent.h"
-#include "LrCombatComponent.generated.h"
+#include "LrCombatComponentBase.h"
+#include "LrAICombatComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackFinished);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class LR_API ULrCombatComponent : public UActorComponent
+class LR_API ULrAICombatComponent : public ULrCombatComponentBase
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this component's properties
-	ULrCombatComponent();
+	ULrAICombatComponent();
 
-	// 是否正在攻击
-	bool IsAttacking() const
-	{
-		return bAttacking;
-	}
 	// 是否能攻击
-	bool CanAttack(AActor* Target) const;
+	bool CanAttack(AActor* Target);
 	// 开始攻击
 	bool StartAttack();
-	// 攻击结束
-	void FinishAttack();
-	
+
+	// 攻击结束 是否需要??
+	void FinishAttack() const;
+
 	UPROPERTY(BlueprintAssignable)
 	FOnAttackFinished OnAttackFinished;
 
@@ -37,17 +32,9 @@ protected:
 	// Called when the game starts
 	// virtual void BeginPlay() override;
 
-	// 是否正在攻击
-	UPROPERTY()
-	bool bAttacking = false;
-
 	// 攻击距离
 	UPROPERTY(EditDefaultsOnly)
 	float AttackRange = 250.f;
-
-	// 朝向判定
-	UPROPERTY(EditDefaultsOnly)
-	float AttackDot = 0.7f;
 
 	// 攻击 CD
 	UPROPERTY(EditDefaultsOnly)
@@ -60,7 +47,4 @@ protected:
 	int32 MaxCombo = 3;
 
 	bool bInComboWindow = false;
-	
-
-	
 };
