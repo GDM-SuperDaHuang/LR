@@ -16,7 +16,11 @@ class LR_API ULrAICombatComponent : public ULrCombatComponentBase
 public:
 	// Sets default values for this component's properties
 	ULrAICombatComponent();
+	virtual AActor* GetClosestEnemyInCone(const FLrCombatQueryParams& Params) override;
 
+	// 单体类型
+	UPROPERTY()
+	TWeakObjectPtr<AActor> CachedTargetActor; //目标可能死亡
 	// 是否能攻击
 	bool CanAttack(AActor* Target);
 	// 开始攻击

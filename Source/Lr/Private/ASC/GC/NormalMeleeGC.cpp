@@ -5,13 +5,9 @@
 
 #include "AbilitySystemGlobals.h"
 #include "NiagaraComponent.h"
-#include "NiagaraFunctionLibrary.h"
 #include "Actor/Weapon/LrWeaponBase.h"
-#include "Data/LrGAListDA.h"
 #include "Kismet/GameplayStatics.h"
-#include "Lib/LrCommonLibrary.h"
 #include "Pawn/LrPawnBase.h"
-#include "Tags/LrGameplayTags.h"
 
 UNormalMeleeGC::UNormalMeleeGC()
 {

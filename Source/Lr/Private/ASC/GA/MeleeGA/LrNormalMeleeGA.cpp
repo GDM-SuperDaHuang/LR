@@ -111,19 +111,20 @@ void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	// ========== 7. 能力结束时机 ==========
 	// 让蒙太age 的 AnimNotify 在播放到“收刀”帧时调用 EndAbility；
 	// 如果 Notify 没触发，也设个兜底超时
-	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(
-		TimerHandle,
-		[this, Handle, ActorInfo, ActivationInfo]()
-		{
-			if (IsActive())
-			{
-				EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-			}
-		},
-		3.0f, // Montage 最大时间 + buffer
-		false
-	);
+	// FTimerHandle TimerHandle;
+	// GetWorld()->GetTimerManager().SetTimer(
+	// 	TimerHandle,
+	// 	[this, Handle, ActorInfo, ActivationInfo]()
+	// 	{
+	// 		if (IsActive())
+	// 		{
+	// 			//todo？？？
+	// 			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+	// 		}
+	// 	},
+	// 	3.0f, // Montage 最大时间 + buffer
+	// 	false
+	// );
 }
 
 void ULrNormalMeleeGA::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
@@ -138,7 +139,12 @@ void ULrNormalMeleeGA::OnMontageFinished()
 	{
 		if (ULrCombatComponentBase* Combat = GetAvatarActorFromActorInfo()->FindComponentByClass<ULrCombatComponentBase>())
 		{
-			LrASC->ApplyDamageToTarget(Combat->CachedTargetActor.Get(), DamageEffectParams);
+			ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
+
+			ConeParams.Origin = OwnerPawn->GetActorLocation();
+			ConeParams.Forward = OwnerPawn->GetActorForwardVector();
+			AActor* TargetAActor = Combat->GetClosestEnemyInCone(ConeParams);
+			LrASC->ApplyDamageToTarget(TargetAActor, DamageEffectParams);
 		}
 	}
 }

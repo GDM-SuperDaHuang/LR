@@ -35,4 +35,8 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, meta=(ExposeOnSpawn = true))
 	FDamageEffectParams DamageEffectParams;
+	
+	UPROPERTY(EditDefaultsOnly)
+	FLrCombatQueryParams ConeParams;
+
 };

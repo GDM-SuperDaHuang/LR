@@ -94,8 +94,12 @@ public:
 	/**************************************** Debuff 相关 ************************/
 
 	/**************************************** GameplayCue 相关 ************************/
+
+
 	FGameplayTag GameplayCue_Melee_Trail; //轨迹特效
 	FGameplayTag GameplayCue_Melee_Hit; // 命中特效
+
+	FGameplayTag GameplayCue_Text_Damage; //文本伤害
 
 	FGameplayTag GameplayCue_Debuff_SpeedCut;
 	FGameplayTag GameplayCue_Debuff_Vertigo;

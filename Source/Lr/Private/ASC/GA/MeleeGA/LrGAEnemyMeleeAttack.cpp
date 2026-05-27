@@ -45,7 +45,7 @@ void ULrGAEnemyMeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
-	
+
 	// Montage 正常结束
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnMontageCompleted);
 
@@ -86,7 +86,11 @@ void ULrGAEnemyMeleeAttack::OnMontageCompleted()
 	{
 		if (ULrCombatComponentBase* Combat = GetAvatarActorFromActorInfo()->FindComponentByClass<ULrCombatComponentBase>())
 		{
-			LrASC->ApplyDamageToTarget(Combat->CachedTargetActor.Get(), DamageEffectParams);
+			ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
+			
+			ConeParams.Origin = OwnerPawn->GetActorLocation();
+			AActor* TargetAActor = Combat->GetClosestEnemyInCone(ConeParams);
+			LrASC->ApplyDamageToTarget(TargetAActor, DamageEffectParams);
 		}
 	}
 }

@@ -16,6 +16,9 @@ class LR_API ULrBuffDA : public UDataAsset
 
 public:
 	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class UGameplayEffect> DefaultEffectClass;
+
+	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class UGameplayEffect> MeleeAttackEffectClass;
 
 	UPROPERTY(EditDefaultsOnly)

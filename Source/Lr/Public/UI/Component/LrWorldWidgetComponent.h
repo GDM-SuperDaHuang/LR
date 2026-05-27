@@ -15,4 +15,7 @@ class LR_API ULrWorldWidgetComponent : public UWidgetComponent
 	GENERATED_BODY()
 public:
 	ULrWorldWidgetComponent();
+
+	// UPROPERTY(EditDefaultsOnly, Category="UI")
+	// TSubclassOf<UUserWidget> LrWidgetClass;
 };

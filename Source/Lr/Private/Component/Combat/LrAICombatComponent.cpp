@@ -15,6 +15,11 @@ ULrAICombatComponent::ULrAICombatComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+AActor* ULrAICombatComponent::GetClosestEnemyInCone(const FLrCombatQueryParams& Params)
+{
+	return CachedTargetActor.Get();
+}
+
 bool ULrAICombatComponent::CanAttack(AActor* Target)
 {
 	if (!Target)
@@ -71,7 +76,7 @@ bool ULrAICombatComponent::StartAttack()
 	}
 	// 尝试激活所有匹配 AbilityTag 的技能
 	// 如果有多个技能共享同一标签，它们都会被尝试激活
-	const bool bActivated = ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(GameplayTags[4]));
+	const bool bActivated = ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(GameplayTags[1]));
 	if (!bActivated)
 	{
 		return false;

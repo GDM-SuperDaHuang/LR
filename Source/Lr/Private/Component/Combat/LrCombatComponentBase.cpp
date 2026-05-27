@@ -10,7 +10,41 @@
 ULrCombatComponentBase::ULrCombatComponentBase()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+}
 
+AActor* ULrCombatComponentBase::GetClosestEnemyInCone(const FLrCombatQueryParams& Params)
+{
+	// 1. 复用现有的扇形 AOE 查询，获取扇形内的所有合法目标
+	FLrCombatQueryParams ConeParams = Params;
+	ConeParams.ShapeType = ELrCombatShape::Cone; // 强制指定为 Cone 类型
+
+	TArray<AActor*> EnemiesInCone = PerformConeQuery(ConeParams);
+
+	if (EnemiesInCone.IsEmpty())
+	{
+		return nullptr;
+	}
+
+	// 2. 遍历结果，通过比较距离的平方（DistSquared）找出最近的目标
+	AActor* ClosestEnemy = nullptr;
+	float MinDistanceSq = BIG_NUMBER; // 初始化为一个极大值
+
+	for (AActor* Enemy : EnemiesInCone)
+	{
+		if (!Enemy) continue;
+
+		// 计算平方距离，免去开方运算，优化性能
+		float CurrentDistanceSq = FVector::DistSquared(Params.Origin, Enemy->GetActorLocation());
+
+		if (CurrentDistanceSq < MinDistanceSq)
+		{
+			MinDistanceSq = CurrentDistanceSq;
+			ClosestEnemy = Enemy;
+		}
+	}
+
+	// 3. 缓存并返回结果
+	return ClosestEnemy;
 }
 
 TArray<AActor*> ULrCombatComponentBase::PerformCombatQuery(const FLrCombatQueryParams& Params)
@@ -185,14 +219,9 @@ TArray<AActor*> ULrCombatComponentBase::PerformConeQuery(const FLrCombatQueryPar
 			continue;
 		}
 
-		const FVector TargetLocation =
-			HitActor->GetActorLocation();
+		const FVector TargetLocation = HitActor->GetActorLocation();
 
-		if (!IsInsideCone(
-			Params.Origin,
-			Params.Forward,
-			TargetLocation,
-			Params.ConeHalfAngle))
+		if (!IsInsideCone(Params.Origin, Params.Forward, TargetLocation, Params.ConeHalfAngle))
 		{
 			continue;
 		}
@@ -226,35 +255,35 @@ bool ULrCombatComponentBase::IsValidCombatTarget(AActor* TargetActor, const FLrC
 	{
 		return false;
 	}
-	
+
 	AActor* OwnerActor = GetOwner();
 	if (!OwnerActor)
 	{
 		return false;
 	}
-	
+
 	if (Params.bIgnoreSelf && TargetActor == OwnerActor)
 	{
 		return false;
 	}
-	
+
 	if (!TargetActor->Implements<ULrCombatInterface>())
 	{
 		return false;
 	}
-	
+
 	ILrCombatInterface* TargetCombat = Cast<ILrCombatInterface>(TargetActor);
 	ILrCombatInterface* OwnerCombat = Cast<ILrCombatInterface>(OwnerActor);
 	if (!TargetCombat || !OwnerCombat)
 	{
 		return false;
 	}
-	
+
 	if (TargetCombat->IsDead())
 	{
 		return false;
 	}
-	
+
 	if (Params.bIgnoreTeammates)
 	{
 		if (TargetCombat->GetTeamID() == OwnerCombat->GetTeamID())
@@ -284,6 +313,4 @@ void ULrCombatComponentBase::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	
 }
-

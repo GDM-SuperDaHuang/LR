@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "ASC/GA/LrGABase.h"
 #include "ASC/GE/LrGEContext.h"
+#include "Component/Combat/LrCombatComponentBase.h"
 #include "LrGAEnemyMeleeAttack.generated.h"
 
 /**
@@ -29,4 +30,7 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, meta=(ExposeOnSpawn = true))
 	FDamageEffectParams DamageEffectParams;
+
+	UPROPERTY(BlueprintReadWrite, meta=(ExposeOnSpawn = true))
+	FLrCombatQueryParams ConeParams;
 };

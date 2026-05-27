@@ -26,7 +26,10 @@ void ALrHUD::BeginPlay()
 		return;
 	}
 	ALrPawnBase* LrPawnBase = Cast<ALrPawnBase>(PC->GetPawn());
-
+	if (!LrPawnBase)
+	{
+		return;
+	}
 	UIController = NewObject<ULrUIController>(this);
 	UIController->Init();
 

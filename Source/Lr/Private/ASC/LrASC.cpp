@@ -52,7 +52,7 @@ void ULrASC::AbilityInputTagPressed(const FGameplayTag& InputTags)
 			{
 				if (UGameplayAbility* AbilityInstance = AbilitySpec.GetPrimaryInstance())
 				{
-					InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputPressed,AbilitySpec.Handle,AbilityInstance->GetCurrentActivationInfo().GetActivationPredictionKey());
+					InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputPressed, AbilitySpec.Handle, AbilityInstance->GetCurrentActivationInfo().GetActivationPredictionKey());
 				}
 			}
 		}
@@ -100,7 +100,7 @@ void ULrASC::AbilityInputTagReleased(const FGameplayTag& InputTags)
 
 			if (UGameplayAbility* AbilityInstance = AbilitySpec.GetPrimaryInstance())
 			{
-				InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased,AbilitySpec.Handle,AbilityInstance->GetCurrentActivationInfo().GetActivationPredictionKey());
+				InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased, AbilitySpec.Handle, AbilityInstance->GetCurrentActivationInfo().GetActivationPredictionKey());
 			}
 		}
 	}
@@ -111,7 +111,7 @@ void ULrASC::ApplyDamageToTarget(AActor* Target, FDamageEffectParams DamageEffec
 {
 	UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
 	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
-	if (!TargetASC || SourceASC) return;
+	if (!TargetASC || !SourceASC) return;
 	const FLrGameplayTags GameplayTags = FLrGameplayTags::Get();
 
 	// 1. 【创建基础上下文】—— GAS效果的"身份证",
@@ -145,32 +145,33 @@ void ULrASC::ApplyDamageToTarget(AActor* Target, FDamageEffectParams DamageEffec
 	{
 		LrGEClass = LrBuffDA->MeleeAttackEffectClass;
 	}
-	if (bHasVertigo)
+	else if (bHasVertigo)
 	{
 		LrGEClass = LrBuffDA->MeleeAttackEffectClass;
 	}
-
-	if (bHasBurn)
+	else if (bHasBurn)
 	{
 		LrGEClass = LrBuffDA->MeleeAttackEffectClass;
 	}
-
-	if (bHasFrozen)
+	else if (bHasFrozen)
 	{
 		LrGEClass = LrBuffDA->MeleeAttackEffectClass;
 	}
-
-	if (bHasPoison)
+	else if (bHasPoison)
 	{
 		LrGEClass = LrBuffDA->MeleeAttackEffectClass;
 	}
-	if (bHasRepel)
+	else if (bHasRepel)
 	{
 		LrGEClass = LrBuffDA->MeleeAttackEffectClass;
 	}
-	if (bHasStiffness)
+	else if (bHasStiffness)
 	{
 		LrGEClass = LrBuffDA->MeleeAttackEffectClass;
+	}
+	else
+	{
+		LrGEClass = LrBuffDA->DefaultEffectClass;
 	}
 	const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(LrGEClass, 1, EffectContextHandle);
 

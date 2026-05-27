@@ -6,6 +6,7 @@
 #include "Pawn/LrPawnBase.h"
 #include "LrEnemyPawn.generated.h"
 
+class ULrWorldBarWidget;
 class ULrWorldWidgetComponent;
 class ULrBarWidget;
 class ULrAIStateComponent;
@@ -34,12 +35,13 @@ public:
 	ALrEnemyPawn();
 
 	virtual void BeginPlay() override;
-	
+
 	/** AIController 接管时初始化 GAS 并授予出生技能 */
 	virtual void PossessedBy(AController* NewController) override;
 
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
-	
+	virtual uint8 GetClassID() const override;
+
 	/** 面向相关 */
 	//面向移动方向
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -62,6 +64,12 @@ public:
 		return PatrolRoute;
 	}
 
+	FORCEINLINE
+	ULrWorldWidgetComponent* GetWorldWidgetComponent() const
+	{
+		return LrWidgetComponent;
+	}
+
 	FVector GetHomeLocation() const;
 
 	/** 获取该敌人配置的行为树资产 */
@@ -76,7 +84,7 @@ public:
 protected:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrAIStateComponent> AIStateComponent;
-	
+
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrPatrolRouteComponent> PatrolRoute;
 
@@ -87,14 +95,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PawnInfo")
 	TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
 
-
 	/** AI 行为树资产，定义敌人的决策逻辑 */
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	TObjectPtr<UBehaviorTree> BehaviorTree;
-	
+
 	/** 世界空间血条 UI 组件，悬浮在敌人头顶,飘字等 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<ULrWorldWidgetComponent> LrWidgetComponent;
 	UPROPERTY(EditDefaultsOnly, Category="UI")
-	TSubclassOf<UUserWidget> HealthBarWidgetClass;
+	TSubclassOf<ULrWorldBarWidget> LrWidgetClass;
 };

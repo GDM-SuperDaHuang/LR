@@ -122,19 +122,19 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 	GameplayTags.GA_Blink = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GA.Blink")),
 		FString("GA Blink"));
-	
+
 	GameplayTags.GA_Melee_1 = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GA.Melee.1")),
 		FString("GA Melee 1"));
-	
+
 	GameplayTags.GA_Melee_2 = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GA.Melee.2")),
 		FString("GA Melee 2"));
-	
+
 	GameplayTags.GA_Melee_3 = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GA.Melee.3")),
 		FString("GA Melee 3"));
-	
+
 	GameplayTags.GA_6 = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GA.6")),
 		FString("GA 6"));
@@ -204,29 +204,34 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 		FName(TEXT("GameplayCue.Melee.Hit")),
 		FString("GameplayCue Melee Attack Hit"));
 
+
+	GameplayTags.GameplayCue_Text_Damage = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GameplayCue.Text.Damage")),
+		FString("GameplayCue Text Damage"));
+
 	GameplayTags.GameplayCue_Debuff_SpeedCut = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GameplayCue.Debuff.SpeedCut")),
 		FString("GameplayCue Debuff SpeedCut"));
 
 	GameplayTags.GameplayCue_Debuff_Vertigo = UGameplayTagsManager::Get().AddNativeGameplayTag(
-	FName(TEXT("GameplayCue.Debuff.Vertigo")),
-	FString("GameplayCue Debuff Vertigo"));
+		FName(TEXT("GameplayCue.Debuff.Vertigo")),
+		FString("GameplayCue Debuff Vertigo"));
 
 	GameplayTags.GameplayCue_Debuff_Burn = UGameplayTagsManager::Get().AddNativeGameplayTag(
-	FName(TEXT("GameplayCue.Debuff.Burn")),
-	FString("GameplayCue Debuff Burn"));
+		FName(TEXT("GameplayCue.Debuff.Burn")),
+		FString("GameplayCue Debuff Burn"));
 
 	GameplayTags.GameplayCue_Debuff_Frozen = UGameplayTagsManager::Get().AddNativeGameplayTag(
-	FName(TEXT("GameplayCue.Debuff.Frozen")),
-	FString("GameplayCue Debuff Frozen"));
+		FName(TEXT("GameplayCue.Debuff.Frozen")),
+		FString("GameplayCue Debuff Frozen"));
 
 	GameplayTags.GameplayCue_Debuff_Poison = UGameplayTagsManager::Get().AddNativeGameplayTag(
-	FName(TEXT("GameplayCue.Debuff.Poison")),
-	FString("GameplayCue Debuff Poison"));
+		FName(TEXT("GameplayCue.Debuff.Poison")),
+		FString("GameplayCue Debuff Poison"));
 
 	GameplayTags.GameplayCue_Debuff_Stiffness = UGameplayTagsManager::Get().AddNativeGameplayTag(
-	FName(TEXT("GameplayCue.Debuff.Stiffness")),
-	FString("GameplayCue Debuff Stiffness"));
+		FName(TEXT("GameplayCue.Debuff.Stiffness")),
+		FString("GameplayCue Debuff Stiffness"));
 
 	// ==========================================================================================
 

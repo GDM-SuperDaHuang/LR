@@ -23,3 +23,14 @@ ULrWorldWidgetComponent::ULrWorldWidgetComponent()
 
 	PrimaryComponentTick.bCanEverTick = false;
 }
+
+// void ULrWorldWidgetComponent::BeginPlay()
+// {
+// 	Super::BeginPlay();
+//
+// 	if (LrWidgetClass)
+// 	{
+// 		this->SetWidgetClass(LrWidgetClass);
+// 	}
+// 	this->InitWidget();
+// }

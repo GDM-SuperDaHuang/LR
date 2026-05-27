@@ -33,6 +33,7 @@ GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName) \
 GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
+class ALrPawnBase;
 class ULrBuffDA;
 struct FLrGameplayEffectContext;
 DECLARE_DELEGATE_RetVal(FGameplayAttribute, FAttributeSignature);
@@ -61,7 +62,7 @@ struct FEffectProperties
 	UPROPERTY()
 	AController* SourceController; // 来源的控制器
 	UPROPERTY()
-	APawn* SourceCharacter; // 来源的角色
+	ALrPawnBase* SourceCharacter; // 来源的角色
 
 	// 目标（接收效果的对象）相关信息
 	UPROPERTY()
@@ -71,7 +72,7 @@ struct FEffectProperties
 	UPROPERTY()
 	AController* TargetController; // 目标的控制器
 	UPROPERTY()
-	APawn* TargetCharacter; // 目标的角色
+	ALrPawnBase* TargetCharacter; // 目标的角色
 };
 
 /**
@@ -128,10 +129,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRepEndurance, Category="primary Attributes")
 	FGameplayAttributeData MaxEndurance;
 	ATTRIBUTE_ACCESSORS(ULrAS, MaxEndurance);
-
-	// UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRepVigor, Category="primary Attributes")
-	// FGameplayAttributeData Vigor;
-	// ATTRIBUTE_ACCESSORS(ULrAttributeSet, Vigor); //生成getter、setter函数
+	
 
 	/*
 	* Damage Pipeline

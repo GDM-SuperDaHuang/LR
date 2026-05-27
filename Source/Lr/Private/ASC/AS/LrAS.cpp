@@ -9,6 +9,7 @@
 #include "Data/LrBuffDA.h"
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Pawn/LrPawnBase.h"
 #include "Tags/LrGameplayTags.h"
 
 ULrAS::ULrAS()
@@ -66,7 +67,7 @@ void ULrAS::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewVa
 	if (Attribute == GetHPAttribute())
 	{
 		// 限制Health在0到MaxHealth之间
-		if (GetMaxHP()!=0)
+		if (GetMaxHP() != 0)
 		{
 			NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHP());
 		}
@@ -74,7 +75,7 @@ void ULrAS::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewVa
 
 	if (Attribute == GetMPAttribute())
 	{
-		if (GetMaxMP()!=0)
+		if (GetMaxMP() != 0)
 		{
 			NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxMP());
 		}
@@ -82,7 +83,7 @@ void ULrAS::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewVa
 
 	if (Attribute == GetEnduranceAttribute())
 	{
-		if (GetMaxEndurance()!=0)
+		if (GetMaxEndurance() != 0)
 		{
 			NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxEndurance());
 		}
@@ -141,6 +142,17 @@ void ULrAS::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackDat
 		}
 
 
+		if (Damage > 0 && Props.TargetCharacter->GetClassID() > 0) //只显示敌人特效
+		{
+			// 构造 Gameplay Cue 参数
+			FGameplayCueParameters Params;
+			Params.RawMagnitude = Damage; // 将伤害数值存入 Magnitude
+			// Params.Location = Data.Target.GetAvatarActor()->GetActorLocation(); // 记录受击位置
+			// Params.EffectCauser = Data.EffectSpec.GetEffectContext().GetEffectCauser();
+			FLrGameplayTags GameplayTags = FLrGameplayTags::Get();
+			// 触发 Gameplay Cue（这会自动在所有客户端同步播放）
+			Data.Target.ExecuteGameplayCue(GameplayTags.GameplayCue_Text_Damage, Params);
+		}
 		/*
 		 * HP
 		 */
@@ -266,8 +278,7 @@ void ULrAS::SetEffectProperties(const struct FGameplayEffectModCallbackData& Dat
 	props.SourceASC = props.EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
 
 	// 3. 获取源相关信息
-	if (IsValid(props.SourceASC) && props.SourceASC->AbilityActorInfo.IsValid() && props.SourceASC->AbilityActorInfo->
-	                                                                                     AvatarActor.IsValid())
+	if (IsValid(props.SourceASC) && props.SourceASC->AbilityActorInfo.IsValid() && props.SourceASC->AbilityActorInfo->AvatarActor.IsValid())
 	{
 		// 源Avatar角色（通常是角色实例）
 		props.SourceAvatarActor = props.SourceASC->AbilityActorInfo->AvatarActor.Get();
@@ -284,7 +295,7 @@ void ULrAS::SetEffectProperties(const struct FGameplayEffectModCallbackData& Dat
 		// 源角色
 		if (props.SourceController != nullptr)
 		{
-			props.SourceCharacter = Cast<APawn>(props.SourceController->GetPawn());
+			props.SourceCharacter = Cast<ALrPawnBase>(props.SourceController->GetPawn());
 		}
 	}
 
@@ -296,7 +307,7 @@ void ULrAS::SetEffectProperties(const struct FGameplayEffectModCallbackData& Dat
 		// 目标控制器
 		props.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
 		// 目标角色
-		props.TargetCharacter = Cast<APawn>(props.TargetAvatarActor);
+		props.TargetCharacter = Cast<ALrPawnBase>(props.TargetAvatarActor);
 		// 目标能力系统组件
 		props.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(props.TargetAvatarActor);
 	}

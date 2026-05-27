@@ -30,26 +30,7 @@ ALrPawnBase::ALrPawnBase()
 	// LrMoverComponent->SetUpdatedComponent(CapsuleComponent);
 	CharacterMotionComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
 	UE_LOG(LogTemp, Warning, TEXT("[ALrPawnBase init] on Mover=%p"), CharacterMotionComponent.Get());
-
-	// =========================
-	// Nav → Mover 桥接
-	// =========================
-	// LrNavMoverComponent = CreateDefaultSubobject<ULrNavMovementComponent>(TEXT("NavMoverComponent"));
-	//  todo 交给子类做
-	// LrNavMoverComponent->UpdatedComponent = CapsuleComponent;
-
-	// =========================
-	// AI 设置
-	// =========================
-	// AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
-	// AIControllerClass = AAIController::StaticClass();
-	// bUseControllerRotationYaw = false;
-
-	// =========================
-	// 属性 ui设置
-	// =========================
-	// LrASComponent = CreateDefaultSubobject<ULrASComponent>(TEXT("LrASComponent"));
-
+	
 	// =========================
 	// 动画相关
 	// =========================
@@ -87,6 +68,11 @@ ULrASC* ALrPawnBase::GetASC() const
 ULrAS* ALrPawnBase::GetAS() const
 {
 	return LrAS;
+}
+
+uint8 ALrPawnBase::GetClassID() const
+{
+	return 0;
 }
 
 // Called when the game starts or when spawned

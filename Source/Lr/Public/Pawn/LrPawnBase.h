@@ -42,7 +42,7 @@ public:
 	virtual bool IsDead() const override;
 	virtual ULrASC* GetASC() const override;
 	virtual ULrAS* GetAS() const override;
-
+	virtual uint8 GetClassID() const override;
 	/** 战斗组件 */
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrCombatComponentBase> LrCombatComponent;

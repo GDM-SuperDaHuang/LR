@@ -11,7 +11,6 @@
 #include "AI/Subsystem/LrAIManagerSubsystem.h"
 #include "Alembic/AbcGeom/IFaceSet.h"
 #include "Component/LrAIStateComponent.h"
-#include "Component/Combat/LrPlayerCombatComponent.h"
 #include "Component/LrPatrolRouteComponent.h"
 #include "Component/Combat/LrAICombatComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
@@ -44,13 +43,15 @@ ALrEnemyPawn::ALrEnemyPawn()
 	LrCapsuleComponent->InitCapsuleSize(34.f, 88.f);
 	LrCapsuleComponent->SetCollisionProfileName(TEXT("LrEnemyPawnCapsuleComponent"));
 	LrCapsuleComponent->SetCanEverAffectNavigation(false);
-
+	LrCapsuleComponent->SetCollisionObjectType(ECC_Pawn);
+	
 	LrSkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrEnemyMesh"));
 	LrSkeletalMeshComponent->SetupAttachment(LrCapsuleComponent);
 	LrSkeletalMeshComponent->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
 	LrSkeletalMeshComponent->SetOnlyOwnerSee(false);
 	LrSkeletalMeshComponent->SetOwnerNoSee(false);
-
+	LrSkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LrSkeletalMeshComponent->SetCanEverAffectNavigation(false);
 	// =========================
 	// 武器 →骨架
 	// =========================
@@ -72,7 +73,7 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// =========================
 	LrNavMoverComponent = CreateDefaultSubobject<ULrNavMovementComponent>(TEXT("EnemyNavMoverComponent"));
 	LrNavMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
-
+	
 	LrASC = CreateDefaultSubobject<ULrASC>(TEXT("EnemyASC"));
 	LrASC->SetIsReplicated(true);
 	LrASC->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
@@ -128,30 +129,35 @@ void ALrEnemyPawn::BeginPlay()
 		CharacterMotionComponent->QueueNextMode(LrAllModes::Air);
 	}
 
-	if (HealthBarWidgetClass)
+	if (LrWidgetClass)
 	{
-		LrWidgetComponent->SetWidgetClass(HealthBarWidgetClass);
+		LrWidgetComponent->SetWidgetClass(LrWidgetClass);
 	}
-
 	LrWidgetComponent->InitWidget();
 
 	ULrWorldBarWidget* BarWidget = Cast<ULrWorldBarWidget>(LrWidgetComponent->GetUserWidgetObject());
+	ULrAS* As = GetAS();
 
 	if (BarWidget)
 	{
 		BarWidget->InitWidget(this);
-		//TODO
-		// BarWidget->UpdateHealth(500);
-		// 属性委托绑定
-		for (TPair<FGameplayTag, FGameplayAttribute(*)()> Pair : LrAS->TagsASMap)
+		for (TPair<FGameplayTag, FGameplayAttribute(*)()> Pair : As->TagsASMap)
 		{
 			LrASC->GetGameplayAttributeValueChangeDelegate(Pair.Value()).AddLambda(
-				[this,Pair,BarWidget](const FOnAttributeChangeData& Data)
+				[this,Pair,BarWidget,As](const FOnAttributeChangeData& Data)
 				{
-					FGameplayAttribute Attribute = Pair.Value();
-					FGameplayTag GameplayTag = Pair.Key;
-					float ASValue = Attribute.GetNumericValue(LrAS);
-					BarWidget->UpdateHealth(Pair.Key, ASValue);
+					const FGameplayTag* TagsAsMaxTag = As->TagsASMaxTags.Find(Pair.Key);
+					float Max = 0;
+					if (TagsAsMaxTag)
+					{
+						FAttributeFuncPtr* Find = As->TagsASMap.Find(*TagsAsMaxTag);
+						if (Find)
+						{
+							FGameplayAttribute MaxAttribute = (*Find)();
+							Max = MaxAttribute.GetNumericValue(As);
+						}
+					}
+					BarWidget->UpdateChance(Pair.Key, Pair.Value().GetNumericValue(As), Max);
 				});
 		}
 	}
@@ -172,6 +178,11 @@ void ALrEnemyPawn::GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRota
 	// Super::GetActorEyesViewPoint(OutLocation, OutRotation);
 	OutLocation = GetActorLocation() + FVector(0.f, 0.f, 60.f);
 	OutRotation = GetActorRotation();
+}
+
+uint8 ALrEnemyPawn::GetClassID() const
+{
+	return 100;
 }
 
 void ALrEnemyPawn::FaceToDirection(const FVector& Direction, float DeltaTime)
