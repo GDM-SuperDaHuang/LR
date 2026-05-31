@@ -34,25 +34,18 @@ void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
 	}
-
-
-	AActor* TargetActor = nullptr;
-	// 如果没有目标，则使用前方作为默认方向
-	FVector TargetLocation;
-	if (TargetActor)
-	{
-		TargetLocation = TargetActor->GetActorLocation();
-	}
-	else
-	{
-		// 默认向前 500cm 作为“假目标点”
-		TargetLocation = OwnerPawn->GetActorLocation() + OwnerPawn->GetActorForwardVector() * 500.f;
-	}
-
+	
 	// ========== 2. 设置 Motion Warping ==========
-	// 需要和蒙太奇运动扭曲轨道，
-	OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocation("FacingTarget", TargetLocation);
-
+	if (ULrCombatComponentBase* Combat = GetAvatarActorFromActorInfo()->FindComponentByClass<ULrCombatComponentBase>())
+	{
+		ConeParams.Origin = OwnerPawn->GetActorLocation();
+		ConeParams.Forward = OwnerPawn->GetActorForwardVector();
+		TargetAActor = Combat->GetClosestEnemyInCone(ConeParams);
+		if (TargetAActor.Get())
+		{
+			OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocation("FacingTarget", TargetAActor->GetActorLocation());
+		}
+	}
 
 	// ================== 2. 播放 Montage ==================
 	FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(OwnerPawn, GetAssetTags().First());
@@ -135,48 +128,33 @@ void ULrNormalMeleeGA::EndAbility(const FGameplayAbilitySpecHandle Handle, const
 void ULrNormalMeleeGA::OnMontageFinished()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo())))
-	{
-		if (ULrCombatComponentBase* Combat = GetAvatarActorFromActorInfo()->FindComponentByClass<ULrCombatComponentBase>())
-		{
-			ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
-
-			ConeParams.Origin = OwnerPawn->GetActorLocation();
-			ConeParams.Forward = OwnerPawn->GetActorForwardVector();
-			AActor* TargetAActor = Combat->GetClosestEnemyInCone(ConeParams);
-			LrASC->ApplyDamageToTarget(TargetAActor, DamageEffectParams);
-		}
-	}
-}
-
-
-void ULrNormalMeleeGA::OnAttackEventReceived(const FGameplayEventData* GameplayEventData) const
-{
 }
 
 
 void ULrNormalMeleeGA::OnAttackEvent(FGameplayEventData Payload)
 {
+	// ========== 2. 应用伤害 ==========
+	// 只在 Server 结算
+	if (!GetAvatarActorFromActorInfo()->HasAuthority())
+	{
+		return;
+	}
 	ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
 	if (!OwnerPawn) return;
 
 	// ========== 1. 播放武器轨迹 Niagara ==========
 	SpawnWeaponTrailFX(OwnerPawn);
 
-	// ========== 2. 命中检测 ==========
-	TArray<FHitResult> HitResults;
-	PerformMeleeTrace(OwnerPawn, HitResults);
-
-	for (const FHitResult& Hit : HitResults)
+	
+	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo())))
 	{
-		AActor* HitActor = Hit.GetActor();
-		if (!HitActor || HitActor == OwnerPawn) continue;
-
-		// ========== 3. 应用伤害 ==========
-		// ApplyDamageToTarget(HitActor, Hit);
-		//
-		// // ========== 4. 敌人血液特效 ==========
-		// PlayHitBloodFX(HitActor, Hit);
+		if (ULrCombatComponentBase* Combat = GetAvatarActorFromActorInfo()->FindComponentByClass<ULrCombatComponentBase>())
+		{
+			if (TargetAActor.Get())
+			{
+				LrASC->ApplyDamageToTarget(TargetAActor.Get(), DamageEffectParams);
+			}
+		}
 	}
 }
 
@@ -186,4 +164,5 @@ void ULrNormalMeleeGA::SpawnWeaponTrailFX(ALrPawnBase* OwnerPawn)
 
 void ULrNormalMeleeGA::PerformMeleeTrace(ALrPawnBase* OwnerPawn, TArray<FHitResult>& Array)
 {
+	
 }

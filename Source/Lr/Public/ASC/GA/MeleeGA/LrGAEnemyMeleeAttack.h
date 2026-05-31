@@ -20,6 +20,9 @@ public:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
+	UFUNCTION()
+	void OnAttackEvent(FGameplayEventData Payload);
+
 	// 被打断
 	UFUNCTION()
 	void OnMontageCancelled();
@@ -33,4 +36,8 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, meta=(ExposeOnSpawn = true))
 	FLrCombatQueryParams ConeParams;
+
+	// 单体类型
+	UPROPERTY()
+	TWeakObjectPtr<AActor> TargetAActor; //目标可能死亡
 };

@@ -15,6 +15,6 @@ class LR_API ULrGCN_DamageNumber : public UGameplayCueNotify_Static
 	GENERATED_BODY()
 
 public:
-	ULrGCN_DamageNumber();
+	// ULrGCN_DamageNumber();
 	virtual bool OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const override;
 };

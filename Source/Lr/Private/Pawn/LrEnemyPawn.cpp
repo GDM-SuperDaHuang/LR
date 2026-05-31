@@ -18,6 +18,9 @@
 #include "Mover/LrAllModes.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/Air/LrAirMovementMode.h"
+#include "Mover/Blink/LrBlinkMovementMode.h"
+#include "Mover/Blink/LrKnockbackMovementMode.h"
+#include "Mover/Death/LrDeathMovementMode.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
 #include "UI/Component/LrWorldWidgetComponent.h"
@@ -44,7 +47,7 @@ ALrEnemyPawn::ALrEnemyPawn()
 	LrCapsuleComponent->SetCollisionProfileName(TEXT("LrEnemyPawnCapsuleComponent"));
 	LrCapsuleComponent->SetCanEverAffectNavigation(false);
 	LrCapsuleComponent->SetCollisionObjectType(ECC_Pawn);
-	
+
 	LrSkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrEnemyMesh"));
 	LrSkeletalMeshComponent->SetupAttachment(LrCapsuleComponent);
 	LrSkeletalMeshComponent->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
@@ -73,7 +76,7 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// =========================
 	LrNavMoverComponent = CreateDefaultSubobject<ULrNavMovementComponent>(TEXT("EnemyNavMoverComponent"));
 	LrNavMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
-	
+
 	LrASC = CreateDefaultSubobject<ULrASC>(TEXT("EnemyASC"));
 	LrASC->SetIsReplicated(true);
 	LrASC->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
@@ -118,6 +121,9 @@ void ALrEnemyPawn::BeginPlay()
 		// 使用 RealisticMovementDefines 中定义的键名（例如 RealisticModes::Walk
 		CharacterMotionComponent->MovementModes.Add(LrAllModes::Walk, NewObject<ULrWalkMovementMode>(CharacterMotionComponent));
 		CharacterMotionComponent->MovementModes.Add(LrAllModes::Air, NewObject<ULrAirMovementMode>(CharacterMotionComponent));
+		CharacterMotionComponent->MovementModes.Add(LrAllModes::Blink, NewObject<ULrBlinkMovementMode>(CharacterMotionComponent));
+		CharacterMotionComponent->MovementModes.Add(LrAllModes::Knock, NewObject<ULrKnockbackMovementMode>(CharacterMotionComponent));
+		CharacterMotionComponent->MovementModes.Add(LrAllModes::Death, NewObject<ULrDeathMovementMode>(CharacterMotionComponent));
 
 		// 清空显式的状态转换表（转换逻辑已内置于各移动模式内部）
 		// Удаляем явные переходы (Transitions), они теперь встроенны в логику режимов
@@ -140,7 +146,7 @@ void ALrEnemyPawn::BeginPlay()
 
 	if (BarWidget)
 	{
-		BarWidget->InitWidget(this);
+		// BarWidget->InitWidget(this);
 		for (TPair<FGameplayTag, FGameplayAttribute(*)()> Pair : As->TagsASMap)
 		{
 			LrASC->GetGameplayAttributeValueChangeDelegate(Pair.Value()).AddLambda(

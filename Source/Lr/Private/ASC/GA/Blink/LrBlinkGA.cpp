@@ -26,6 +26,7 @@ void ULrBlinkGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 	}
 
 	OwnerPawn->CharacterMotionComponent->QueueNextMode(LrAllModes::Blink);
+
 	EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
 }
 

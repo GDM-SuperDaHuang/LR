@@ -16,7 +16,7 @@ class LR_API ULrAICombatComponent : public ULrCombatComponentBase
 public:
 	// Sets default values for this component's properties
 	ULrAICombatComponent();
-	virtual AActor* GetClosestEnemyInCone(const FLrCombatQueryParams& Params) override;
+	virtual TWeakObjectPtr<AActor> GetClosestEnemyInCone(const FLrCombatQueryParams& Params) override;
 
 	// 单体类型
 	UPROPERTY()

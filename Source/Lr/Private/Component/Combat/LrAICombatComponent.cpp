@@ -15,7 +15,7 @@ ULrAICombatComponent::ULrAICombatComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-AActor* ULrAICombatComponent::GetClosestEnemyInCone(const FLrCombatQueryParams& Params)
+TWeakObjectPtr<AActor> ULrAICombatComponent::GetClosestEnemyInCone(const FLrCombatQueryParams& Params)
 {
 	return CachedTargetActor.Get();
 }

@@ -17,7 +17,7 @@ class LR_API ULrWalkMovementMode : public UBaseMovementMode
 
 public:
 	ULrWalkMovementMode();
-
+	virtual void Activate() override;
 	virtual void GenerateMove_Implementation(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const override;
 	virtual void SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState) override;
 

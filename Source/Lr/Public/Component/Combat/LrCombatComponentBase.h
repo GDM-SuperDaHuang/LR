@@ -106,12 +106,12 @@ public:
 	ULrCombatComponentBase();
 	
 	// 新增：获取前方扇形范围内最近的一个敌人（会自动更新 CachedTargetActor）
-	virtual AActor* GetClosestEnemyInCone(const FLrCombatQueryParams& Params);
+	virtual TWeakObjectPtr<AActor> GetClosestEnemyInCone(const FLrCombatQueryParams& Params);
 	// AOE 类型
-	TArray<AActor*> PerformCombatQuery(const FLrCombatQueryParams& Params);
-	TArray<AActor*> PerformSphereQuery(const FLrCombatQueryParams& Params); //圆形
-	TArray<AActor*> PerformBoxQuery(const FLrCombatQueryParams& Params); //矩形
-	TArray<AActor*> PerformConeQuery(const FLrCombatQueryParams& Params); //扇形
+	TArray<TWeakObjectPtr<AActor>> PerformCombatQuery(const FLrCombatQueryParams& Params);
+	TArray<TWeakObjectPtr<AActor>> PerformSphereQuery(const FLrCombatQueryParams& Params); //圆形
+	TArray<TWeakObjectPtr<AActor>> PerformBoxQuery(const FLrCombatQueryParams& Params); //矩形
+	TArray<TWeakObjectPtr<AActor>> PerformConeQuery(const FLrCombatQueryParams& Params); //扇形
 	// 目标过滤
 	bool IsValidCombatTarget(AActor* TargetActor, const FLrCombatQueryParams& Params) const;
 	// 角度判断

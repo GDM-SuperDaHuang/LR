@@ -42,7 +42,8 @@ public:
 	virtual bool IsDead() const override;
 	virtual ULrASC* GetASC() const override;
 	virtual ULrAS* GetAS() const override;
-	virtual uint8 GetClassID() const override;
+	virtual uint8 GetClassID() const;
+	virtual void ToDie(const FVector& DeathImpulse, float Duration) const override;
 	/** 战斗组件 */
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrCombatComponentBase> LrCombatComponent;
@@ -78,6 +79,10 @@ public:
 	TObjectPtr<ULrNavMovementComponent> LrNavMoverComponent;
 
 protected:
+	UFUNCTION()
+	void HandleMoverFinalized(const FMoverSyncState& SyncState, const FMoverAuxStateContext& AuxState);
+	UFUNCTION()
+	void HandleOnMovementModeChanged(const FName& PreviousMovementModeName, const FName& NewMovementModeName);
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -94,7 +99,7 @@ protected:
 	 * @param DeltaMs 距离上次模拟的毫秒数
 	 * @param InputCmd 输入命令，可以修改后传出
 	 */
-	virtual void OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdResult);
+	// virtual void OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdResult);
 
 	UPROPERTY()
 	TObjectPtr<ULrASC> LrASC;
@@ -125,7 +130,21 @@ private:
 	bool bIsJumpPressed = false; // 当前处于按住状态
 	FVector CachedMoveInput = FVector::ZeroVector; // Movement input (intent or velocity) the last time we had one that wasn't zero
 
+	FVector LastVelocity = FVector::ZeroVector; //当前速度，只有>0.5,或者小于0.5的瞬间才触发委托
 	FCharacterDefaultInputs CharacterDefaultInputsPre;
 	FMoverDataCollection InputDataCollection;
 	/** 最后一次非零移动输入（用于维持朝向） */
+
+
+protected:
+	// 动态材质实例
+	UPROPERTY()
+	class UMaterialInstanceDynamic* DynamicDissolveMaterial;
+
+	// 溶解控制变量
+	bool bIsDissolving = false;
+	float DissolveValue = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Death")
+	float DissolveSpeed = 1.0f; // 溶解速度
 };

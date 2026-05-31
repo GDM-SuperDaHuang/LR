@@ -39,6 +39,8 @@ struct FLrAnimMovementData
 	bool bIsFalling = false; //是否掉落
 };
 
+DECLARE_DELEGATE_OneParam(FOnMovementDataChanged, const FLrAnimMovementData&);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class LR_API ULrAnimationComponent : public UActorComponent
 {
@@ -54,16 +56,24 @@ protected:
 
 public:
 	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	// virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	// FLrAnimMovementData& UpdateMovementData();
 
-
+	UPROPERTY(BlueprintReadOnly, Category="Animation")
+	FLrAnimMovementData MovementData;
+	
 	FLrAnimMovementData& GetMovementData()
 	{
 		return MovementData;
 	}
 
+	/** 数据变化时广播（AnimInstance 订阅此委托，避免每帧轮询） */
+	FOnMovementDataChanged OnMovementDataChanged;
+
 protected:
-	void UpdateMovementData(float DeltaTime);
+
+	// /** 检查数据是否有显著变化（避免微小浮点差异触发广播） */
+	// bool HasDataChangedSignificantly(const FLrAnimMovementData& NewData);
 
 protected:
 	UPROPERTY()
@@ -72,6 +82,9 @@ protected:
 	UPROPERTY()
 	TObjectPtr<ULrMoverComponent> CachedMover;
 
-	UPROPERTY(BlueprintReadOnly, Category="Animation")
-	FLrAnimMovementData MovementData;
+	// UPROPERTY(BlueprintReadOnly, Category="Animation")
+	// FLrAnimMovementData MovementData;
+
+	/** 上一帧数据，用于对比变化 */
+	// FLrAnimMovementData PreviousMovementData;
 };

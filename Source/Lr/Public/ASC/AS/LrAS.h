@@ -129,17 +129,17 @@ public:
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRepEndurance, Category="primary Attributes")
 	FGameplayAttributeData MaxEndurance;
 	ATTRIBUTE_ACCESSORS(ULrAS, MaxEndurance);
-	
+
 
 	/*
 	* Damage Pipeline
 	*/
 	UPROPERTY(BlueprintReadOnly)
-	FGameplayAttributeData IncomingDamage;
+	FGameplayAttributeData IncomingDamage; //伤害
 	ATTRIBUTE_ACCESSORS(ULrAS, IncomingDamage)
 
 	UPROPERTY(BlueprintReadOnly)
-	FGameplayAttributeData IncomingHeal;
+	FGameplayAttributeData IncomingHeal; //治疗
 	ATTRIBUTE_ACCESSORS(ULrAS, IncomingHeal)
 
 	/*

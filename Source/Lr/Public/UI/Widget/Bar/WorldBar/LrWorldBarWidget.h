@@ -19,23 +19,27 @@ class LR_API ULrWorldBarWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void InitWidget(ALrEnemyPawn* InEnemy);
-	void UpdateChance(FGameplayTag ASTag, float Current, float Max) const;
+	// void InitWidget(ALrEnemyPawn* InEnemy);
+	void UpdateChance(FGameplayTag ASTag, float Current, float Max);
 
-	void UpdateHealth(float Current, float Max) const;
+	void UpdateHealth(float Current, float Max);
 	virtual void NativeConstruct() override;
 	void PlayDamageAnimation(float DamageValue);
+	void Tick(float DeltaTime);
 
 protected:
 	// 主进度条
 	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
 	TObjectPtr<UProgressBar> MainBar;
+
+public:
 	// 虚幻进度条
 	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
 	TObjectPtr<UProgressBar> GhostBar;
 
-	UPROPERTY()
-	TObjectPtr<ALrEnemyPawn> OwnerEnemy;
+protected:
+	// UPROPERTY()
+	// TObjectPtr<ALrEnemyPawn> OwnerEnemy;
 
 	// 数值显示
 	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
@@ -45,4 +49,11 @@ protected:
 	// 注意：动画必须加上 Transient
 	UPROPERTY(BlueprintReadOnly, Transient, meta = (BindWidgetAnim, AllowPrivateAccess = "true"))
 	TObjectPtr<UWidgetAnimation> DamageAnimRef;
+
+public:
+	bool bIsAnimating = false;
+	float LastGhostPercent = 1.f;
+	float CurrentValue = 0.f;
+	float TargetPercent = 1.f;
+	float InterpSpeed = 4.f;
 };

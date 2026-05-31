@@ -43,15 +43,15 @@ EBTNodeResult::Type ULrBTTaskGetNextPatrolPoint::ExecuteTask(UBehaviorTreeCompon
 	BB->SetValueAsVector(LrBBKeys::MoveLocation, NextPoint);
 	
 	// 画点
-	DrawDebugSphere(
-		GetWorld(),
-		NextPoint,
-		100.f,
-		16,
-		FColor::Magenta,
-		false,
-		10.f,
-		0,
-		3.f);
+	// DrawDebugSphere(
+	// 	GetWorld(),
+	// 	NextPoint,
+	// 	100.f,
+	// 	16,
+	// 	FColor::Magenta,
+	// 	false,
+	// 	10.f,
+	// 	0,
+	// 	3.f);
 	return EBTNodeResult::Succeeded;
 }

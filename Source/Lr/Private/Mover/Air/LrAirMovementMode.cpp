@@ -125,19 +125,19 @@ void ULrAirMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 		{
 			// 触地 -> 切换到行走模式
 			OutputState.MovementEndState.NextModeName = LrAllModes::Walk;
-			if (CacheMoverComponent)
-			{
-				CacheMoverComponent->bJumpInitiated = false;
-			}
-			else
-			{
-				if (ULrMoverComponent* Mover = Cast<ULrMoverComponent>(GetMoverComponent()))
-				{	
-					CacheMoverComponent = Mover;
-					Mover->bJumpInitiated = false;
-					CacheMoverComponent->bJumpInitiated = false;
-				}
-			}
+			// if (CacheMoverComponent)
+			// {
+			// 	CacheMoverComponent->bJumpInitiated = false;
+			// }
+			// else
+			// {
+			// 	if (ULrMoverComponent* Mover = Cast<ULrMoverComponent>(GetMoverComponent()))
+			// 	{	
+			// 		CacheMoverComponent = Mover;
+			// 		Mover->bJumpInitiated = false;
+			// 		CacheMoverComponent->bJumpInitiated = false;
+			// 	}
+			// }
 		}
 		else
 		{

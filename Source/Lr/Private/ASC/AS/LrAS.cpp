@@ -107,30 +107,12 @@ void ULrAS::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackDat
 	FEffectProperties Props;
 	SetEffectProperties(Data, Props); // 解析效果的源和目标信息
 	/*
-	 * Damage
+	 * 伤害
 	 */
 	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
 	{
 		float Damage = GetIncomingDamage();
 		SetIncomingDamage(0.f);
-
-		/*
-		 * Shield First
-		 */
-		float CurrentShield = GetShield();
-		if (CurrentShield > 0.f)
-		{
-			const float NewShield = FMath::Max(0.f, CurrentShield - Damage);
-			float RemainDamage = FMath::Max(0.f, Damage - CurrentShield);
-			SetShield(NewShield);
-			Damage = RemainDamage;
-		}
-
-		/*
-		 * Armor Reduce
-		 */
-		Damage -= GetDefense();
-		Damage = FMath::Max(0.f, Damage);
 
 		const FLrGameplayEffectContext* LrGEContext = static_cast<const FLrGameplayEffectContext*>(Props.EffectContextHandle.Get());
 		if (LrGEContext)
@@ -153,14 +135,26 @@ void ULrAS::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackDat
 			// 触发 Gameplay Cue（这会自动在所有客户端同步播放）
 			Data.Target.ExecuteGameplayCue(GameplayTags.GameplayCue_Text_Damage, Params);
 		}
+
+		float NewHP = GetHP() - Damage;
+		if (NewHP <= 0) //死亡
+		{
+			ILrCombatInterface* CombatInterface = Cast<ILrCombatInterface>(Props.TargetAvatarActor);
+			// 击退方向
+			FVector KnockDir = (Data.Target.GetAvatarActor()->GetActorLocation() - Props.SourceAvatarActor->GetActorLocation()).GetSafeNormal();
+			// 竖直分量
+			KnockDir.Z = 0.3f;
+			FVector Impulse = KnockDir * 200.f + FVector(0, 0, 200.f); //击飞力*800 + 额外向上力 
+			CombatInterface->ToDie(Impulse, 0.5);
+		}
 		/*
 		 * HP
 		 */
-		SetHP(FMath::Clamp(GetHP() - Damage, 0.f, GetMaxHP()));
+		SetHP(FMath::Clamp(NewHP, 0.f, GetMaxHP()));
 	}
 
 	/*
-	 * Heal
+	 * 治疗 
 	 */
 	if (Data.EvaluatedData.Attribute == GetIncomingHealAttribute())
 	{

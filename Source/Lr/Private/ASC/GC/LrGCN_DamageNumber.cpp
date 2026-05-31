@@ -8,11 +8,11 @@
 #include "UI/Component/LrWorldWidgetComponent.h"
 #include "UI/Widget/Bar/WorldBar/LrWorldBarWidget.h"
 
-ULrGCN_DamageNumber::ULrGCN_DamageNumber()
-{
-	// GameplayCueTag = FLrGameplayTags::Get().GameplayCue_Text_Damage;
-	GameplayCueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Text.Damage"));
-}
+// ULrGCN_DamageNumber::ULrGCN_DamageNumber()
+// {
+// 	// GameplayCueTag = FLrGameplayTags::Get().GameplayCue_Text_Damage;
+// 	GameplayCueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Text.Damage"));
+// }
 
 bool ULrGCN_DamageNumber::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {

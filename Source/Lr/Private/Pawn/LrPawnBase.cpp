@@ -9,13 +9,14 @@
 #include "Data/LrExcelConfig.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Mover/FLrMoverInputCmd.h"
+#include "Mover/LrAllModes.h"
 #include "Mover/LrMoverComponent.h"
 
 // Sets default values
 ALrPawnBase::ALrPawnBase()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	// PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 
 	// 关键：禁用Actor级别的移动复制
@@ -25,12 +26,9 @@ ALrPawnBase::ALrPawnBase()
 	// =========================
 	// Mover
 	// =========================
-	// LrMoverComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
-	// todo 交给子类做
-	// LrMoverComponent->SetUpdatedComponent(CapsuleComponent);
 	CharacterMotionComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
 	UE_LOG(LogTemp, Warning, TEXT("[ALrPawnBase init] on Mover=%p"), CharacterMotionComponent.Get());
-	
+
 	// =========================
 	// 动画相关
 	// =========================
@@ -75,6 +73,82 @@ uint8 ALrPawnBase::GetClassID() const
 	return 0;
 }
 
+void ALrPawnBase::ToDie(const FVector& DeathImpulse, float Duration) const
+{
+	CharacterMotionComponent->Launch(DeathImpulse, Duration);
+
+	// 1. 禁用碰撞和移动，防止死尸挡路或继续移动
+	// LrCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// LrSkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// GetCharacterMovement()->DisableMovement();
+	//
+	// // 2. 创建动态材质实例 (假设Mesh上使用的是支持溶解的材质)
+	// UMaterialInterface* BaseMaterial = GetMesh()->GetMaterial(0);
+	// if (BaseMaterial)
+	// {
+	// 	DynamicDissolveMaterial = GetMesh()->CreateDynamicMaterialInstance(0, BaseMaterial);
+	// }
+	//
+	// // 3. 开启溶解状态
+	// bIsDissolving = true;
+	// DissolveValue = 0.0f;
+}
+
+void ALrPawnBase::HandleMoverFinalized(const FMoverSyncState& SyncState, const FMoverAuxStateContext& AuxState)
+{
+	// 这里拿到的就是最精确的当前帧速度！
+	FVector NewVelocity = CharacterMotionComponent->GetVelocity();
+	float NewSpeed = NewVelocity.Size();
+	float LastSize = LastVelocity.Size();
+	// 只标记速度0.5作为临界值瞬间时，才有委托,注意混合空间
+	// UE_LOG(LogTemp, Warning, TEXT("HandleMoverFinalized 新速度 = %f"), NewSpeed);
+	// UE_LOG(LogTemp, Warning, TEXT("HandleMoverFinalized 老速度 = %f"), LrAnimationComponent->MovementData.Speed);
+	if (NewSpeed > 0.5 && LastSize < 0.5) //0~0.5的时候
+	{
+		LastVelocity = NewVelocity;
+		LrAnimationComponent->MovementData.Speed = NewSpeed;
+		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
+		// UE_LOG(LogTemp, Warning, TEXT("HandleMoverFinalized 开始起步 = %f"), NewSpeed);
+	}
+	else if (NewSpeed < 0.5f && LastSize > 0.5) //回到0~0.5的时候
+	{
+		LastVelocity = NewVelocity;
+		LrAnimationComponent->MovementData.Speed = NewSpeed;
+		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
+		UE_LOG(LogTemp, Warning, TEXT("HandleMoverFinalized 回退到起步 = %f"), NewSpeed);
+	}
+	if (CharacterMotionComponent->bJumpInitiated != LrAnimationComponent->MovementData.bIsJumping)
+	{
+		LrAnimationComponent->MovementData.bIsJumping = CharacterMotionComponent->bJumpInitiated;
+		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
+		UE_LOG(LogTemp, Warning, TEXT("HandleMoverFinalized bJumpInitiated "));
+	}
+}
+
+void ALrPawnBase::HandleOnMovementModeChanged(const FName& PreviousMovementModeName, const FName& NewMovementModeName)
+{
+	if (NewMovementModeName == LrAllModes::Blink) //在闪现
+	{
+		LrAnimationComponent->MovementData.bIsBlink = true;
+		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
+		UE_LOG(LogTemp, Warning, TEXT("HandleOnMovementModeChanged Blink "));
+	}
+	else if (NewMovementModeName == LrAllModes::Air) //在空中
+	{
+		LrAnimationComponent->MovementData.bIsBlink = false;
+		LrAnimationComponent->MovementData.bIsFalling = true;
+		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
+		UE_LOG(LogTemp, Warning, TEXT("HandleOnMovementModeChanged Air "));
+	}
+	else if (NewMovementModeName == LrAllModes::Walk) //刚刚落地
+	{
+		LrAnimationComponent->MovementData.bIsBlink = false;
+		LrAnimationComponent->MovementData.bIsFalling = false;
+		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
+		UE_LOG(LogTemp, Warning, TEXT("HandleOnMovementModeChanged Walk "));
+	}
+}
+
 // Called when the game starts or when spawned
 void ALrPawnBase::BeginPlay()
 {
@@ -87,6 +161,9 @@ void ALrPawnBase::BeginPlay()
 			MoverDataStructBase
 		);
 	}
+	CharacterMotionComponent->OnPostFinalize.AddDynamic(this, &ALrPawnBase::HandleMoverFinalized);
+	// 在 ALrPawnBase::BeginPlay 中绑定
+	CharacterMotionComponent->OnMovementModeChanged.AddDynamic(this, &ALrPawnBase::HandleOnMovementModeChanged);
 }
 
 void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)
@@ -95,12 +172,6 @@ void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdCon
 	{
 		return;
 	}
-	// IMoverInputProducerInterface::ProduceInput_Implementation(SimTimeMs, InputCmdResult);
-	OnProduceInput(SimTimeMs, InputCmdResult);
-}
-
-void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdResult)
-{
 	UWorld* World = this->GetWorld();
 
 	FLrMoverInputCmd& Inputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FLrMoverInputCmd>();
@@ -137,8 +208,12 @@ void ALrPawnBase::OnProduceInput(float DeltaMs, FMoverInputCmdContext& InputCmdR
 	// 跳跃输入（一次性）
 	Inputs.bIsJumpPressed = bIsJumpJustPressed;
 	bIsJumpJustPressed = false; //
-	// CachedMoveInput = FVector::ZeroVector;
+
+	// IMoverInputProducerInterface::ProduceInput_Implementation(SimTimeMs, InputCmdResult);
+	// OnProduceInput(SimTimeMs, InputCmdResult);
 }
+
+
 
 
 // ue的mover插件，客户端移动出现抖动，服务器的移动的画面没有问题

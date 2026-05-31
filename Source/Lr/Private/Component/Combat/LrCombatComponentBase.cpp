@@ -12,13 +12,13 @@ ULrCombatComponentBase::ULrCombatComponentBase()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-AActor* ULrCombatComponentBase::GetClosestEnemyInCone(const FLrCombatQueryParams& Params)
+TWeakObjectPtr<AActor> ULrCombatComponentBase::GetClosestEnemyInCone(const FLrCombatQueryParams& Params)
 {
 	// 1. 复用现有的扇形 AOE 查询，获取扇形内的所有合法目标
 	FLrCombatQueryParams ConeParams = Params;
 	ConeParams.ShapeType = ELrCombatShape::Cone; // 强制指定为 Cone 类型
 
-	TArray<AActor*> EnemiesInCone = PerformConeQuery(ConeParams);
+	TArray<TWeakObjectPtr<AActor>> EnemiesInCone = PerformConeQuery(ConeParams);
 
 	if (EnemiesInCone.IsEmpty())
 	{
@@ -26,12 +26,12 @@ AActor* ULrCombatComponentBase::GetClosestEnemyInCone(const FLrCombatQueryParams
 	}
 
 	// 2. 遍历结果，通过比较距离的平方（DistSquared）找出最近的目标
-	AActor* ClosestEnemy = nullptr;
+	TWeakObjectPtr<AActor> ClosestEnemy = nullptr;
 	float MinDistanceSq = BIG_NUMBER; // 初始化为一个极大值
 
-	for (AActor* Enemy : EnemiesInCone)
+	for (TWeakObjectPtr<AActor> Enemy : EnemiesInCone)
 	{
-		if (!Enemy) continue;
+		if (!Enemy.Get()) continue;
 
 		// 计算平方距离，免去开方运算，优化性能
 		float CurrentDistanceSq = FVector::DistSquared(Params.Origin, Enemy->GetActorLocation());
@@ -47,7 +47,7 @@ AActor* ULrCombatComponentBase::GetClosestEnemyInCone(const FLrCombatQueryParams
 	return ClosestEnemy;
 }
 
-TArray<AActor*> ULrCombatComponentBase::PerformCombatQuery(const FLrCombatQueryParams& Params)
+TArray<TWeakObjectPtr<AActor>> ULrCombatComponentBase::PerformCombatQuery(const FLrCombatQueryParams& Params)
 {
 	switch (Params.ShapeType)
 	{
@@ -64,9 +64,9 @@ TArray<AActor*> ULrCombatComponentBase::PerformCombatQuery(const FLrCombatQueryP
 	return {};
 }
 
-TArray<AActor*> ULrCombatComponentBase::PerformSphereQuery(const FLrCombatQueryParams& Params)
+TArray<TWeakObjectPtr<AActor>> ULrCombatComponentBase::PerformSphereQuery(const FLrCombatQueryParams& Params)
 {
-	TArray<AActor*> ResultActors;
+	TArray<TWeakObjectPtr<AActor>> ResultActors;
 
 	UWorld* World = GetWorld();
 	if (!World)
@@ -94,18 +94,41 @@ TArray<AActor*> ULrCombatComponentBase::PerformSphereQuery(const FLrCombatQueryP
 		return ResultActors;
 	}
 
-	for (const FOverlapResult& Result : Overlaps)
+	// 并行筛选：当重叠结果较多时使用 ParallelFor 加速
+	const int32 OverlapCount = Overlaps.Num();
+	if (OverlapCount > 16)
 	{
-		AActor* HitActor = Result.GetActor();
+		TArray<uint8> ValidMask;
+		ValidMask.SetNumZeroed(OverlapCount);
 
-		if (!IsValidCombatTarget(HitActor, Params))
+		ParallelFor(OverlapCount, [&](int32 Index)
 		{
-			continue;
+			AActor* HitActor = Overlaps[Index].GetActor();
+			if (IsValidCombatTarget(HitActor, Params))
+			{
+				ValidMask[Index] = 1;
+			}
+		});
+
+		for (int32 i = 0; i < OverlapCount; ++i)
+		{
+			if (ValidMask[i])
+			{
+				ResultActors.AddUnique(Overlaps[i].GetActor());
+			}
 		}
-
-		ResultActors.AddUnique(HitActor);
 	}
-
+	else
+	{
+		for (const FOverlapResult& Result : Overlaps)
+		{
+			AActor* HitActor = Result.GetActor();
+			if (IsValidCombatTarget(HitActor, Params))
+			{
+				ResultActors.AddUnique(HitActor);
+			}
+		}
+	}
 
 	if (Params.bDrawDebug)
 	{
@@ -122,9 +145,9 @@ TArray<AActor*> ULrCombatComponentBase::PerformSphereQuery(const FLrCombatQueryP
 	return ResultActors;
 }
 
-TArray<AActor*> ULrCombatComponentBase::PerformBoxQuery(const FLrCombatQueryParams& Params)
+TArray<TWeakObjectPtr<AActor>> ULrCombatComponentBase::PerformBoxQuery(const FLrCombatQueryParams& Params)
 {
-	TArray<AActor*> ResultActors;
+	TArray<TWeakObjectPtr<AActor>> ResultActors;
 	UWorld* World = GetWorld();
 	if (!World)
 	{
@@ -153,16 +176,40 @@ TArray<AActor*> ULrCombatComponentBase::PerformBoxQuery(const FLrCombatQueryPara
 		return ResultActors;
 	}
 
-	for (const FOverlapResult& Result : Overlaps)
+	// 并行筛选：当重叠结果较多时使用 ParallelFor 加速
+	const int32 OverlapCount = Overlaps.Num();
+	if (OverlapCount > 16)
 	{
-		AActor* HitActor = Result.GetActor();
+		TArray<uint8> ValidMask;
+		ValidMask.SetNumZeroed(OverlapCount);
 
-		if (!IsValidCombatTarget(HitActor, Params))
+		ParallelFor(OverlapCount, [&](int32 Index)
 		{
-			continue;
-		}
+			AActor* HitActor = Overlaps[Index].GetActor();
+			if (IsValidCombatTarget(HitActor, Params))
+			{
+				ValidMask[Index] = 1;
+			}
+		});
 
-		ResultActors.AddUnique(HitActor);
+		for (int32 i = 0; i < OverlapCount; ++i)
+		{
+			if (ValidMask[i])
+			{
+				ResultActors.AddUnique(Overlaps[i].GetActor());
+			}
+		}
+	}
+	else
+	{
+		for (const FOverlapResult& Result : Overlaps)
+		{
+			AActor* HitActor = Result.GetActor();
+			if (IsValidCombatTarget(HitActor, Params))
+			{
+				ResultActors.AddUnique(HitActor);
+			}
+		}
 	}
 
 	if (Params.bDrawDebug)
@@ -180,9 +227,9 @@ TArray<AActor*> ULrCombatComponentBase::PerformBoxQuery(const FLrCombatQueryPara
 	return ResultActors;
 }
 
-TArray<AActor*> ULrCombatComponentBase::PerformConeQuery(const FLrCombatQueryParams& Params)
+TArray<TWeakObjectPtr<AActor>> ULrCombatComponentBase::PerformConeQuery(const FLrCombatQueryParams& Params)
 {
-	TArray<AActor*> ResultActors;
+	TArray<TWeakObjectPtr<AActor>> ResultActors;
 
 	UWorld* World = GetWorld();
 	if (!World)
@@ -210,23 +257,52 @@ TArray<AActor*> ULrCombatComponentBase::PerformConeQuery(const FLrCombatQueryPar
 		return ResultActors;
 	}
 
-	for (const FOverlapResult& Result : Overlaps)
+	// 并行筛选：当重叠结果较多时使用 ParallelFor 加速
+	const int32 OverlapCount = Overlaps.Num();
+	if (OverlapCount > 16)
 	{
-		AActor* HitActor = Result.GetActor();
+		TArray<uint8> ValidMask;
+		ValidMask.SetNumZeroed(OverlapCount);
 
-		if (!IsValidCombatTarget(HitActor, Params))
+		ParallelFor(OverlapCount, [&](int32 Index)
 		{
-			continue;
-		}
+			AActor* HitActor = Overlaps[Index].GetActor();
+			if (!IsValidCombatTarget(HitActor, Params))
+			{
+				return;
+			}
 
-		const FVector TargetLocation = HitActor->GetActorLocation();
+			const FVector TargetLocation = HitActor->GetActorLocation();
+			if (IsInsideCone(Params.Origin, Params.Forward, TargetLocation, Params.ConeHalfAngle))
+			{
+				ValidMask[Index] = 1;
+			}
+		});
 
-		if (!IsInsideCone(Params.Origin, Params.Forward, TargetLocation, Params.ConeHalfAngle))
+		for (int32 i = 0; i < OverlapCount; ++i)
 		{
-			continue;
+			if (ValidMask[i])
+			{
+				ResultActors.AddUnique(Overlaps[i].GetActor());
+			}
 		}
+	}
+	else
+	{
+		for (const FOverlapResult& Result : Overlaps)
+		{
+			AActor* HitActor = Result.GetActor();
+			if (!IsValidCombatTarget(HitActor, Params))
+			{
+				continue;
+			}
 
-		ResultActors.AddUnique(HitActor);
+			const FVector TargetLocation = HitActor->GetActorLocation();
+			if (IsInsideCone(Params.Origin, Params.Forward, TargetLocation, Params.ConeHalfAngle))
+			{
+				ResultActors.AddUnique(HitActor);
+			}
+		}
 	}
 
 	if (Params.bDrawDebug)

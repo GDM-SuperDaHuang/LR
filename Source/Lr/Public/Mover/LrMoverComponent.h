@@ -7,6 +7,13 @@
 #include "LrMoverComponent.generated.h"
 
 class ULrMovementSettings;
+
+struct FPendingLaunchData
+{
+	FVector Impulse;
+	float Duration = 0.3f;
+};
+
 /**
  * 
  */
@@ -18,9 +25,14 @@ class LR_API ULrMoverComponent : public UMoverComponent
 public:
 	ULrMoverComponent();
 
+	
+
 	UPROPERTY(EditAnywhere, Instanced, Category = "Realistic Movement")
 	TObjectPtr<ULrMovementSettings> RealisticSettings;
-	// virtual void InitializeComponent() override;
+	
 	bool bJumpInitiated = false;
-	// bool bIsAirborne = false;
+	const FPendingLaunchData* GetPendingLaunchData();
+	void Launch(FVector Impulse, float Duration);
+
+	FPendingLaunchData PendingLaunchData;
 };

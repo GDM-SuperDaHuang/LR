@@ -20,6 +20,9 @@
 #include "Mover/LrMoverComponent.h"
 #include "Mover/LrAllModes.h"
 #include "Mover/Air/LrAirMovementMode.h"
+#include "Mover/Blink/LrBlinkMovementMode.h"
+#include "Mover/Blink/LrKnockbackMovementMode.h"
+#include "Mover/Death/LrDeathMovementMode.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -29,8 +32,7 @@
 ALrHeroPawn::ALrHeroPawn()
 {
 	LrCombatComponent = CreateDefaultSubobject<ULrPlayerCombatComponent>(TEXT("LrCombatComponent"));
-
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	LrCapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
 	RootComponent = LrCapsuleComponent;
 	LrCapsuleComponent->InitCapsuleSize(34.f, 88.f);
@@ -75,13 +77,8 @@ ALrHeroPawn::ALrHeroPawn()
 	// =========================
 	// NS→武器
 	// =========================
-	// WeaponTrailComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("WeaponTrail"));
-	// WeaponTrailComponent->SetupAttachment(WeaponSKM, TEXT("WeaponTrailSocket"));
-	//
-	// WeaponTrailComponent->SetAsset(LoadObject<UNiagaraSystem>(nullptr, TEXT("/Game/FX/NS_WeaponTrail.NS_WeaponTrail")));
-	// WeaponTrailComponent->SetAutoActivate(false);
-	// WeaponTrailComponent->bAutoDestroy = false;
 
+	
 	// =========================
 	// 运动扭曲 
 	// =========================
@@ -91,14 +88,7 @@ ALrHeroPawn::ALrHeroPawn()
 	// =========================
 	// Mover
 	// =========================
-	// LrMoverComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
-	// LrMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
-
-	// CharacterMotionComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
 	CharacterMotionComponent->SetUpdatedComponent(LrCapsuleComponent);
-	// CharacterMotionComponent->SetPrimaryVisualComponent(LrSkeletalMeshComponent);
-	// CharacterMotionComponent->SmoothingMode = EMoverSmoothingMode::None;
-
 	// CharacterMotionComponent->SetIsReplicated(true);
 
 
@@ -114,23 +104,7 @@ ALrHeroPawn::ALrHeroPawn()
 	 * 2，NavMesh 生成 / 更新的参与者
 	 */
 	LrCapsuleComponent->SetCanEverAffectNavigation(false);
-	// =========================
-	// AI 设置
-	// =========================
-	// AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
-	// AIControllerClass = AAIController::StaticClass();
-	// bUseControllerRotationYaw = false;
-
-	// AutoPossessPlayer = EAutoReceiveInput::Player0; // ⭐关键
-
-
-	// 添加特定的自定义移动模式
-	// LrMoverComponent->AddMovementModeFromClass(TEXT("LrWalk"), ULrWalkMovementMode::StaticClass());
-	// 默认激活模式设定视需求而定
-	// ⭐ 核心：设置初始模式名字
-	// LrMoverComponent->StartingMovementMode = TEXT("LrWalk");
-	CharacterMotionComponent->StartingMovementMode = TEXT("LrWalk");
-	// CharacterMotionComponent->StartingMovementMode = DefaultModeNames::Walking;
+	// CharacterMotionComponent->StartingMovementMode = LrAllModes::Walking;
 }
 
 void ALrHeroPawn::BeginPlay()
@@ -153,6 +127,9 @@ void ALrHeroPawn::BeginPlay()
 		// 使用 RealisticMovementDefines 中定义的键名（例如 RealisticModes::Walk
 		CharacterMotionComponent->MovementModes.Add(LrAllModes::Walk, NewObject<ULrWalkMovementMode>(CharacterMotionComponent));
 		CharacterMotionComponent->MovementModes.Add(LrAllModes::Air, NewObject<ULrAirMovementMode>(CharacterMotionComponent));
+		CharacterMotionComponent->MovementModes.Add(LrAllModes::Blink, NewObject<ULrBlinkMovementMode>(CharacterMotionComponent));
+		CharacterMotionComponent->MovementModes.Add(LrAllModes::Knock, NewObject<ULrKnockbackMovementMode>(CharacterMotionComponent));
+		CharacterMotionComponent->MovementModes.Add(LrAllModes::Death, NewObject<ULrDeathMovementMode>(CharacterMotionComponent));
 
 		// 清空显式的状态转换表（转换逻辑已内置于各移动模式内部）
 		// Удаляем явные переходы (Transitions), они теперь встроенны в логику режимов

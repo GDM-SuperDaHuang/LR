@@ -31,12 +31,16 @@ public:
 	void SpawnWeaponTrailFX(ALrPawnBase* OwnerPawn);
 	void PerformMeleeTrace(ALrPawnBase* OwnerPawn, TArray<FHitResult>& Array);
 
-	void OnAttackEventReceived(const FGameplayEventData* GameplayEventData) const;
+	// void OnAttackEventReceived(const FGameplayEventData* GameplayEventData) const;
 
 	UPROPERTY(BlueprintReadWrite, meta=(ExposeOnSpawn = true))
 	FDamageEffectParams DamageEffectParams;
 	
 	UPROPERTY(EditDefaultsOnly)
 	FLrCombatQueryParams ConeParams;
+
+	// 单体类型
+	UPROPERTY()
+	TWeakObjectPtr<AActor> TargetAActor; //目标可能死亡
 
 };

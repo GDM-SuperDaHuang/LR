@@ -31,17 +31,17 @@ class LR_API ULrBarWidget : public UUserWidget
 public:
 	void SetViewModel(FName ViewModelName,ULrMVVMVBar* InViewModel);
 protected:
-	// 主进度条
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	TObjectPtr<UProgressBar> MainBar;
-
-	// 虚幻进度条
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	TObjectPtr<UProgressBar> GhostBar;
-
-	// 数值显示
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	TObjectPtr<UTextBlock> TextHP;
+	// // 主进度条
+	// UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	// TObjectPtr<UProgressBar> MainBar;
+	//
+	// // 虚幻进度条
+	// UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	// TObjectPtr<UProgressBar> GhostBar;
+	//
+	// // 数值显示
+	// UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	// TObjectPtr<UTextBlock> TextHP;
 
 	// VM
 	UPROPERTY()

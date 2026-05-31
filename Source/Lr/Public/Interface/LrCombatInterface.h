@@ -31,7 +31,7 @@ public:
 	virtual bool IsDead() const = 0;
 	virtual ULrASC* GetASC() const =0;
 	virtual ULrAS* GetAS() const =0;
-	
-	virtual uint8 GetClassID() const = 0;
 
+	//去死 可能会倒飞出去
+	virtual void ToDie(const FVector& DeathImpulse, float Duration) const = 0;
 };
