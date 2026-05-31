@@ -24,9 +24,7 @@ class LR_API ULrMoverComponent : public UMoverComponent
 
 public:
 	ULrMoverComponent();
-
 	
-
 	UPROPERTY(EditAnywhere, Instanced, Category = "Realistic Movement")
 	TObjectPtr<ULrMovementSettings> RealisticSettings;
 	

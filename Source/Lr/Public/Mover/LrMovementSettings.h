@@ -15,7 +15,7 @@ class LR_API ULrMovementSettings : public UObject, public IMovementSettingsInter
 {
 	GENERATED_BODY()
 public:
-	ULrMovementSettings();
+	// ULrMovementSettings();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physics")
 	float Mass = 80.0f;
@@ -27,7 +27,7 @@ public:
 	float GravityScale = 2.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Walk")
-	float MaxWalkSpeed = 600.0f;
+	float MaxWalkSpeed = 300.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Walk")
 	float SprintSpeedMult = 1.5f;

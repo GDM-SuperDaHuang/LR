@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ASC/LrASC.h"
 #include "GameFramework/HUD.h"
 #include "LrHUD.generated.h"
 
@@ -27,6 +28,7 @@ public:
 	void HandleEquipRequest(FLrWeaponConfig WeaponConfig);
 	void HandleUnequipRequest(FLrWeaponConfig WeaponConfig);
 
+	void HandleASCRegistered(ULrASC* LrAsc) const;
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 

@@ -14,12 +14,6 @@ ULrAirMovementMode::ULrAirMovementMode()
 	SharedSettingsClasses.Add(ULrMovementSettings::StaticClass());
 }
 
-// void ULrAirMovementMode::Activate()
-// {
-//     Super::Activate();
-//     CacheMoverComponent = Cast<ULrMoverComponent>(GetMoverComponent());
-// }
-
 // 生成提议移动：根据当前状态（速度、输入）计算出本帧的预期速度（不实际移动，仅计算）
 void ULrAirMovementMode::GenerateMove_Implementation(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
 {
@@ -125,19 +119,6 @@ void ULrAirMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 		{
 			// 触地 -> 切换到行走模式
 			OutputState.MovementEndState.NextModeName = LrAllModes::Walk;
-			// if (CacheMoverComponent)
-			// {
-			// 	CacheMoverComponent->bJumpInitiated = false;
-			// }
-			// else
-			// {
-			// 	if (ULrMoverComponent* Mover = Cast<ULrMoverComponent>(GetMoverComponent()))
-			// 	{	
-			// 		CacheMoverComponent = Mover;
-			// 		Mover->bJumpInitiated = false;
-			// 		CacheMoverComponent->bJumpInitiated = false;
-			// 	}
-			// }
 		}
 		else
 		{

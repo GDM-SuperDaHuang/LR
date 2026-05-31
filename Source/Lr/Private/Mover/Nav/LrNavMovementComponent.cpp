@@ -23,12 +23,6 @@ void ULrNavMovementComponent::RequestDirectMove(const FVector& MoveVelocity, boo
 	{
 		return;
 	}
-	// // 
-	// if (MoveVelocity.IsNearlyZero() || MoveVelocity.SizeSquared() < 25.0f)
-	// {
-	// 	return;
-	// }
-
 	// 转换成方向输入
 	const FVector MoveDirection = MoveVelocity.GetSafeNormal();
 	LrEnemyPawn->UpdateMove(MoveDirection);

@@ -26,8 +26,8 @@ ALrPawnBase::ALrPawnBase()
 	// =========================
 	// Mover
 	// =========================
-	CharacterMotionComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
-	UE_LOG(LogTemp, Warning, TEXT("[ALrPawnBase init] on Mover=%p"), CharacterMotionComponent.Get());
+	LrMoverComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
+	UE_LOG(LogTemp, Warning, TEXT("[ALrPawnBase init] on Mover=%p"), LrMoverComponent.Get());
 
 	// =========================
 	// 动画相关
@@ -75,7 +75,7 @@ uint8 ALrPawnBase::GetClassID() const
 
 void ALrPawnBase::ToDie(const FVector& DeathImpulse, float Duration) const
 {
-	CharacterMotionComponent->Launch(DeathImpulse, Duration);
+	LrMoverComponent->Launch(DeathImpulse, Duration);
 
 	// 1. 禁用碰撞和移动，防止死尸挡路或继续移动
 	// LrCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -97,7 +97,7 @@ void ALrPawnBase::ToDie(const FVector& DeathImpulse, float Duration) const
 void ALrPawnBase::HandleMoverFinalized(const FMoverSyncState& SyncState, const FMoverAuxStateContext& AuxState)
 {
 	// 这里拿到的就是最精确的当前帧速度！
-	FVector NewVelocity = CharacterMotionComponent->GetVelocity();
+	FVector NewVelocity = LrMoverComponent->GetVelocity();
 	float NewSpeed = NewVelocity.Size();
 	float LastSize = LastVelocity.Size();
 	// 只标记速度0.5作为临界值瞬间时，才有委托,注意混合空间
@@ -115,13 +115,13 @@ void ALrPawnBase::HandleMoverFinalized(const FMoverSyncState& SyncState, const F
 		LastVelocity = NewVelocity;
 		LrAnimationComponent->MovementData.Speed = NewSpeed;
 		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
-		UE_LOG(LogTemp, Warning, TEXT("HandleMoverFinalized 回退到起步 = %f"), NewSpeed);
+		// UE_LOG(LogTemp, Warning, TEXT("HandleMoverFinalized 回退到起步 = %f"), NewSpeed);
 	}
-	if (CharacterMotionComponent->bJumpInitiated != LrAnimationComponent->MovementData.bIsJumping)
+	if (LrMoverComponent->bJumpInitiated != LrAnimationComponent->MovementData.bIsJumping)
 	{
-		LrAnimationComponent->MovementData.bIsJumping = CharacterMotionComponent->bJumpInitiated;
+		LrAnimationComponent->MovementData.bIsJumping = LrMoverComponent->bJumpInitiated;
 		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
-		UE_LOG(LogTemp, Warning, TEXT("HandleMoverFinalized bJumpInitiated "));
+		// UE_LOG(LogTemp, Warning, TEXT("HandleMoverFinalized bJumpInitiated "));
 	}
 }
 
@@ -131,21 +131,21 @@ void ALrPawnBase::HandleOnMovementModeChanged(const FName& PreviousMovementModeN
 	{
 		LrAnimationComponent->MovementData.bIsBlink = true;
 		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
-		UE_LOG(LogTemp, Warning, TEXT("HandleOnMovementModeChanged Blink "));
+		// UE_LOG(LogTemp, Warning, TEXT("HandleOnMovementModeChanged Blink "));
 	}
 	else if (NewMovementModeName == LrAllModes::Air) //在空中
 	{
 		LrAnimationComponent->MovementData.bIsBlink = false;
 		LrAnimationComponent->MovementData.bIsFalling = true;
 		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
-		UE_LOG(LogTemp, Warning, TEXT("HandleOnMovementModeChanged Air "));
+		// UE_LOG(LogTemp, Warning, TEXT("HandleOnMovementModeChanged Air "));
 	}
 	else if (NewMovementModeName == LrAllModes::Walk) //刚刚落地
 	{
 		LrAnimationComponent->MovementData.bIsBlink = false;
 		LrAnimationComponent->MovementData.bIsFalling = false;
 		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
-		UE_LOG(LogTemp, Warning, TEXT("HandleOnMovementModeChanged Walk "));
+		// UE_LOG(LogTemp, Warning, TEXT("HandleOnMovementModeChanged Walk "));
 	}
 }
 
@@ -153,7 +153,7 @@ void ALrPawnBase::HandleOnMovementModeChanged(const FName& PreviousMovementModeN
 void ALrPawnBase::BeginPlay()
 {
 	Super::BeginPlay();
-	FMoverInputCmdContext MoverInputCmdContext = CharacterMotionComponent->GetLastInputCmd();
+	FMoverInputCmdContext MoverInputCmdContext = LrMoverComponent->GetLastInputCmd();
 	if (FMoverDataStructBase* MoverDataStructBase = MoverInputCmdContext.InputCollection.FindDataByType(FCharacterDefaultInputs::StaticStruct()))
 	{
 		FCharacterDefaultInputs::StaticStruct()->CopyScriptStruct(
@@ -161,9 +161,9 @@ void ALrPawnBase::BeginPlay()
 			MoverDataStructBase
 		);
 	}
-	CharacterMotionComponent->OnPostFinalize.AddDynamic(this, &ALrPawnBase::HandleMoverFinalized);
-	// 在 ALrPawnBase::BeginPlay 中绑定
-	CharacterMotionComponent->OnMovementModeChanged.AddDynamic(this, &ALrPawnBase::HandleOnMovementModeChanged);
+	// todo 销毁时候最好 RemoveDynamic
+	LrMoverComponent->OnPostFinalize.AddDynamic(this, &ALrPawnBase::HandleMoverFinalized);
+	LrMoverComponent->OnMovementModeChanged.AddDynamic(this, &ALrPawnBase::HandleOnMovementModeChanged);
 }
 
 void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)
@@ -209,8 +209,6 @@ void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdCon
 	Inputs.bIsJumpPressed = bIsJumpJustPressed;
 	bIsJumpJustPressed = false; //
 
-	// IMoverInputProducerInterface::ProduceInput_Implementation(SimTimeMs, InputCmdResult);
-	// OnProduceInput(SimTimeMs, InputCmdResult);
 }
 
 
@@ -247,8 +245,6 @@ void ALrPawnBase::UpdatePressedJump(bool Input)
 }
 
 /** 输入更新相关 */
-
-
 void ALrPawnBase::CheckFloorPhysics(float& OutFrictionMult)
 {
 	OutFrictionMult = 1.0f;

@@ -69,7 +69,7 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// =========================
 	// Mover
 	// =========================
-	CharacterMotionComponent->SetUpdatedComponent(LrCapsuleComponent);
+	LrMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
 
 	// =========================
 	// Nav → Mover 桥接
@@ -112,27 +112,27 @@ void ALrEnemyPawn::BeginPlay()
 
 	AISubsystem->SpawnNormalAI(this);
 
-	if (CharacterMotionComponent)
+	if (LrMoverComponent)
 	{
 		//  清空旧模式（防止重复注册）
-		CharacterMotionComponent->MovementModes.Empty();
+		LrMoverComponent->MovementModes.Empty();
 
 		// 创建新的移动模式对象：行走模式、空中模式
 		// 使用 RealisticMovementDefines 中定义的键名（例如 RealisticModes::Walk
-		CharacterMotionComponent->MovementModes.Add(LrAllModes::Walk, NewObject<ULrWalkMovementMode>(CharacterMotionComponent));
-		CharacterMotionComponent->MovementModes.Add(LrAllModes::Air, NewObject<ULrAirMovementMode>(CharacterMotionComponent));
-		CharacterMotionComponent->MovementModes.Add(LrAllModes::Blink, NewObject<ULrBlinkMovementMode>(CharacterMotionComponent));
-		CharacterMotionComponent->MovementModes.Add(LrAllModes::Knock, NewObject<ULrKnockbackMovementMode>(CharacterMotionComponent));
-		CharacterMotionComponent->MovementModes.Add(LrAllModes::Death, NewObject<ULrDeathMovementMode>(CharacterMotionComponent));
+		LrMoverComponent->MovementModes.Add(LrAllModes::Walk, NewObject<ULrWalkMovementMode>(LrMoverComponent));
+		LrMoverComponent->MovementModes.Add(LrAllModes::Air, NewObject<ULrAirMovementMode>(LrMoverComponent));
+		LrMoverComponent->MovementModes.Add(LrAllModes::Blink, NewObject<ULrBlinkMovementMode>(LrMoverComponent));
+		LrMoverComponent->MovementModes.Add(LrAllModes::Knock, NewObject<ULrKnockbackMovementMode>(LrMoverComponent));
+		LrMoverComponent->MovementModes.Add(LrAllModes::Death, NewObject<ULrDeathMovementMode>(LrMoverComponent));
 
 		// 清空显式的状态转换表（转换逻辑已内置于各移动模式内部）
 		// Удаляем явные переходы (Transitions), они теперь встроенны в логику режимов
-		CharacterMotionComponent->Transitions.Empty();
+		LrMoverComponent->Transitions.Empty();
 
 		// 设置起始模式为空中模式（防止角色一开始就卡在地面下）
 		// 通常空中模式会在落地时自动切换到行走模式
 		// Устанавливаем стартовый режим
-		CharacterMotionComponent->QueueNextMode(LrAllModes::Air);
+		LrMoverComponent->QueueNextMode(LrAllModes::Air);
 	}
 
 	if (LrWidgetClass)

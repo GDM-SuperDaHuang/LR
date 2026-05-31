@@ -47,13 +47,12 @@ void ALrHUD::BeginPlay()
 	MainWidget = CreateWidget<ULrMainWidget>(GetWorld(), MainWidgetClass);
 	if (!MainWidget)return;
 	// 直接给自动创建好的子 UI 绑定 ViewModel
-	MainWidget->HPBarWidget->SetViewModel(TEXT("HPVM"),UIController->HPVM);
-	MainWidget->MPBarWidget->SetViewModel(TEXT("MPVM"),UIController->MPVM);
-	
+	MainWidget->HPBarWidget->SetViewModel(TEXT("HPVM"), UIController->HPVM);
+	MainWidget->MPBarWidget->SetViewModel(TEXT("MPVM"), UIController->MPVM);
+
 	// 2️⃣ 加到屏幕（关键！）
 	MainWidget->AddToViewport();
 
-	
 
 	// 动态创建 GetTransientPackage()
 	ViewModel = NewObject<UMVVMMainScreen>(GetWorld(), FName("UMVVMMainScreen"));
@@ -64,27 +63,30 @@ void ALrHUD::BeginPlay()
 	ViewModel->OnUnequipRequest.AddUObject(this, &ALrHUD::HandleUnequipRequest);
 
 	// 获取监听的 GAS 属性
-	ULrAS* LrAs = LrPawnBase->GetAS();
-	for (TPair<FGameplayTag, FGameplayAttribute(*)()> Pair : LrAs->TagsASMap)
-	{
-		LrPawnBase->GetASC()->GetGameplayAttributeValueChangeDelegate(Pair.Value()).AddLambda(
-			[this,Pair,LrAs](const FOnAttributeChangeData& Data)
-			{
-				const FGameplayTag* TagsAsMaxTag = LrAs->TagsASMaxTags.Find(Pair.Key);
-				float Max = 0;
-				if (TagsAsMaxTag)
-				{
-					FAttributeFuncPtr* Find = LrAs->TagsASMap.Find(*TagsAsMaxTag);
-					if (Find)
-					{
-						FGameplayAttribute MaxAttribute = (*Find)();
-						Max = MaxAttribute.GetNumericValue(LrAs);
-					}
-				}
-				UIController->OnASChanged(Pair.Key, Pair.Value().GetNumericValue(LrAs), Max);
-			});
-	}
-	LrPawnBase->InitAS();
+
+	LrPawnBase->OnASCRegistered.AddUObject(this, &ALrHUD::HandleASCRegistered);
+
+	// ULrAS* LrAs = LrPawnBase->GetAS();
+	// for (TPair<FGameplayTag, FGameplayAttribute(*)()> Pair : LrAs->TagsASMap)
+	// {
+	// 	LrPawnBase->GetASC()->GetGameplayAttributeValueChangeDelegate(Pair.Value()).AddLambda(
+	// 		[this,Pair,LrAs](const FOnAttributeChangeData& Data)
+	// 		{
+	// 			const FGameplayTag* TagsAsMaxTag = LrAs->TagsASMaxTags.Find(Pair.Key);
+	// 			float Max = 0;
+	// 			if (TagsAsMaxTag)
+	// 			{
+	// 				FAttributeFuncPtr* Find = LrAs->TagsASMap.Find(*TagsAsMaxTag);
+	// 				if (Find)
+	// 				{
+	// 					FGameplayAttribute MaxAttribute = (*Find)();
+	// 					Max = MaxAttribute.GetNumericValue(LrAs);
+	// 				}
+	// 			}
+	// 			UIController->OnASChanged(Pair.Key, Pair.Value().GetNumericValue(LrAs), Max);
+	// 		});
+	// }
+	// LrPawnBase->InitAS();
 }
 
 void ALrHUD::Tick(float DeltaSeconds)
@@ -124,4 +126,32 @@ void ALrHUD::HandleUnequipRequest(FLrWeaponConfig WeaponConfig)
 	{
 		EquipTarget->Unequipped(WeaponConfig);
 	}
+}
+
+void ALrHUD::HandleASCRegistered(ULrASC* LrAsc) const
+{
+	APlayerController* PC = GetOwningPlayerController();
+	ALrPawnBase* LrPawnBase = Cast<ALrPawnBase>(PC->GetPawn());
+	ULrAS* LrAs = LrPawnBase->GetAS();
+	for (TPair<FGameplayTag, FGameplayAttribute(*)()> Pair : LrAs->TagsASMap)
+	{
+		LrAsc->GetGameplayAttributeValueChangeDelegate(Pair.Value()).AddLambda(
+			[this,Pair,LrAs](const FOnAttributeChangeData& Data)
+			{
+				const FGameplayTag* TagsAsMaxTag = LrAs->TagsASMaxTags.Find(Pair.Key);
+				float Max = 0;
+				if (TagsAsMaxTag)
+				{
+					FAttributeFuncPtr* Find = LrAs->TagsASMap.Find(*TagsAsMaxTag);
+					if (Find)
+					{
+						FGameplayAttribute MaxAttribute = (*Find)();
+						Max = MaxAttribute.GetNumericValue(LrAs);
+					}
+				}
+				UIController->OnASChanged(Pair.Key, Pair.Value().GetNumericValue(LrAs), Max);
+			});
+	}
+	LrPawnBase->InitAS();
+	// LrPawnBase->OnASCRegistered.RemoveDynamic(LrAsc);
 }

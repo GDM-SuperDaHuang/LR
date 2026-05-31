@@ -57,7 +57,7 @@ public:
 
 	/** 角色移动组件（Mover系统的核心） */
 	UPROPERTY(Category = Movement, VisibleAnywhere, BlueprintReadOnly, Transient, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<ULrMoverComponent> CharacterMotionComponent;
+	TObjectPtr<ULrMoverComponent> LrMoverComponent;
 
 	/** 武器 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
