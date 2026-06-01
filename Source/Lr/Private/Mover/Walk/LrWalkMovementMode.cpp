@@ -3,6 +3,7 @@
 
 #include "Mover/Walk/LrWalkMovementMode.h"
 
+#include "Kismet/KismetSystemLibrary.h"
 #include "MoveLibrary/FloorQueryUtils.h"
 #include "MoveLibrary/MovementUtils.h"
 #include "Mover/FLrMoverInputCmd.h"
@@ -29,13 +30,19 @@ void ULrWalkMovementMode::Activate()
 
 void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
 {
-	// 获取基础同步状态和玩家当前步的输入
 	const FMoverDefaultSyncState* SyncState = StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
 	const FLrMoverInputCmd* Inputs = StartState.InputCmd.InputCollection.FindDataByType<FLrMoverInputCmd>();
 
-	if (!SyncState || !Inputs) return;
+	if (!SyncState) return;
 
-	// 获取移动配置参数（优先从组件实例获取，其次从共享设置获取）
+	// 安全保底：若无输入数据，强制视作静止制动
+	if (!Inputs)
+	{
+		OutProposedMove.LinearVelocity = FVector(0.0f, 0.0f, SyncState->GetVelocity_WorldSpace().Z);
+		OutProposedMove.DirectionIntent = FVector::ZeroVector;
+		return;
+	}
+
 	const ULrMovementSettings* Settings = nullptr;
 	if (const ULrMoverComponent* MyMover = Cast<ULrMoverComponent>(GetMoverComponent()))
 	{
@@ -45,102 +52,113 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
 	{
 		Settings = GetMoverComponent()->FindSharedSettings<ULrMovementSettings>();
 	}
-	if (!Settings) return;
 
-	// 基础变量准备
 	float DeltaSeconds = TimeStep.StepMs * 0.001f;
 	FVector CurrentVelocity = SyncState->GetVelocity_WorldSpace();
-	
-	// 步行模式只处理水平位移，暂存并清空 Z 轴速度
 	float StrippedZVelocity = CurrentVelocity.Z;
 	CurrentVelocity.Z = 0.0f;
 
-	// 解析输入方向
+	// 读取输入
 	FVector MoveInput = Inputs->GetMoveInput();
-	if (MoveInput.SizeSquared() < 0.01f) 
+	float InputMagnitude = MoveInput.Size();
+
+	FVector MoveIntent = FVector::ZeroVector;
+	float SpeedScale = 0.0f;
+
+	// 【输入安全边界】
+	const float SafeDeadzone = 0.20f;
+	if (InputMagnitude > SafeDeadzone)
 	{
-		MoveInput = FVector::ZeroVector;
+		MoveIntent = MoveInput.GetSafeNormal();
+		SpeedScale = FMath::Clamp((InputMagnitude - SafeDeadzone) / (1.0f - SafeDeadzone), 0.0f, 1.0f);
 	}
-	FVector MoveIntent = MoveInput.GetSafeNormal();
-	bool bHasInput = !MoveIntent.IsNearlyZero();
 
-	// ---------- 基础物理模拟：摩擦力与制动 ----------
-	// 应用地面基础摩擦力
-	if (Settings->GroundFriction > 0.0f)
+	// ————————————————————————————————————————————————————————————————
+	// 【核心物理参数定义：通过极端数值欺骗人眼，达成“有物理的0惯性”】
+	// ————————————————————————————————————————————————————————————————
+	const float TargetMaxSpeed = (Settings ? Settings->MaxWalkSpeed : 600.0f) * (Inputs->bIsCrouchPressed ? 0.5f : (Inputs->bIsBlinkPressed ? 1.6f : 1.0f));
+	const float StableFriction = 12.0f; // 稳定的高额地面摩擦力：网络稳定的定海神针
+	const float InfiniteAcceleration = 25000.0f; // 恐怖的爆发加速度：0.02秒内充满速度，体感绝对0起步惯性
+	const float InstantBraking = 5000.0f; // 极强的刹车制动减速度：松手瞬间死死钉在原地，绝不滑行
+
+	if (SpeedScale > 0.0f)
 	{
-		CurrentVelocity = CurrentVelocity / (1.0f + (Settings->GroundFriction * DeltaSeconds));
-	}
-
-	// ---------- 基础物理模拟：加速与减速 ----------
-	if (bHasInput)
-	{
-		// 有输入：向输入方向加速
-		float TargetMaxSpeed = Settings->MaxWalkSpeed;
-		
-		// 状态修正速度（下蹲/冲刺）
-		if (Inputs->bIsCrouchPressed)
-		{
-			TargetMaxSpeed *= Settings->CrouchSpeedMult;
-		}
-		else if (Inputs->bIsBlinkPressed)
-		{
-			float SprintMult = (Settings->SprintSpeedMult > 0.0f) ? Settings->SprintSpeedMult : 1.5f;
-			TargetMaxSpeed *= SprintMult;
-		}
-
-		// 计算推力产生的加速度 (a = F / m)
-		float PushForce = (Settings->MaxWalkForce < 100.0f) ? 192000.0f : Settings->MaxWalkForce;
-		FVector Acceleration = (MoveIntent * PushForce) / Settings->Mass;
-		
-		// 叠加上步速度
-		FVector NewVelocity = CurrentVelocity + (Acceleration * DeltaSeconds);
-
-		// 软限制最大速度
-		if (NewVelocity.SizeSquared() > FMath::Square(TargetMaxSpeed))
-		{
-			if (NewVelocity.SizeSquared() > CurrentVelocity.SizeSquared())
-			{
-				NewVelocity = NewVelocity.GetSafeNormal() * TargetMaxSpeed;
-			}
-		}
-		CurrentVelocity = NewVelocity;
-	}
-	else
-	{
-		// 无输入：实施刹车制动
-		float BrakeDecel = (Settings->BrakingDeceleration < 10.0f) ? 4000.0f : Settings->BrakingDeceleration;
-		float CurrentSpeed = CurrentVelocity.Size();
-		
-		if (CurrentSpeed > 0.1f)
-		{
-			float NewSpeed = FMath::Max(0.0f, CurrentSpeed - (BrakeDecel * DeltaSeconds));
-			CurrentVelocity = CurrentVelocity.GetSafeNormal() * NewSpeed;
-		}
-		else
+		// 【去转弯惯性优化】如果玩家推反方向摇杆（角度大于90度），瞬间蒸发旧速度，实现无半径折返
+		if ((CurrentVelocity | MoveIntent) < 0.0f)
 		{
 			CurrentVelocity = FVector::ZeroVector;
 		}
+
+		// 1. 先应用高额物理摩擦力（让网络同步管道极其舒服的负反馈层）
+		CurrentVelocity = CurrentVelocity - (CurrentVelocity * StableFriction * DeltaSeconds);
+
+		// 2. 注入毁灭性的加速度
+		CurrentVelocity += MoveIntent * InfiniteAcceleration * DeltaSeconds;
+
+		// 3. 严格限制最大速度
+		float SpeedLimit = TargetMaxSpeed * SpeedScale;
+		if (CurrentVelocity.SizeSquared() > FMath::Square(SpeedLimit))
+		{
+			CurrentVelocity = CurrentVelocity.GetSafeNormal() * SpeedLimit;
+		}
+	}
+	else
+	{
+		// 【去急停惯性优化】无输入或处于死区时，摩擦力与制动爆发力双管齐下
+		CurrentVelocity = CurrentVelocity - (CurrentVelocity * StableFriction * DeltaSeconds);
+
+		FVector BrakingDrop = CurrentVelocity.GetSafeNormal() * InstantBraking * DeltaSeconds;
+		if (BrakingDrop.SizeSquared() >= CurrentVelocity.SizeSquared())
+		{
+			CurrentVelocity = FVector::ZeroVector; // 瞬间切断，不准滑行
+		}
+		else
+		{
+			CurrentVelocity -= BrakingDrop;
+		}
 	}
 
-	// 还原 Z 轴速度分量（处理斜坡等物理自然下落/位移）
+	// 恢复垂直轴速度
 	CurrentVelocity.Z = StrippedZVelocity;
 
-	// ---------- 跳跃处理 ----------
-	// 注意：绝对不要在这里修改外部组件的任何 Bool 变量（例如 CacheMoverComponent->bJumpInitiated = true）
-	// 那样会导致回滚时状态错乱。只把速度传出去即可。
+	// 跳跃处理
 	if (Inputs->bIsJumpPressed)
 	{
-		CurrentVelocity.Z = Settings->JumpImpulseForce / Settings->Mass;
+		CurrentVelocity.Z = (Settings && Settings->Mass > 0.0f) ? (Settings->JumpImpulseForce / Settings->Mass) : 700.0f;
 	}
 
-	// 填充提议移动结果
 	OutProposedMove.LinearVelocity = CurrentVelocity;
 	OutProposedMove.DirectionIntent = MoveIntent;
+
+	AActor* Owner = GetMoverComponent() ? GetMoverComponent()->GetOwner() : nullptr;
+
+	if (Owner)
+	{
+		const FString RoleStr = UEnum::GetValueAsString(Owner->GetLocalRole());
+
+		const FVector InputVector = Inputs ? Inputs->GetMoveInput() : FVector::ZeroVector;
+
+		UE_LOG(LogTemp, Warning,
+		       TEXT(
+			       "[GenerateMove][%s] "
+			       "Input=%s "
+			       "Intent=%s "
+			       "SyncVel=%s "
+			       "OutVel=%s "
+			       "Speed=%.2f"
+		       ),
+		       *RoleStr,
+		       *InputVector.ToString(),
+		       *MoveIntent.ToString(),
+		       *SyncState->GetVelocity_WorldSpace().ToString(),
+		       *CurrentVelocity.ToString(),
+		       CurrentVelocity.Size()
+		);
+	}
 }
 
 void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState)
 {
-	// 获取可变的输出同步状态引用
 	FMoverDefaultSyncState& OutputSyncState = OutputState.SyncState.SyncStateCollection.FindOrAddMutableDataByType<FMoverDefaultSyncState>();
 	const FMoverDefaultSyncState* StartingSyncState = Params.StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
 	if (!StartingSyncState) return;
@@ -148,65 +166,61 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
 	float DeltaTime = Params.TimeStep.StepMs * 0.001f;
 	FVector ProposedVelocity = Params.ProposedMove.LinearVelocity;
 	FVector DirectionIntent = Params.ProposedMove.DirectionIntent;
-	
-	// 保持并处理平滑旋转
+
 	FQuat CurrentRotation = StartingSyncState->GetOrientation_WorldSpace().Quaternion();
 	FQuat TargetRotation = CurrentRotation;
 
+	// 朝向瞬间同步
 	if (!DirectionIntent.IsNearlyZero())
 	{
 		FRotator TargetRot = DirectionIntent.Rotation();
 		TargetRot.Pitch = 0.0f;
 		TargetRot.Roll = 0.0f;
-		FQuat DesiredRotation = TargetRot.Quaternion();
+		TargetRotation = TargetRot.Quaternion();
+	}
 
-		// 确定性的单帧平滑旋转插值
-		const float RotationSpeed = 240.0f; // 度/秒
-		const float MaxRotationThisFrame = RotationSpeed * DeltaTime;
-		const float AngleDiff = FMath::Acos(FMath::Clamp(CurrentRotation | DesiredRotation, -1.0f, 1.0f)) * (180.0f / PI);
+	// 执行高精度物理移动（采用当帧最新的姿态进行物理扫掠，彻底封死因碰撞体角度不一致导致的误差）
+	FHitResult Hit;
+	Params.MovingComps.UpdatedComponent->MoveComponent(ProposedVelocity * DeltaTime, TargetRotation, true, &Hit);
 
-		if (AngleDiff <= MaxRotationThisFrame || AngleDiff < 1.0f)
+
+	if (ProposedVelocity.Size() > 0)
+	{
+		if (AActor* Owner = GetMoverComponent()->GetOwner())
 		{
-			TargetRotation = DesiredRotation;
-		}
-		else
-		{
-			float T = FMath::Clamp(MaxRotationThisFrame / AngleDiff, 0.01f, 1.0f);
-			TargetRotation = FQuat::Slerp(CurrentRotation, DesiredRotation, T);
-			TargetRotation.Normalize();
+			const FVector Location = OutputSyncState.GetLocation_WorldSpace();
+			UE_LOG(LogTemp, Warning, TEXT("[%s] Loc=%s Vel=%f"),
+			       *UEnum::GetValueAsString(Owner->GetLocalRole()),
+			       *Location.ToString(),
+			       ProposedVelocity.Size()
+			);
 		}
 	}
 
-	// ---------- 执行实际位移与障碍物滑动 ----------
-	FHitResult Hit;
-	// 仅移动位置，旋转在最后由 SyncState 统一更新，防止表现与物理冲突
-	Params.MovingComps.UpdatedComponent->MoveComponent(ProposedVelocity * DeltaTime, CurrentRotation, true, &Hit);
 
 	if (Hit.IsValidBlockingHit())
 	{
-		// 撞到障碍物，调用 Mover 库的滑动处理（爬坡、贴墙走）
-		FMovementRecord MoveRecord;
-		MoveRecord.SetDeltaSeconds(DeltaTime);
-		UMovementUtils::TryMoveToSlideAlongSurface(Params.MovingComps, ProposedVelocity * DeltaTime, 1.0f - Hit.Time, CurrentRotation, Hit.Normal, Hit, true, MoveRecord);
+		const bool bIsWall = Hit.Normal.Z < 0.3f;
+		if (bIsWall)
+		{
+			FMovementRecord MoveRecord;
+			MoveRecord.SetDeltaSeconds(DeltaTime);
+			UMovementUtils::TryMoveToSlideAlongSurface(Params.MovingComps, ProposedVelocity * DeltaTime, 1.0f - Hit.Time, TargetRotation, Hit.Normal, Hit, true, MoveRecord);
+			ProposedVelocity = MoveRecord.GetRelevantVelocity();
+		}
 		
-		// 将实际滑动后的合法速度更新
-		ProposedVelocity = MoveRecord.GetRelevantVelocity();
 	}
 
-	// ---------- 地面可行走检测与模式切换 ----------
+	// 地面检索
 	FFloorCheckResult FloorResult;
-	// 50.0f 为最大向下扫掠检测距离
 	UFloorQueryUtils::FindFloor(Params.MovingComps, 50.0f, 0.0f, true, Params.MovingComps.UpdatedComponent->GetComponentLocation(), FloorResult);
 
-	// 如果失去悬浮/脚下空了，或者离地距离超过 10cm，自动切入空中模式
-	bool bShouldGoToAir = !FloorResult.bWalkableFloor || (FloorResult.FloorDist > 10.0f);
-	if (bShouldGoToAir)
+	if (!FloorResult.bWalkableFloor || (FloorResult.FloorDist > 10.0f))
 	{
 		OutputState.MovementEndState.NextModeName = LrAllModes::Air;
 	}
 
-	// ---------- 最终数据封包 ----------
-	// 将最终计算出的确定坐标、旋转、速度塞入输出状态，Mover 插件会自动在多端将其平滑同步
+	// 打包发送全网
 	OutputSyncState.SetTransforms_WorldSpace(
 		Params.MovingComps.UpdatedComponent->GetComponentLocation(),
 		TargetRotation.Rotator(),
@@ -214,6 +228,194 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
 		FVector::ZeroVector
 	);
 }
+
+// void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
+// {
+// 	// 获取基础同步状态和玩家当前步的输入
+// 	const FMoverDefaultSyncState* SyncState = StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
+// 	const FLrMoverInputCmd* Inputs = StartState.InputCmd.InputCollection.FindDataByType<FLrMoverInputCmd>();
+//
+// 	if (!SyncState || !Inputs) return;
+//
+// 	// 获取移动配置参数（优先从组件实例获取，其次从共享设置获取）
+// 	const ULrMovementSettings* Settings = nullptr;
+// 	if (const ULrMoverComponent* MyMover = Cast<ULrMoverComponent>(GetMoverComponent()))
+// 	{
+// 		Settings = MyMover->RealisticSettings;
+// 	}
+// 	if (!Settings)
+// 	{
+// 		Settings = GetMoverComponent()->FindSharedSettings<ULrMovementSettings>();
+// 	}
+// 	if (!Settings) return;
+//
+// 	// 基础变量准备
+// 	float DeltaSeconds = TimeStep.StepMs * 0.001f;
+// 	FVector CurrentVelocity = SyncState->GetVelocity_WorldSpace();
+// 	
+// 	// 步行模式只处理水平位移，暂存并清空 Z 轴速度
+// 	float StrippedZVelocity = CurrentVelocity.Z;
+// 	CurrentVelocity.Z = 0.0f;
+//
+// 	// 解析输入方向
+// 	FVector MoveInput = Inputs->GetMoveInput();
+// 	if (MoveInput.SizeSquared() < 0.01f) 
+// 	{
+// 		MoveInput = FVector::ZeroVector;
+// 	}
+// 	FVector MoveIntent = MoveInput.GetSafeNormal();
+// 	bool bHasInput = !MoveIntent.IsNearlyZero();
+//
+// 	// ---------- 基础物理模拟：摩擦力与制动 ----------
+// 	// 应用地面基础摩擦力
+// 	if (Settings->GroundFriction > 0.0f)
+// 	{
+// 		CurrentVelocity = CurrentVelocity / (1.0f + (Settings->GroundFriction * DeltaSeconds));
+// 	}
+//
+// 	// ---------- 基础物理模拟：加速与减速 ----------
+// 	if (bHasInput)
+// 	{
+// 		// 有输入：向输入方向加速
+// 		float TargetMaxSpeed = Settings->MaxWalkSpeed;
+// 		
+// 		// 状态修正速度（下蹲/冲刺）
+// 		if (Inputs->bIsCrouchPressed)
+// 		{
+// 			TargetMaxSpeed *= Settings->CrouchSpeedMult;
+// 		}
+// 		else if (Inputs->bIsBlinkPressed)
+// 		{
+// 			float SprintMult = (Settings->SprintSpeedMult > 0.0f) ? Settings->SprintSpeedMult : 1.5f;
+// 			TargetMaxSpeed *= SprintMult;
+// 		}
+//
+// 		// 计算推力产生的加速度 (a = F / m)
+// 		float PushForce = (Settings->MaxWalkForce < 100.0f) ? 192000.0f : Settings->MaxWalkForce;
+// 		FVector Acceleration = (MoveIntent * PushForce) / Settings->Mass;
+// 		
+// 		// 叠加上步速度
+// 		FVector NewVelocity = CurrentVelocity + (Acceleration * DeltaSeconds);
+//
+// 		// 软限制最大速度
+// 		if (NewVelocity.SizeSquared() > FMath::Square(TargetMaxSpeed))
+// 		{
+// 			if (NewVelocity.SizeSquared() > CurrentVelocity.SizeSquared())
+// 			{
+// 				NewVelocity = NewVelocity.GetSafeNormal() * TargetMaxSpeed;
+// 			}
+// 		}
+// 		CurrentVelocity = NewVelocity;
+// 	}
+// 	else
+// 	{
+// 		// 无输入：实施刹车制动
+// 		float BrakeDecel = (Settings->BrakingDeceleration < 10.0f) ? 4000.0f : Settings->BrakingDeceleration;
+// 		float CurrentSpeed = CurrentVelocity.Size();
+// 		
+// 		if (CurrentSpeed > 0.1f)
+// 		{
+// 			float NewSpeed = FMath::Max(0.0f, CurrentSpeed - (BrakeDecel * DeltaSeconds));
+// 			CurrentVelocity = CurrentVelocity.GetSafeNormal() * NewSpeed;
+// 		}
+// 		else
+// 		{
+// 			CurrentVelocity = FVector::ZeroVector;
+// 		}
+// 	}
+//
+// 	// 还原 Z 轴速度分量（处理斜坡等物理自然下落/位移）
+// 	CurrentVelocity.Z = StrippedZVelocity;
+//
+// 	// ---------- 跳跃处理 ----------
+// 	// 注意：绝对不要在这里修改外部组件的任何 Bool 变量（例如 CacheMoverComponent->bJumpInitiated = true）
+// 	// 那样会导致回滚时状态错乱。只把速度传出去即可。
+// 	if (Inputs->bIsJumpPressed)
+// 	{
+// 		CurrentVelocity.Z = Settings->JumpImpulseForce / Settings->Mass;
+// 	}
+//
+// 	// 填充提议移动结果
+// 	OutProposedMove.LinearVelocity = CurrentVelocity;
+// 	OutProposedMove.DirectionIntent = MoveIntent;
+// }
+//
+// void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState)
+// {
+// 	// 获取可变的输出同步状态引用
+// 	FMoverDefaultSyncState& OutputSyncState = OutputState.SyncState.SyncStateCollection.FindOrAddMutableDataByType<FMoverDefaultSyncState>();
+// 	const FMoverDefaultSyncState* StartingSyncState = Params.StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
+// 	if (!StartingSyncState) return;
+//
+// 	float DeltaTime = Params.TimeStep.StepMs * 0.001f;
+// 	FVector ProposedVelocity = Params.ProposedMove.LinearVelocity;
+// 	FVector DirectionIntent = Params.ProposedMove.DirectionIntent;
+// 	
+// 	// 保持并处理平滑旋转
+// 	FQuat CurrentRotation = StartingSyncState->GetOrientation_WorldSpace().Quaternion();
+// 	FQuat TargetRotation = CurrentRotation;
+//
+// 	if (!DirectionIntent.IsNearlyZero())
+// 	{
+// 		FRotator TargetRot = DirectionIntent.Rotation();
+// 		TargetRot.Pitch = 0.0f;
+// 		TargetRot.Roll = 0.0f;
+// 		FQuat DesiredRotation = TargetRot.Quaternion();
+//
+// 		// 确定性的单帧平滑旋转插值
+// 		const float RotationSpeed = 240.0f; // 度/秒
+// 		const float MaxRotationThisFrame = RotationSpeed * DeltaTime;
+// 		const float AngleDiff = FMath::Acos(FMath::Clamp(CurrentRotation | DesiredRotation, -1.0f, 1.0f)) * (180.0f / PI);
+//
+// 		if (AngleDiff <= MaxRotationThisFrame || AngleDiff < 1.0f)
+// 		{
+// 			TargetRotation = DesiredRotation;
+// 		}
+// 		else
+// 		{
+// 			float T = FMath::Clamp(MaxRotationThisFrame / AngleDiff, 0.01f, 1.0f);
+// 			TargetRotation = FQuat::Slerp(CurrentRotation, DesiredRotation, T);
+// 			TargetRotation.Normalize();
+// 		}
+// 	}
+//
+// 	// ---------- 执行实际位移与障碍物滑动 ----------
+// 	FHitResult Hit;
+// 	// 仅移动位置，旋转在最后由 SyncState 统一更新，防止表现与物理冲突
+// 	Params.MovingComps.UpdatedComponent->MoveComponent(ProposedVelocity * DeltaTime, CurrentRotation, true, &Hit);
+//
+// 	if (Hit.IsValidBlockingHit())
+// 	{
+// 		// 撞到障碍物，调用 Mover 库的滑动处理（爬坡、贴墙走）
+// 		FMovementRecord MoveRecord;
+// 		MoveRecord.SetDeltaSeconds(DeltaTime);
+// 		UMovementUtils::TryMoveToSlideAlongSurface(Params.MovingComps, ProposedVelocity * DeltaTime, 1.0f - Hit.Time, CurrentRotation, Hit.Normal, Hit, true, MoveRecord);
+// 		
+// 		// 将实际滑动后的合法速度更新
+// 		ProposedVelocity = MoveRecord.GetRelevantVelocity();
+// 	}
+//
+// 	// ---------- 地面可行走检测与模式切换 ----------
+// 	FFloorCheckResult FloorResult;
+// 	// 50.0f 为最大向下扫掠检测距离
+// 	UFloorQueryUtils::FindFloor(Params.MovingComps, 50.0f, 0.0f, true, Params.MovingComps.UpdatedComponent->GetComponentLocation(), FloorResult);
+//
+// 	// 如果失去悬浮/脚下空了，或者离地距离超过 10cm，自动切入空中模式
+// 	bool bShouldGoToAir = !FloorResult.bWalkableFloor || (FloorResult.FloorDist > 10.0f);
+// 	if (bShouldGoToAir)
+// 	{
+// 		OutputState.MovementEndState.NextModeName = LrAllModes::Air;
+// 	}
+//
+// 	// ---------- 最终数据封包 ----------
+// 	// 将最终计算出的确定坐标、旋转、速度塞入输出状态，Mover 插件会自动在多端将其平滑同步
+// 	OutputSyncState.SetTransforms_WorldSpace(
+// 		Params.MovingComps.UpdatedComponent->GetComponentLocation(),
+// 		TargetRotation.Rotator(),
+// 		ProposedVelocity,
+// 		FVector::ZeroVector
+// 	);
+// }
 
 
 /**
