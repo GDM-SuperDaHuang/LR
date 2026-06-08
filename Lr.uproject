@@ -18,7 +18,9 @@
 				"UMG",
 				"CoreUObject",
 				"CommonUI",
-				"DeveloperSettings"
+				"DeveloperSettings",
+				"GameplayStateTreeModule",
+				"StateTreeModule"
 			]
 		}
 	],
@@ -95,6 +97,10 @@
 		},
 		{
 			"Name": "MetaHumanRuntime",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayStateTree",
 			"Enabled": true
 		}
 	]

@@ -61,7 +61,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category="Team")
 	TObjectPtr<UAIPerceptionStimuliSourceComponent>StimuliSource;
 	/** 感知组件 */
+
 	
+
 private:
 	// 技能列表
 	// UPROPERTY(EditAnywhere, Category="Abilities")

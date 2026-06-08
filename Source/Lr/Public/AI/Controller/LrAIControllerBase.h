@@ -6,9 +6,18 @@
 #include "AIController.h"
 #include "LrAIControllerBase.generated.h"
 
+class ALrPawnBase;
 class UBehaviorTreeComponent;
 struct FAIStimulus;
 class UAISenseConfig_Sight;
+
+UENUM()
+enum class EMoveState : uint8
+{
+	None,
+	Start, //开始行动
+	Finish, //移动完成
+};
 
 /**
 *if (HealthPercent <= 0.5f)
@@ -33,6 +42,13 @@ public:
 	ALrAIControllerBase();
 	virtual FGenericTeamId GetGenericTeamId() const override;
 	virtual void ShutdownAI();
+	virtual void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result) override;
+	UPROPERTY()
+	EMoveState MoveState = EMoveState::None;
+
+	void MoverToTarget(const FVector& TargetLocation);
+	void MoveToPlayer(AActor* Player);
+
 protected:
 	/**
 	 * 接管 Pawn 时的初始化逻辑
@@ -53,8 +69,8 @@ protected:
 	 */
 	UFUNCTION()
 	void OnTargetDetected(AActor* Actor, FAIStimulus Stimulus);
-	void SetTargetActor(AActor* Target);
-	void ClearTargetActor();
+	// void SetTargetActor(AActor* Target);
+	// void ClearTargetActor();
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Team")
@@ -62,7 +78,7 @@ protected:
 
 	// UPROPERTY()
 	// TObjectPtr<AActor> CurrentTarget;
-	
+
 	// bool bIsChasing = false;
 	UPROPERTY(EditDefaultsOnly)
 	float AcceptanceRadius = 120.f;

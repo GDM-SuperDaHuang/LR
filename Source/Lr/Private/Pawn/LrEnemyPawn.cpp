@@ -8,6 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "MotionWarpingComponent.h"
 #include "AI/Controller/LrAIControllerBase.h"
+#include "AI/ST/LrSTComponent.h"
 #include "AI/Subsystem/LrAIManagerSubsystem.h"
 #include "Alembic/AbcGeom/IFaceSet.h"
 #include "Component/LrAIStateComponent.h"
@@ -33,11 +34,11 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// =========================
 	// AI
 	// =========================
-	AIStateComponent = CreateDefaultSubobject<ULrAIStateComponent>(TEXT("AIStateComponent"));
+	// AIStateComponent = CreateDefaultSubobject<ULrAIStateComponent>(TEXT("AIStateComponent"));
 	LrCombatComponent = CreateDefaultSubobject<ULrAICombatComponent>(TEXT("LrCombatComponent"));
 
 	PatrolRoute = CreateDefaultSubobject<ULrPatrolRouteComponent>(TEXT("PatrolRoute"));
-	AutoPossessAI = EAutoPossessAI::Disabled; //禁止自动Possess,自己直接调用
+	AutoPossessAI = EAutoPossessAI::Disabled; //禁止自动 Possess,自己直接调用
 	// =========================
 	// 骨骼 →碰撞体
 	// =========================
@@ -91,6 +92,13 @@ ALrEnemyPawn::ALrEnemyPawn()
 	LrWidgetComponent = CreateDefaultSubobject<ULrWorldWidgetComponent>(TEXT("HealthBarComponent"));
 	LrWidgetComponent->SetupAttachment(RootComponent);
 	LrWidgetComponent->SetRelativeLocation(FVector(0, 0, 120.f));
+
+	// =========================
+	// 状态树
+	// =========================
+	LrStateTreeComponent = CreateDefaultSubobject<ULrSTComponent>(TEXT("LrSTComponent"));
+
+	
 }
 
 void ALrEnemyPawn::BeginPlay()

@@ -6,6 +6,7 @@
 #include "Pawn/LrPawnBase.h"
 #include "LrEnemyPawn.generated.h"
 
+class ULrSTComponent;
 class ULrWorldBarWidget;
 class ULrWorldWidgetComponent;
 class ULrBarWidget;
@@ -55,7 +56,8 @@ public:
 	FORCEINLINE
 	ULrAIStateComponent* GetAIStateComponent() const
 	{
-		return AIStateComponent;
+		// return AIStateComponent;
+		return nullptr;
 	}
 
 	FORCEINLINE
@@ -73,7 +75,7 @@ public:
 	FVector GetHomeLocation() const;
 
 	/** 获取该敌人配置的行为树资产 */
-	FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
+	// FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
 	/** AI相关 End */
 
 
@@ -81,12 +83,13 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Combat")
 	FOnEnemyDeath OnEnemyDeath;
 
-protected:
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<ULrAIStateComponent> AIStateComponent;
 
+protected:
+	// UPROPERTY(VisibleAnywhere)
+	// TObjectPtr<ULrAIStateComponent> AIStateComponent;
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrPatrolRouteComponent> PatrolRoute;
+	
 
 	UPROPERTY()
 	FVector HomeLocation;
@@ -95,13 +98,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PawnInfo")
 	TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
 
-	/** AI 行为树资产，定义敌人的决策逻辑 */
-	UPROPERTY(EditDefaultsOnly, Category = "AI")
-	TObjectPtr<UBehaviorTree> BehaviorTree;
-
 	/** 世界空间血条 UI 组件，悬浮在敌人头顶,飘字等 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<ULrWorldWidgetComponent> LrWidgetComponent;
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<ULrWorldBarWidget> LrWidgetClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	TObjectPtr<ULrSTComponent> LrStateTreeComponent;
 };

@@ -14,7 +14,7 @@ class LR_API ULrPatrolRouteComponent : public UActorComponent
 public:
 	ULrPatrolRouteComponent();
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	
+
 	FVector GetNextPatrolPoint();
 	void GenerateCircle(float Radius, int32 Count);
 	void DebugDrawPatrolRoute();
@@ -22,6 +22,9 @@ public:
 	{
 		HomeLocation = InHome;
 	}
+
+	UPROPERTY()
+	AActor* TargetActor;
 protected:
 	int32 CurrentIndex = 0;
 
@@ -30,4 +33,6 @@ protected:
 
 	UPROPERTY()
 	FVector HomeLocation = FVector::ZeroVector;
+
+	
 };
