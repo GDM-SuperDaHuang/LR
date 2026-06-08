@@ -55,6 +55,10 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
 
 	float DeltaSeconds = TimeStep.StepMs * 0.001f;
 	FVector CurrentVelocity = SyncState->GetVelocity_WorldSpace();
+	if (CurrentVelocity.Size() > 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT(""));
+	}
 	float StrippedZVelocity = CurrentVelocity.Z;
 	CurrentVelocity.Z = 0.0f;
 
@@ -130,35 +134,29 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
 	OutProposedMove.LinearVelocity = CurrentVelocity;
 	OutProposedMove.DirectionIntent = MoveIntent;
 
-	AActor* Owner = GetMoverComponent() ? GetMoverComponent()->GetOwner() : nullptr;
-
-	if (Owner)
+	if (CurrentVelocity.Size() > 0)
 	{
-		const FString RoleStr = UEnum::GetValueAsString(Owner->GetLocalRole());
-
-		const FVector InputVector = Inputs ? Inputs->GetMoveInput() : FVector::ZeroVector;
-
-		UE_LOG(LogTemp, Warning,
-		       TEXT(
-			       "[GenerateMove][%s] "
-			       "Input=%s "
-			       "Intent=%s "
-			       "SyncVel=%s "
-			       "OutVel=%s "
-			       "Speed=%.2f"
-		       ),
-		       *RoleStr,
-		       *InputVector.ToString(),
-		       *MoveIntent.ToString(),
-		       *SyncState->GetVelocity_WorldSpace().ToString(),
-		       *CurrentVelocity.ToString(),
-		       CurrentVelocity.Size()
-		);
+		if (AActor* Owner = GetMoverComponent()->GetOwner())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[%s] DirectionIntent=%s LinearVelocity=%s"),
+				   *UEnum::GetValueAsString(Owner->GetLocalRole()),
+				   *MoveIntent.ToString(),
+				   *CurrentVelocity.ToString()
+			);
+		}
 	}
 }
 
 void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState)
 {
+
+	const ENetRole Role = GetMoverComponent()->GetOwner()->GetLocalRole();
+	if (Role == ROLE_SimulatedProxy)
+	{
+		UE_LOG(LogTemp, Error,TEXT("SimulatedProxy Tick"));
+	}
+
+	
 	FMoverDefaultSyncState& OutputSyncState = OutputState.SyncState.SyncStateCollection.FindOrAddMutableDataByType<FMoverDefaultSyncState>();
 	const FMoverDefaultSyncState* StartingSyncState = Params.StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
 	if (!StartingSyncState) return;
@@ -179,25 +177,20 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
 		TargetRotation = TargetRot.Quaternion();
 	}
 
+	// 地面检索
+	FFloorCheckResult FloorResult;
+	UFloorQueryUtils::FindFloor(Params.MovingComps, 50.0f, 0.0f, true, Params.MovingComps.UpdatedComponent->GetComponentLocation(), FloorResult);
+	if (FloorResult.bWalkableFloor && FloorResult.FloorDist < 2.f)
+	{
+		ProposedVelocity.Z = 0.f;
+	}
+	if (!FloorResult.bWalkableFloor || (FloorResult.FloorDist > 10.0f))
+	{
+		OutputState.MovementEndState.NextModeName = LrAllModes::Air;
+	}
 	// 执行高精度物理移动（采用当帧最新的姿态进行物理扫掠，彻底封死因碰撞体角度不一致导致的误差）
 	FHitResult Hit;
 	Params.MovingComps.UpdatedComponent->MoveComponent(ProposedVelocity * DeltaTime, TargetRotation, true, &Hit);
-
-
-	if (ProposedVelocity.Size() > 0)
-	{
-		if (AActor* Owner = GetMoverComponent()->GetOwner())
-		{
-			const FVector Location = OutputSyncState.GetLocation_WorldSpace();
-			UE_LOG(LogTemp, Warning, TEXT("[%s] Loc=%s Vel=%f"),
-			       *UEnum::GetValueAsString(Owner->GetLocalRole()),
-			       *Location.ToString(),
-			       ProposedVelocity.Size()
-			);
-		}
-	}
-
-
 	if (Hit.IsValidBlockingHit())
 	{
 		const bool bIsWall = Hit.Normal.Z < 0.3f;
@@ -208,18 +201,21 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
 			UMovementUtils::TryMoveToSlideAlongSurface(Params.MovingComps, ProposedVelocity * DeltaTime, 1.0f - Hit.Time, TargetRotation, Hit.Normal, Hit, true, MoveRecord);
 			ProposedVelocity = MoveRecord.GetRelevantVelocity();
 		}
-		
 	}
-
-	// 地面检索
-	FFloorCheckResult FloorResult;
-	UFloorQueryUtils::FindFloor(Params.MovingComps, 50.0f, 0.0f, true, Params.MovingComps.UpdatedComponent->GetComponentLocation(), FloorResult);
-
-	if (!FloorResult.bWalkableFloor || (FloorResult.FloorDist > 10.0f))
+	
+	if (ProposedVelocity.Size() > 0)
 	{
-		OutputState.MovementEndState.NextModeName = LrAllModes::Air;
+		if (AActor* Owner = GetMoverComponent()->GetOwner())
+		{
+			const FVector Location = OutputSyncState.GetLocation_WorldSpace();
+			UE_LOG(LogTemp, Warning, TEXT("[%s] Loc=%s Vel=%s"),
+			       *UEnum::GetValueAsString(Owner->GetLocalRole()),
+			       *Location.ToString(),
+			       *ProposedVelocity.ToString()
+			);
+		}
 	}
-
+	
 	// 打包发送全网
 	OutputSyncState.SetTransforms_WorldSpace(
 		Params.MovingComps.UpdatedComponent->GetComponentLocation(),

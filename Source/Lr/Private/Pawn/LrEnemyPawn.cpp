@@ -8,6 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "MotionWarpingComponent.h"
 #include "AI/Controller/LrAIControllerBase.h"
+#include "AI/ST/LrSTComponent.h"
 #include "AI/Subsystem/LrAIManagerSubsystem.h"
 #include "Alembic/AbcGeom/IFaceSet.h"
 #include "Component/LrAIStateComponent.h"
@@ -91,6 +92,13 @@ ALrEnemyPawn::ALrEnemyPawn()
 	LrWidgetComponent = CreateDefaultSubobject<ULrWorldWidgetComponent>(TEXT("HealthBarComponent"));
 	LrWidgetComponent->SetupAttachment(RootComponent);
 	LrWidgetComponent->SetRelativeLocation(FVector(0, 0, 120.f));
+
+	// =========================
+	// 状态树
+	// =========================
+	LrStateTreeComponent = CreateDefaultSubobject<ULrSTComponent>(TEXT("LrSTComponent"));
+
+	
 }
 
 void ALrEnemyPawn::BeginPlay()

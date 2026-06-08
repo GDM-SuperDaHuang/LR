@@ -6,6 +6,7 @@
 #include "Pawn/LrPawnBase.h"
 #include "LrEnemyPawn.generated.h"
 
+class ULrSTComponent;
 class ULrWorldBarWidget;
 class ULrWorldWidgetComponent;
 class ULrBarWidget;
@@ -104,4 +105,7 @@ protected:
 	TObjectPtr<ULrWorldWidgetComponent> LrWidgetComponent;
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<ULrWorldBarWidget> LrWidgetClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	TObjectPtr<ULrSTComponent> LrStateTreeComponent;
 };
