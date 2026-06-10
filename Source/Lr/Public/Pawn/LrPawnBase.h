@@ -79,8 +79,10 @@ public:
 	TObjectPtr<ULrNavMovementComponent> LrNavMoverComponent;
 
 protected:
+	/** mover写入网络时 */
 	UFUNCTION()
 	void HandleMoverFinalized(const FMoverSyncState& SyncState, const FMoverAuxStateContext& AuxState);
+	/** mover模式切换时 */
 	UFUNCTION()
 	void HandleOnMovementModeChanged(const FName& PreviousMovementModeName, const FName& NewMovementModeName);
 	// Called when the game starts or when spawned

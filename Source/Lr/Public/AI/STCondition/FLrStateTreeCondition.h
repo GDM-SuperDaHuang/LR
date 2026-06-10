@@ -15,23 +15,23 @@ struct FLrStateTreeCondition : public FStateTreeConditionBase
 	// using FInstanceDataType = FLrEvaluatorInstanceData;
 	
 	// 声明 Handle 读取外部数据
-	TStateTreeExternalDataHandle<FEnemyAIExternalData> EnemyDataHandle;
-
-	virtual bool Link(FStateTreeLinker& Linker) override
-	{
-		Linker.LinkExternalData(EnemyDataHandle);
-		return true;
-	}
-
-	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override
-	{
-		FEnemyAIExternalData& Data = Context.GetExternalData(EnemyDataHandle);
-		if (!Data.SelfPawn || !Data.TargetActor)
-			return false;
-
-		float Dist = FVector::Dist(Data.SelfPawn->GetActorLocation(), Data.TargetActor->GetActorLocation());
-		return Dist <= Data.AttackRange;
-	}
+	// TStateTreeExternalDataHandle<FEnemyAIExternalData> EnemyDataHandle;
+	//
+	// virtual bool Link(FStateTreeLinker& Linker) override
+	// {
+	// 	Linker.LinkExternalData(EnemyDataHandle);
+	// 	return true;
+	// }
+	//
+	// virtual bool TestCondition(FStateTreeExecutionContext& Context) const override
+	// {
+	// 	FEnemyAIExternalData& Data = Context.GetExternalData(EnemyDataHandle);
+	// 	if (!Data.SelfPawn || !Data.TargetActor)
+	// 		return false;
+	//
+	// 	float Dist = FVector::Dist(Data.SelfPawn->GetActorLocation(), Data.TargetActor->GetActorLocation());
+	// 	return Dist <= Data.AttackRange;
+	// }
 };
 
 
