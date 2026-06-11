@@ -111,49 +111,11 @@ void ALrHeroPawn::BeginPlay()
 {
 	Super::BeginPlay();
 	UE_LOG(LogTemp, Warning, TEXT("Controller = %s"), *GetNameSafe(GetController()));
-
-	// if (LrMoverComponent)
-	// {
-	// 	// 添加特定的自定义移动模式
-	// 	LrMoverComponent->AddMovementModeFromClass(TEXT("LrWalk"), ULrWalkMovementMode::StaticClass());
-	// }
-
-	if (LrMoverComponent)
-	{
-		//  清空旧模式（防止重复注册）
-		LrMoverComponent->MovementModes.Empty();
-
-		// 创建新的移动模式对象：行走模式、空中模式
-		// 使用 RealisticMovementDefines 中定义的键名（例如 RealisticModes::Walk
-		LrMoverComponent->MovementModes.Add(LrAllModes::Walk, NewObject<ULrWalkMovementMode>(LrMoverComponent));
-		LrMoverComponent->MovementModes.Add(LrAllModes::Air, NewObject<ULrAirMovementMode>(LrMoverComponent));
-		LrMoverComponent->MovementModes.Add(LrAllModes::Blink, NewObject<ULrBlinkMovementMode>(LrMoverComponent));
-		LrMoverComponent->MovementModes.Add(LrAllModes::Knock, NewObject<ULrKnockbackMovementMode>(LrMoverComponent));
-		LrMoverComponent->MovementModes.Add(LrAllModes::Death, NewObject<ULrDeathMovementMode>(LrMoverComponent));
-
-		// 清空显式的状态转换表（转换逻辑已内置于各移动模式内部）
-		// Удаляем явные переходы (Transitions), они теперь встроенны в логику режимов
-		LrMoverComponent->Transitions.Empty();
-
-		// 设置起始模式为空中模式（防止角色一开始就卡在地面下）
-		// 通常空中模式会在落地时自动切换到行走模式
-		// Устанавливаем стартовый режим
-		LrMoverComponent->QueueNextMode(LrAllModes::Air);
-	}
 }
 
 void ALrHeroPawn::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	// if (LrMoverComponent)
-	// {
-	// 	// 添加特定的自定义移动模式
-	// 	LrMoverComponent->AddMovementModeFromClass(TEXT("LrWalk"), ULrWalkMovementMode::StaticClass());
-	//
-	// 	// 默认激活模式设定视需求而定
-	// 	// ⭐ 核心：设置初始模式名字
-	// 	LrMoverComponent->StartingMovementMode = TEXT("LrWalk");
-	// }
 }
 
 void ALrHeroPawn::PossessedBy(AController* NewController)
