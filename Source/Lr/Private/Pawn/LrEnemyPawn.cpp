@@ -11,19 +11,13 @@
 #include "AI/ST/LrSTComponent.h"
 #include "AI/Subsystem/LrAIManagerSubsystem.h"
 #include "Alembic/AbcGeom/IFaceSet.h"
-#include "Component/LrAIStateComponent.h"
 #include "Component/LrPatrolRouteComponent.h"
 #include "Component/Combat/LrAICombatComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Lib/LrCommonLibrary.h"
-#include "Mover/LrAllModes.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/Air/LrAirMovementMode.h"
-#include "Mover/Blink/LrBlinkMovementMode.h"
-#include "Mover/Blink/LrKnockbackMovementMode.h"
-#include "Mover/Death/LrDeathMovementMode.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
-#include "Mover/Walk/LrWalkMovementMode.h"
 #include "UI/Component/LrWorldWidgetComponent.h"
 #include "UI/Widget/Bar/WorldBar/LrWorldBarWidget.h"
 
@@ -97,8 +91,6 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// 状态树
 	// =========================
 	LrStateTreeComponent = CreateDefaultSubobject<ULrSTComponent>(TEXT("LrSTComponent"));
-
-	
 }
 
 void ALrEnemyPawn::BeginPlay()
@@ -119,7 +111,7 @@ void ALrEnemyPawn::BeginPlay()
 	}
 
 	AISubsystem->SpawnNormalAI(this);
-	
+
 	if (LrWidgetClass)
 	{
 		LrWidgetComponent->SetWidgetClass(LrWidgetClass);
@@ -174,6 +166,60 @@ void ALrEnemyPawn::GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRota
 uint8 ALrEnemyPawn::GetClassID() const
 {
 	return 100;
+}
+
+void ALrEnemyPawn::ToDie(const FVector& DeathImpulse, float Duration)
+{
+	Super::ToDie(DeathImpulse, Duration);
+	// // 1. 禁用碰撞和移动，防止死尸挡路或继续移动
+	LrCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LrSkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (ALrAIControllerBase* AI = Cast<ALrAIControllerBase>(GetController()))
+	{
+		// 禁止移动
+		AI->StopMovement();
+	}
+
+	// 2. 创建动态材质实例 (假设Mesh上使用的是支持溶解的材质)
+	// 2. 多材质溶解逻辑
+	if (LrSkeletalMeshComponent)
+	{
+		// 清空旧数组（防止复活等逻辑重复调用导致常驻内存）
+		DissolveMIDs.Empty();
+		// 获取当前 Mesh 的材质槽位总数
+		const int32 NumMaterials = LrSkeletalMeshComponent->GetNumMaterials();
+		for (int32 i = 0; i < NumMaterials; ++i)
+		{
+			// 为每一个槽位创建动态材质实例（它会自动应用到 Mesh 上）
+			UMaterialInstanceDynamic* MID = LrSkeletalMeshComponent->CreateDynamicMaterialInstance(i);
+			if (MID)
+			{
+				DissolveMIDs.Add(MID);
+			}
+		}
+
+		// 如果成功创建了至少一个动态材质
+		if (DissolveMIDs.Num() > 0)
+		{
+			DissolveStartTime = GetWorld()->GetTimeSeconds();
+			// 启动定时器
+			GetWorld()->GetTimerManager().SetTimer(
+				DissolveTimerHandle,
+				this,
+				&ALrEnemyPawn::UpdateDissolveProgress,
+				0.02f,
+				true
+			);
+		}
+		else
+		{
+			Destroy();
+		}
+	}
+	else
+	{
+		Destroy();
+	}
 }
 
 void ALrEnemyPawn::FaceToDirection(const FVector& Direction, float DeltaTime)

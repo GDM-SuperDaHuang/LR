@@ -53,9 +53,9 @@ ALrHeroPawn::ALrHeroPawn()
 	// =========================
 	// 感知组件
 	// =========================
-	StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
-	StimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
-	StimuliSource->RegisterWithPerceptionSystem();
+	// StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
+	// StimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
+	// StimuliSource->RegisterWithPerceptionSystem();
 
 	// =========================
 	// 骨骼 →碰撞体
@@ -121,31 +121,29 @@ void ALrHeroPawn::PostInitializeComponents()
 void ALrHeroPawn::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	ALrPS* LrPS = GetPlayerState<ALrPS>();
-	check(LrPS);
-	// 绑定 自身与ps 到ASC
-	LrPS->GetAbilitySystemComponent()->InitAbilityActorInfo(LrPS, this);
-
-	LrASC = Cast<ULrASC>(LrPS->GetAbilitySystemComponent());
-	//ASC 初始化成功委托
-	OnASCRegistered.Broadcast(LrASC);
-	LrAS = LrPS->GetAttributeSet();
+	InitASC();
 	// 初始技能
-	ULrASC* ASC = CastChecked<ULrASC>(LrASC);
 	FPawnTypeGAConfig LrDAConfig = ULrCommonLibrary::FindPawnTypeGAConfig(this, PawnType);
-	ASC->AddGA(LrDAConfig.GATagList);
+	LrASC->AddGA(LrDAConfig.GATagList);
 }
 
 void ALrHeroPawn::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
+	InitASC();
+}
+void ALrHeroPawn::InitASC()
+{
 	ALrPS* LrPS = GetPlayerState<ALrPS>();
 	check(LrPS);
 	// 绑定 自身与ps 到ASC
 	LrPS->GetAbilitySystemComponent()->InitAbilityActorInfo(LrPS, this);
 	LrASC = Cast<ULrASC>(LrPS->GetAbilitySystemComponent());
-}
+	LrAS = LrPS->GetAttributeSet();
 
+	//ASC 初始化成功委托
+	OnASCRegistered.Broadcast(LrASC);
+}
 ULrAS* ALrHeroPawn::GetAS() const
 {
 	ALrPS* LrPS = GetPlayerState<ALrPS>();
@@ -183,4 +181,9 @@ void ALrHeroPawn::Unequipped(FLrWeaponConfig WeaponConfig)
 	{
 		if (OldWeapon) OldWeapon->OnUnequipped();
 	}
+}
+
+void ALrHeroPawn::ToDie(const FVector& DeathImpulse, float Duration) 
+{
+	Super::ToDie(DeathImpulse, Duration);
 }

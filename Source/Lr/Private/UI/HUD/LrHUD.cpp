@@ -63,30 +63,13 @@ void ALrHUD::BeginPlay()
 	ViewModel->OnUnequipRequest.AddUObject(this, &ALrHUD::HandleUnequipRequest);
 
 	// 获取监听的 GAS 属性
-
+	// 可能没来及注册
+	if (LrPawnBase->GetASC())
+	{
+		// 如果已经错过了广播，我们在这里手动补救调用
+		HandleASCRegistered(LrPawnBase->GetASC());
+	}
 	LrPawnBase->OnASCRegistered.AddUObject(this, &ALrHUD::HandleASCRegistered);
-
-	// ULrAS* LrAs = LrPawnBase->GetAS();
-	// for (TPair<FGameplayTag, FGameplayAttribute(*)()> Pair : LrAs->TagsASMap)
-	// {
-	// 	LrPawnBase->GetASC()->GetGameplayAttributeValueChangeDelegate(Pair.Value()).AddLambda(
-	// 		[this,Pair,LrAs](const FOnAttributeChangeData& Data)
-	// 		{
-	// 			const FGameplayTag* TagsAsMaxTag = LrAs->TagsASMaxTags.Find(Pair.Key);
-	// 			float Max = 0;
-	// 			if (TagsAsMaxTag)
-	// 			{
-	// 				FAttributeFuncPtr* Find = LrAs->TagsASMap.Find(*TagsAsMaxTag);
-	// 				if (Find)
-	// 				{
-	// 					FGameplayAttribute MaxAttribute = (*Find)();
-	// 					Max = MaxAttribute.GetNumericValue(LrAs);
-	// 				}
-	// 			}
-	// 			UIController->OnASChanged(Pair.Key, Pair.Value().GetNumericValue(LrAs), Max);
-	// 		});
-	// }
-	// LrPawnBase->InitAS();
 }
 
 void ALrHUD::Tick(float DeltaSeconds)

@@ -87,6 +87,6 @@ protected:
 	 * 包含视野半径（SightRadius=2000）、丢失半径（LoseSightRadius=2500）、
 	 * 视野角度（PeripheralVisionAngleDegrees=90）和记忆时长（MaxAge=5s）
 	 */
-	UPROPERTY(VisibleAnywhere, Category = "AI")
-	TObjectPtr<UAISenseConfig_Sight> SightConfig;
+	// UPROPERTY(VisibleAnywhere, Category = "AI")
+	// TObjectPtr<UAISenseConfig_Sight> SightConfig;
 };

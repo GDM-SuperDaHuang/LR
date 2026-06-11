@@ -42,7 +42,7 @@ public:
 
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 	virtual uint8 GetClassID() const override;
-
+	virtual void ToDie(const FVector& DeathImpulse, float Duration) override;
 	/** 面向相关 */
 	//面向移动方向
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)

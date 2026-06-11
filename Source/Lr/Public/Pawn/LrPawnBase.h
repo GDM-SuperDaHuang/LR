@@ -43,7 +43,7 @@ public:
 	virtual ULrASC* GetASC() const override;
 	virtual ULrAS* GetAS() const override;
 	virtual uint8 GetClassID() const;
-	virtual void ToDie(const FVector& DeathImpulse, float Duration) const override;
+	virtual void ToDie(const FVector& DeathImpulse, float Duration) override;
 	/** 战斗组件 */
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrCombatComponentBase> LrCombatComponent;
@@ -140,13 +140,13 @@ private:
 
 protected:
 	// 动态材质实例
+	// 使用 TArray 存储所有材质槽位的动态材质，UPROPERTY() 必须加，防止被 GC 回收
 	UPROPERTY()
-	class UMaterialInstanceDynamic* DynamicDissolveMaterial;
+	TArray<UMaterialInstanceDynamic*> DissolveMIDs;
 
-	// 溶解控制变量
-	bool bIsDissolving = false;
-	float DissolveValue = 0.0f;
+	FTimerHandle DissolveTimerHandle;
+	float DissolveStartTime;
+	float DissolveDuration = 3.f;
 
-	UPROPERTY(EditAnywhere, Category = "Death")
-	float DissolveSpeed = 1.0f; // 溶解速度
+	void UpdateDissolveProgress();
 };

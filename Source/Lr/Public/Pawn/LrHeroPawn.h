@@ -36,6 +36,7 @@ public:
 
 	// 客户端
 	virtual void OnRep_PlayerState() override;
+	void InitASC();
 
 	virtual ULrAS* GetAS() const override;
 
@@ -43,7 +44,9 @@ protected:
 	// 装备武器
 	virtual void EquipWeapon(FLrWeaponConfig WeaponConfig) override;
 	virtual void Unequipped(FLrWeaponConfig WeaponConfig) override;
-	
+
+	virtual void ToDie(const FVector& DeathImpulse, float Duration) override;
+
 	/** 碰撞体（NavAgent & Mover 都依赖它） */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
@@ -58,14 +61,7 @@ protected:
 
 	/** 感知组件 */
 	//敌我区分
-	UPROPERTY(VisibleAnywhere, Category="Team")
-	TObjectPtr<UAIPerceptionStimuliSourceComponent>StimuliSource;
+	// UPROPERTY(VisibleAnywhere, Category="Team")
+	// TObjectPtr<UAIPerceptionStimuliSourceComponent>StimuliSource;
 	/** 感知组件 */
-
-	
-
-private:
-	// 技能列表
-	// UPROPERTY(EditAnywhere, Category="Abilities")
-	// TArray<FGameplayTag> GATagListConfig;
 };

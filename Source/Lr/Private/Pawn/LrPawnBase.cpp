@@ -78,11 +78,11 @@ uint8 ALrPawnBase::GetClassID() const
 	return 0;
 }
 
-void ALrPawnBase::ToDie(const FVector& DeathImpulse, float Duration) const
+void ALrPawnBase::ToDie(const FVector& DeathImpulse, float Duration)
 {
 	LrMoverComponent->Launch(DeathImpulse, Duration);
 
-	// 1. 禁用碰撞和移动，防止死尸挡路或继续移动
+	// // 1. 禁用碰撞和移动，防止死尸挡路或继续移动
 	// LrCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	// LrSkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	// GetCharacterMovement()->DisableMovement();
@@ -209,7 +209,7 @@ void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdCon
 	FVector EffectiveInput = CachedMoveInput;
 	if (FrictionMult < 0.5f)
 	{
-		EffectiveInput *= 0.2f; // Скользкий лед
+		EffectiveInput *= 0.2f;
 	}
 
 	// 填充输入数据
@@ -286,10 +286,14 @@ void ALrPawnBase::CheckFloorPhysics(float& OutFrictionMult)
 	}
 }
 
-
+//初始化属性
 void ALrPawnBase::InitAS() const
 {
 	ALrGameModeBase* LrGameModeBase = ULrCommonLibrary::GetLrGameModeBase(GetWorld());
+	if (!LrGameModeBase) // 多人是null？？？
+	{
+		return;
+	}
 	TObjectPtr<ULrExcelConfig> LrExcelConfig = LrGameModeBase->LrExcelConfig;
 	if (!LrExcelConfig) return;
 	TArray<FLrInitASRow*> LrInitAsRows = LrExcelConfig->FindAllAS();
@@ -309,5 +313,30 @@ void ALrPawnBase::InitAS() const
 			FGameplayAttribute GameplayAttribute = (*Find)();
 			LrASC->SetNumericAttributeBase(GameplayAttribute, Row->BaseValue);
 		}
+	}
+}
+
+void ALrPawnBase::UpdateDissolveProgress()
+{
+	// 计算当前进度
+	float CurrentTime = GetWorld()->GetTimeSeconds();
+	float Progress = (CurrentTime - DissolveStartTime) / DissolveDuration;
+	Progress = FMath::Clamp(Progress, 0.f, 1.f);
+
+	// 遍历所有动态材质，批量更新参数
+	for (UMaterialInstanceDynamic* MID : DissolveMIDs)
+	{
+		if (MID)
+		{
+			MID->SetScalarParameterValue(FName("DissolveAmount"), Progress);
+		}
+	}
+
+	// 溶解完成，销毁
+	if (Progress >= 1.f)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(DissolveTimerHandle);
+		DissolveMIDs.Empty(); // 清空数组释放引用
+		Destroy();
 	}
 }
