@@ -43,7 +43,7 @@ public:
 	virtual ULrASC* GetASC() const override;
 	virtual ULrAS* GetAS() const override;
 	virtual uint8 GetClassID() const;
-	virtual void ToDie(const FVector& DeathImpulse, float Duration) override;
+	virtual void ToDie(const FLrDieParameters& LrDieConfig) override;
 	/** 战斗组件 */
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrCombatComponentBase> LrCombatComponent;

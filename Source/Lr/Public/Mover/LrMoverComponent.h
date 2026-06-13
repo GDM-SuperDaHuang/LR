@@ -24,11 +24,15 @@ class LR_API ULrMoverComponent : public UMoverComponent
 
 public:
 	ULrMoverComponent();
-	
+
 	UPROPERTY(EditAnywhere, Instanced, Category = "Realistic Movement")
 	TObjectPtr<ULrMovementSettings> RealisticSettings;
-	
+
 	bool bJumpInitiated = false;
+
+	bool bIsInAttackWarp = false;
+	FRotator AttackWarpRotation = FRotator::ZeroRotator;
+
 	const FPendingLaunchData* GetPendingLaunchData();
 	void Launch(FVector Impulse, float Duration);
 

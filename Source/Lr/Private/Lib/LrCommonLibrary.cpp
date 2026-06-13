@@ -4,6 +4,7 @@
 #include "Lib/LrCommonLibrary.h"
 
 #include "AbilitySystemGlobals.h"
+#include "Data/LrCorpseConfigDA.h"
 #include "Data/LrGAListDA.h"
 #include "Game/LrGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
@@ -16,6 +17,18 @@ UAbilitySystemComponent* ULrCommonLibrary::GetASC(AActor* Actor)
 ALrGameModeBase* ULrCommonLibrary::GetLrGameModeBase(const UObject* WorldContextObject)
 {
 	return Cast<ALrGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
+}
+
+FLrCorpseConfig ULrCommonLibrary::FindCorpseConfigByPawnType(const UObject* WorldContextObject, const uint32 PawnType)
+{
+	static constexpr FLrCorpseConfig EmptyConfig;
+	const ALrGameModeBase* LrGameMode = Cast<ALrGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
+	if (LrGameMode == nullptr) return EmptyConfig;
+	TObjectPtr<ULrCorpseConfigDA> LrGAListDA = LrGameMode->LrCorpseConfigDA;
+	if (LrGAListDA == nullptr) return EmptyConfig;
+	const FLrCorpseConfig* FindGaByTag = LrGAListDA.Get()->FindCorpseConfigByPawnType(PawnType);
+	if (FindGaByTag == nullptr) return EmptyConfig;
+	return *FindGaByTag;
 }
 
 const FLrGAConfig& ULrCommonLibrary::FindGAByTag(const UObject* WorldContextObject, const FGameplayTag& GATag)

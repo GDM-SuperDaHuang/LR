@@ -45,7 +45,7 @@ protected:
 	virtual void EquipWeapon(FLrWeaponConfig WeaponConfig) override;
 	virtual void Unequipped(FLrWeaponConfig WeaponConfig) override;
 
-	virtual void ToDie(const FVector& DeathImpulse, float Duration) override;
+	virtual void ToDie(const FLrDieParameters& LrDieConfig) override;
 
 	/** 碰撞体（NavAgent & Mover 都依赖它） */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PawnInfo")

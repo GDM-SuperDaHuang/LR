@@ -78,7 +78,7 @@ ALrHeroPawn::ALrHeroPawn()
 	// NS→武器
 	// =========================
 
-	
+
 	// =========================
 	// 运动扭曲 
 	// =========================
@@ -132,6 +132,7 @@ void ALrHeroPawn::OnRep_PlayerState()
 	Super::OnRep_PlayerState();
 	InitASC();
 }
+
 void ALrHeroPawn::InitASC()
 {
 	ALrPS* LrPS = GetPlayerState<ALrPS>();
@@ -144,6 +145,7 @@ void ALrHeroPawn::InitASC()
 	//ASC 初始化成功委托
 	OnASCRegistered.Broadcast(LrASC);
 }
+
 ULrAS* ALrHeroPawn::GetAS() const
 {
 	ALrPS* LrPS = GetPlayerState<ALrPS>();
@@ -183,7 +185,7 @@ void ALrHeroPawn::Unequipped(FLrWeaponConfig WeaponConfig)
 	}
 }
 
-void ALrHeroPawn::ToDie(const FVector& DeathImpulse, float Duration) 
+void ALrHeroPawn::ToDie(const FLrDieParameters& LrDieConfig)
 {
-	Super::ToDie(DeathImpulse, Duration);
+	Super::ToDie(LrDieConfig);
 }

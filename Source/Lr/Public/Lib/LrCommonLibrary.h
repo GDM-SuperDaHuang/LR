@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/LrCorpseConfigDA.h"
 #include "Data/LrGAListDA.h"
 #include "Game/LrGameModeBase.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
@@ -26,6 +27,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = Ability, Meta=(DefaultToSelf = "Actor"))
 	static UAbilitySystemComponent* GetASC(AActor* Actor);
 	static ALrGameModeBase* GetLrGameModeBase(const UObject* WorldContextObject);
+
+	// 死亡配置
+	static FLrCorpseConfig FindCorpseConfigByPawnType(const UObject* WorldContextObject, uint32 PawnType);
 
 	// 根据标签查找技能配置
 	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))

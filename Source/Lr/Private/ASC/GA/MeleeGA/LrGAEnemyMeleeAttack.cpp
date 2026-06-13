@@ -9,6 +9,7 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "ASC/LrASC.h"
 #include "Lib/LrCommonLibrary.h"
+#include "Mover/LrMoverComponent.h"
 #include "Pawn/LrPawnBase.h"
 
 
@@ -45,7 +46,26 @@ void ULrGAEnemyMeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		TargetAActor = Combat->GetClosestEnemyInCone(ConeParams);
 		if (TargetAActor.Get())
 		{
-			OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocation("FacingTarget", TargetAActor->GetActorLocation());
+			FVector TargetLocation = TargetAActor->GetActorLocation();
+			FVector OwnerLocation = OwnerPawn->GetActorLocation();
+
+			// 计算从攻击者指向目标的方向旋转
+			FRotator TargetRotation = (TargetLocation - OwnerLocation).Rotation();
+
+			// 通常攻击转向只需要水平转身（Yaw），需要把 Pitch 和 Roll 清零，防止角色发生倾斜
+			TargetRotation.Pitch = 0.f;
+			TargetRotation.Roll = 0.f;
+			OwnerPawn->LrMoverComponent->AttackWarpRotation = TargetRotation;
+
+			UE_LOG(LogTemp, Warning, TEXT("OwnerYaw=%f TargetYaw=%f"),
+			       OwnerPawn->GetActorRotation().Yaw,
+			       TargetRotation.Yaw);
+			// 使用带有 Rotation 的函数版本
+			OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(
+				FName("FacingTarget"),
+				TargetLocation,
+				TargetRotation
+			);
 		}
 	}
 
@@ -77,7 +97,6 @@ void ULrGAEnemyMeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 	EventTask->EventReceived.AddDynamic(this, &ULrGAEnemyMeleeAttack::OnAttackEvent);
 	EventTask->ReadyForActivation();
-
 }
 
 void ULrGAEnemyMeleeAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
@@ -88,11 +107,19 @@ void ULrGAEnemyMeleeAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, 
 void ULrGAEnemyMeleeAttack::OnMontageCancelled()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+	ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
+	if (!OwnerPawn) return;
+	OwnerPawn->LrMoverComponent->bIsInAttackWarp = false;
+	OwnerPawn->LrMoverComponent->AttackWarpRotation = FRotator::ZeroRotator;
 }
 
 void ULrGAEnemyMeleeAttack::OnMontageCompleted()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+	ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
+	if (!OwnerPawn) return;
+	OwnerPawn->LrMoverComponent->bIsInAttackWarp = false;
+	OwnerPawn->LrMoverComponent->AttackWarpRotation = FRotator::ZeroRotator;
 }
 
 void ULrGAEnemyMeleeAttack::OnAttackEvent(FGameplayEventData Payload)
@@ -114,6 +141,7 @@ void ULrGAEnemyMeleeAttack::OnAttackEvent(FGameplayEventData Payload)
 			{
 				LrASC->ApplyDamageToTarget(TargetAActor.Get(), DamageEffectParams);
 			}
+			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
 		}
 	}
 }

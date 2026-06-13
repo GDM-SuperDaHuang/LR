@@ -42,7 +42,7 @@ public:
 
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 	virtual uint8 GetClassID() const override;
-	virtual void ToDie(const FVector& DeathImpulse, float Duration) override;
+	virtual void ToDie(const FLrDieParameters& DieParam) override;
 	/** 面向相关 */
 	//面向移动方向
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -73,6 +73,8 @@ public:
 	}
 
 	FVector GetHomeLocation() const;
+	void PlayDeathMontage(UAnimMontage* Montage);
+	void FinishDeath();
 
 	/** 获取该敌人配置的行为树资产 */
 	// FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }

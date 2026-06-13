@@ -13,6 +13,7 @@
 #include "Data/LrGAListDA.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Lib/LrCommonLibrary.h"
+#include "Mover/LrMoverComponent.h"
 #include "Pawn/LrPawnBase.h"
 
 
@@ -34,16 +35,39 @@ void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
 	}
-	
+
 	// ========== 2. 设置 Motion Warping ==========
 	if (ULrCombatComponentBase* Combat = GetAvatarActorFromActorInfo()->FindComponentByClass<ULrCombatComponentBase>())
 	{
 		ConeParams.Origin = OwnerPawn->GetActorLocation();
 		ConeParams.Forward = OwnerPawn->GetActorForwardVector();
 		TargetAActor = Combat->GetClosestEnemyInCone(ConeParams);
+		// if (TargetAActor.Get())
+		// {
+		// 	OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocation("FacingTarget", TargetAActor->GetActorLocation());
+		// }
 		if (TargetAActor.Get())
 		{
-			OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocation("FacingTarget", TargetAActor->GetActorLocation());
+			FVector TargetLocation = TargetAActor->GetActorLocation();
+			FVector OwnerLocation = OwnerPawn->GetActorLocation();
+
+			// 计算从攻击者指向目标的方向旋转
+			FRotator TargetRotation = (TargetLocation - OwnerLocation).Rotation();
+
+			// 通常攻击转向只需要水平转身（Yaw），需要把 Pitch 和 Roll 清零，防止角色发生倾斜
+			TargetRotation.Pitch = 0.f;
+			TargetRotation.Roll = 0.f;
+			OwnerPawn->LrMoverComponent->AttackWarpRotation = TargetRotation;
+
+			UE_LOG(LogTemp, Warning, TEXT("OwnerYaw=%f TargetYaw=%f"),
+			       OwnerPawn->GetActorRotation().Yaw,
+			       TargetRotation.Yaw);
+			// 使用带有 Rotation 的函数版本
+			OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(
+				FName("FacingTarget"),
+				TargetLocation,
+				TargetRotation
+			);
 		}
 	}
 
@@ -128,6 +152,10 @@ void ULrNormalMeleeGA::EndAbility(const FGameplayAbilitySpecHandle Handle, const
 void ULrNormalMeleeGA::OnMontageFinished()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+	ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
+	if (!OwnerPawn) return;
+	OwnerPawn->LrMoverComponent->bIsInAttackWarp = false;
+	OwnerPawn->LrMoverComponent->AttackWarpRotation = FRotator::ZeroRotator;
 }
 
 
@@ -145,7 +173,7 @@ void ULrNormalMeleeGA::OnAttackEvent(FGameplayEventData Payload)
 	// ========== 1. 播放武器轨迹 Niagara ==========
 	SpawnWeaponTrailFX(OwnerPawn);
 
-	
+
 	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo())))
 	{
 		if (ULrCombatComponentBase* Combat = GetAvatarActorFromActorInfo()->FindComponentByClass<ULrCombatComponentBase>())
@@ -154,6 +182,7 @@ void ULrNormalMeleeGA::OnAttackEvent(FGameplayEventData Payload)
 			{
 				LrASC->ApplyDamageToTarget(TargetAActor.Get(), DamageEffectParams);
 			}
+			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
 		}
 	}
 }
@@ -164,5 +193,4 @@ void ULrNormalMeleeGA::SpawnWeaponTrailFX(ALrPawnBase* OwnerPawn)
 
 void ULrNormalMeleeGA::PerformMeleeTrace(ALrPawnBase* OwnerPawn, TArray<FHitResult>& Array)
 {
-	
 }

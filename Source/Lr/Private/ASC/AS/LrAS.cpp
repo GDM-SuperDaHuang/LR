@@ -145,7 +145,10 @@ void ULrAS::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackDat
 			// 竖直分量
 			KnockDir.Z = 0.3f;
 			FVector Impulse = KnockDir * 200.f + FVector(0, 0, 200.f); //击飞力*800 + 额外向上力 
-			CombatInterface->ToDie(Impulse, 0.5);
+			FLrDieParameters LrDieConfig ;
+			LrDieConfig.PawnType = Props.TargetCharacter->PawnType;
+			LrDieConfig.DeathImpulse = Impulse;
+			CombatInterface->ToDie(LrDieConfig);
 		}
 		/*
 		 * HP

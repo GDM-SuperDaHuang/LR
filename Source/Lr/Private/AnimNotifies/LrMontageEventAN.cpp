@@ -7,6 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Abilities/GameplayAbilityTypes.h"
+#include "Pawn/LrEnemyPawn.h"
 
 void ULrMontageEventAN::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
@@ -14,33 +15,20 @@ void ULrMontageEventAN::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBa
 	if (!MeshComp) return;
 	AActor* Owner = MeshComp->GetOwner();
 	if (!Owner) return;
+	const FAnimNotifyEvent* AnimNotifyEvent = EventReference.GetNotify();
+	if (!AnimNotifyEvent) return;
 	FGameplayEventData EventData;
 	EventData.EventTag = EventTag;
 	EventData.Instigator = Owner;
+
+	if (ALrEnemyPawn* Enemy = Cast<ALrEnemyPawn>(MeshComp->GetOwner()))
+	{
+		// Enemy->OnDeathRagdoll();
+	}
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
 		Owner,
 		EventTag,
 		EventData
 	);
-
-	
-	// if (AController* Controller = MeshComp->GetOwner()->GetInstigatorController())
-	// {
-	// 	if (APawn* Pawn = Cast<APawn>(Controller->GetPawn()))
-	// 	{
-	// 		if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Pawn))
-	// 		{
-	// 			FGameplayEventData EventData ;
-	// 			EventData.EventTag = EventTag;  // e.g., Montage.Attack
-	// 			ASC->HandleGameplayEvent(EventTag,EventData);
-	// 			// 可选：填充 TargetData（e.g., 通过 trace 获取击中）
-	// 			// FHitResult Hit;  // 执行 sphere trace 从武器位置
-	// 			// ... trace 逻辑 ...
-	// 			// EventData.TargetData.SetHitResult(Hit);
-	// 			// ASC.Handle
-	// 			// ASC->HandleGameplayEvent(EventTag, EventData);
-	// 		}
-	// 	}
-	// }
 }

@@ -9,6 +9,26 @@
 class ULrAS;
 class ULrASC;
 class ULrCombatComponentBase;
+
+
+USTRUCT(BlueprintType)
+struct FLrDieParameters
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, Category = "Corpse")
+	FVector DeathImpulse = FVector::ZeroVector;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Corpse")
+	float Duration = 0.5f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Corpse")
+	uint32 PawnType = 0; //生物类型
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UAnimMontage> DeathMontage; //死亡动画
+};
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class ULrCombatInterface : public UInterface
@@ -33,5 +53,5 @@ public:
 	virtual ULrAS* GetAS() const =0;
 
 	//去死 可能会倒飞出去
-	virtual void ToDie(const FVector& DeathImpulse, float Duration) = 0;
+	virtual void ToDie(const FLrDieParameters& LrDieConfig) = 0;
 };

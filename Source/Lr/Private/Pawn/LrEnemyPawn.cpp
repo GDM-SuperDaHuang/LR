@@ -7,6 +7,7 @@
 #include "ASC/AS/LrAS.h"
 #include "Components/CapsuleComponent.h"
 #include "MotionWarpingComponent.h"
+#include "Actor/Corpse/LrCorpseActor.h"
 #include "AI/Controller/LrAIControllerBase.h"
 #include "AI/ST/LrSTComponent.h"
 #include "AI/Subsystem/LrAIManagerSubsystem.h"
@@ -168,30 +169,76 @@ uint8 ALrEnemyPawn::GetClassID() const
 	return 100;
 }
 
-void ALrEnemyPawn::ToDie(const FVector& DeathImpulse, float Duration)
+void ALrEnemyPawn::ToDie(const FLrDieParameters& DieParam)
 {
-	Super::ToDie(DeathImpulse, Duration);
-	// // 1. 禁用碰撞和移动，防止死尸挡路或继续移动
-	LrCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	LrSkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (DieParam.DeathMontage)
+	{
+		PlayDeathMontage(DieParam.DeathMontage);
+	}
+	else
+	{
+		FinishDeath();
+	}
+
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		// 强制取消所有技能，这样攻击技能就会提前走 EndAbility，而不会在死后还尝试去绑定 Task
+		ASC->CancelAllAbilities();
+	}
 	if (ALrAIControllerBase* AI = Cast<ALrAIControllerBase>(GetController()))
 	{
 		// 禁止移动
 		AI->StopMovement();
+		// 尝试寻找 StateTree 组件（通常挂在 AIController 上）
+		if (UStateTreeComponent* StateTreeComp = AI->FindComponentByClass<UStateTreeComponent>())
+		{
+			// 显式停止 StateTree 运行，防止其继续 Tick 并访问已死亡的 Pawn
+			StateTreeComp->StopLogic(TEXT("Pawn Died"));
+		}
+		// 安全地解除控制
+		AI->UnPossess();
 	}
+
+	// ====== 2. 核心：生成独立的尸体 Actor ======
+	USkeletalMeshComponent* NewSMComponent = nullptr;
+	if (ALrCorpseActor* CorpseActor = GetWorld()->SpawnActor<ALrCorpseActor>(ALrCorpseActor::StaticClass(), GetActorLocation(), GetActorRotation()))
+	{
+		FLrCorpseConfig CorpseConfig = ULrCommonLibrary::FindCorpseConfigByPawnType(this, DieParam.PawnType);
+		// 让尸体复制当前 Mesh 的动作，并飞出去
+		NewSMComponent = CorpseActor->InitializeCorpse(LrSkeletalMeshComponent, DieParam.DeathImpulse, CorpseConfig);
+	}
+
+	// ====== 3. 本体干净利落地进入“隐藏”状态，准备返回对象池 ======
+	// 关动画蓝图
+	LrSkeletalMeshComponent->SetAnimInstanceClass(nullptr);
+	// 关掉 Mover 和自身碰撞（Mover 再也不会报任何警告，因为原 Mesh 根本没开物理）
+	if (LrMoverComponent)
+	{
+		LrMoverComponent->SetComponentTickEnabled(false);
+		LrMoverComponent->Deactivate();
+	}
+	LrCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LrSkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 隐身
+	SetActorHiddenInGame(true);
+
+	// ====== 4. 通知你的对象池管理器 ======
+	// MyObjectPoolManager->ReturnToPool(this);
+
 
 	// 2. 创建动态材质实例 (假设Mesh上使用的是支持溶解的材质)
 	// 2. 多材质溶解逻辑
-	if (LrSkeletalMeshComponent)
+	if (NewSMComponent)
 	{
 		// 清空旧数组（防止复活等逻辑重复调用导致常驻内存）
 		DissolveMIDs.Empty();
 		// 获取当前 Mesh 的材质槽位总数
-		const int32 NumMaterials = LrSkeletalMeshComponent->GetNumMaterials();
+		const int32 NumMaterials = NewSMComponent->GetNumMaterials();
 		for (int32 i = 0; i < NumMaterials; ++i)
 		{
 			// 为每一个槽位创建动态材质实例（它会自动应用到 Mesh 上）
-			UMaterialInstanceDynamic* MID = LrSkeletalMeshComponent->CreateDynamicMaterialInstance(i);
+			UMaterialInstanceDynamic* MID = NewSMComponent->CreateDynamicMaterialInstance(i);
 			if (MID)
 			{
 				DissolveMIDs.Add(MID);
@@ -244,4 +291,38 @@ void ALrEnemyPawn::FaceToTarget(const FVector& TargetLocation, float DeltaTime)
 FVector ALrEnemyPawn::GetHomeLocation() const
 {
 	return HomeLocation;
+}
+
+
+void ALrEnemyPawn::PlayDeathMontage(UAnimMontage* Montage)
+{
+	UAnimInstance* Anim = LrSkeletalMeshComponent->GetAnimInstance();
+
+	if (!Anim)
+	{
+		FinishDeath();
+		return;
+	}
+
+	float Duration = Anim->Montage_Play(Montage);
+
+	if (Duration <= 0.f)
+	{
+		FinishDeath();
+		return;
+	}
+
+	FTimerHandle Handle;
+
+	GetWorldTimerManager().SetTimer(
+		Handle,
+		this,
+		&ALrEnemyPawn::FinishDeath,
+		Duration,
+		false);
+}
+void ALrEnemyPawn::FinishDeath()
+{
+	// SpawnCorpse();
+	SetActorHiddenInGame(true);
 }

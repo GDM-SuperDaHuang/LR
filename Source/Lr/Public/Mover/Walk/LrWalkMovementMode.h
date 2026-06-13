@@ -6,6 +6,7 @@
 #include "MovementMode.h"
 #include "LrWalkMovementMode.generated.h"
 
+struct FFloorCheckResult;
 class ULrMoverComponent;
 /**
  * 

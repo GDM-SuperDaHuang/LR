@@ -179,9 +179,10 @@ struct FLrChaseTask : public FStateTreeTaskCommonBase
 		const float DistSq = FVector::DistSquared(Enemy.GetActorLocation(), InstanceData.TargetActor->GetActorLocation());
 		if (DistSq >= FMath::Square(InstanceData.AttackRange))
 		{
-			ALrAIControllerBase* AI = Cast<ALrAIControllerBase>(Enemy.GetController());
-			AI->MoveToPlayer(Patrol->TargetActor);
-			return EStateTreeRunStatus::Running;
+			if (ALrAIControllerBase* AI = Cast<ALrAIControllerBase>(Enemy.GetController()))
+			{
+				AI->MoveToPlayer(Patrol->TargetActor);
+			}
 		}
 		return EStateTreeRunStatus::Running;
 	}
@@ -200,8 +201,10 @@ struct FLrChaseTask : public FStateTreeTaskCommonBase
 		const float DistSq = FVector::DistSquared(Enemy.GetActorLocation(), InstanceData.TargetActor->GetActorLocation());
 		if (DistSq >= FMath::Square(InstanceData.AttackRange)) // todo
 		{
-			ALrAIControllerBase* AI = Cast<ALrAIControllerBase>(Enemy.GetController());
-			AI->MoveToPlayer(InstanceData.TargetActor);
+			if (ALrAIControllerBase* AI = Cast<ALrAIControllerBase>(Enemy.GetController()))
+			{
+				AI->MoveToPlayer(InstanceData.TargetActor);
+			}
 			return EStateTreeRunStatus::Running;
 		}
 		return EStateTreeRunStatus::Succeeded;

@@ -78,25 +78,9 @@ uint8 ALrPawnBase::GetClassID() const
 	return 0;
 }
 
-void ALrPawnBase::ToDie(const FVector& DeathImpulse, float Duration)
+void ALrPawnBase::ToDie(const FLrDieParameters& LrDieConfig)
 {
-	LrMoverComponent->Launch(DeathImpulse, Duration);
-
-	// // 1. 禁用碰撞和移动，防止死尸挡路或继续移动
-	// LrCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	// LrSkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	// GetCharacterMovement()->DisableMovement();
-	//
-	// // 2. 创建动态材质实例 (假设Mesh上使用的是支持溶解的材质)
-	// UMaterialInterface* BaseMaterial = GetMesh()->GetMaterial(0);
-	// if (BaseMaterial)
-	// {
-	// 	DynamicDissolveMaterial = GetMesh()->CreateDynamicMaterialInstance(0, BaseMaterial);
-	// }
-	//
-	// // 3. 开启溶解状态
-	// bIsDissolving = true;
-	// DissolveValue = 0.0f;
+	LrMoverComponent->Launch(LrDieConfig.DeathImpulse, LrDieConfig.Duration);
 }
 
 void ALrPawnBase::HandleMoverFinalized(const FMoverSyncState& SyncState, const FMoverAuxStateContext& AuxState)
@@ -108,14 +92,15 @@ void ALrPawnBase::HandleMoverFinalized(const FMoverSyncState& SyncState, const F
 	// 只标记速度0.5作为临界值瞬间时，才有委托,注意混合空间
 	// UE_LOG(LogTemp, Warning, TEXT("HandleMoverFinalized 新速度 = %f"), NewSpeed);
 	// UE_LOG(LogTemp, Warning, TEXT("HandleMoverFinalized 老速度 = %f"), LrAnimationComponent->MovementData.Speed);
-	if (NewSpeed > 0.5 && LastSize < 0.5) //0~0.5的时候
+	float BaseSpeed = 0.5f;
+	if (NewSpeed > BaseSpeed && LastSize < BaseSpeed) //0~1的时候
 	{
 		LastVelocity = NewVelocity;
 		LrAnimationComponent->MovementData.Speed = NewSpeed;
 		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
 		// UE_LOG(LogTemp, Warning, TEXT("HandleMoverFinalized 开始起步 = %f"), NewSpeed);
 	}
-	else if (NewSpeed < 0.5f && LastSize > 0.5) //回到0~0.5的时候
+	else if (NewSpeed < BaseSpeed && LastSize > BaseSpeed) //回到0~1的时候
 	{
 		LastVelocity = NewVelocity;
 		LrAnimationComponent->MovementData.Speed = NewSpeed;
