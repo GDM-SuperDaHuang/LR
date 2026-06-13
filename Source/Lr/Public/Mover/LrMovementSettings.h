@@ -50,7 +50,7 @@ public:
 	float AccelerationRampUpTime = 0.5f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jump")
-	float JumpImpulseForce = 120000.0f;
+	float JumpImpulseForce = 1600.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crouch")
 	float CrouchSpeedMult = 0.5f;
