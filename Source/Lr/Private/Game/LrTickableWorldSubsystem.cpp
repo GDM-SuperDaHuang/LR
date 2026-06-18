@@ -3,6 +3,7 @@
 
 #include "Game/LrTickableWorldSubsystem.h"
 
+#include "Actor/Projectile/LrProjectile.h"
 #include "UI/Widget/Bar/WorldBar/LrWorldBarWidget.h"
 
 TStatId ULrTickableWorldSubsystem::GetStatId() const
@@ -10,6 +11,10 @@ TStatId ULrTickableWorldSubsystem::GetStatId() const
 	RETURN_QUICK_DECLARE_CYCLE_STAT(ULrWorldBarSubsystem, STATGROUP_Tickables);
 }
 
+/**
+ * 集中刷新
+ * @param DeltaTime 
+ */
 void ULrTickableWorldSubsystem::Tick(float DeltaTime)
 {
 	for (int32 i = ActiveBars.Num() - 1; i >= 0; --i)
@@ -18,7 +23,6 @@ void ULrTickableWorldSubsystem::Tick(float DeltaTime)
 		if (!Bar)
 		{
 			ActiveBars.RemoveAtSwap(i);
-			Bar->bIsAnimating = false;
 			continue;
 		}
 		Bar->Tick(DeltaTime);
@@ -32,14 +36,71 @@ void ULrTickableWorldSubsystem::Tick(float DeltaTime)
 
 void ULrTickableWorldSubsystem::RegisterActiveBar(ULrWorldBarWidget* Bar)
 {
-	if (!Bar)
+	ActiveBars.AddUnique(Bar);
+}
+
+ALrProjectile* ULrTickableWorldSubsystem::AcquireProjectile()
+{
+	if (FreeProjectiles.Num() > 0)
+	{
+		ALrProjectile* Projectile = FreeProjectiles.Pop(false);
+		return Projectile;
+	}
+
+	if (!ProjectileClass)
+	{
+		return nullptr;
+	}
+
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	ALrProjectile* NewProjectile = GetWorld()->SpawnActor<ALrProjectile>(
+		ProjectileClass,
+		FVector::ZeroVector,
+		FRotator::ZeroRotator,
+		Params);
+
+	if (!NewProjectile)
+	{
+		return nullptr;
+	}
+
+	AllProjectiles.Add(NewProjectile);
+	return NewProjectile;
+}
+
+void ULrTickableWorldSubsystem::ReleaseProjectile(ALrProjectile* Projectile)
+{
+	if (!Projectile)
 	{
 		return;
 	}
-	if (Bar->bIsAnimating)
+	FreeProjectiles.Add(Projectile);
+}
+
+void ULrTickableWorldSubsystem::SpawnProjectile(AActor* InOwner, const FVector& StartLocation, const FVector& Direction)
+{
+	if (!GetWorld())
 	{
 		return;
 	}
-	ActiveBars.Add(Bar);
-	Bar->bIsAnimating = true;
+
+	//客户端不生成
+	if (GetWorld()->GetNetMode() == NM_Client)
+	{
+		return;
+	}
+
+	ALrProjectile* Projectile = AcquireProjectile();
+
+	if (!Projectile)
+	{
+		return;
+	}
+
+	Projectile->ActivateProjectile(
+		StartLocation,
+		Direction,
+		InOwner);
 }

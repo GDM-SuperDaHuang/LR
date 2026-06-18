@@ -78,7 +78,6 @@ USkeletalMeshComponent* ALrCorpseActor::InitializeCorpse(const USkeletalMeshComp
 	// UE_LOG(LogTemp, Warning, TEXT("PhysicsAsset=%s"), *GetNameSafe(CorpseMesh->GetPhysicsAsset()));
 
 	CorpseMesh->SetCollisionProfileName(TEXT("Ragdoll"));
-
 	CorpseMesh->SetAllBodiesSimulatePhysics(true);
 
 	CorpseMesh->WakeAllRigidBodies();

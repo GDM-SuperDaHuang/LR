@@ -27,6 +27,4 @@ protected:
 	float LifeDuration = 5.0f;
 
 	void OnCorpseLifeEnd();
-	
-
 };

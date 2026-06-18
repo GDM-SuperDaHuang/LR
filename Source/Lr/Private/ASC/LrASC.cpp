@@ -151,7 +151,7 @@ void ULrASC::ApplyDamageToTarget(AActor* Target, FDamageEffectParams DamageEffec
 	}
 	else if (bHasBurn)
 	{
-		LrGEClass = LrBuffDA->MeleeAttackEffectClass;
+		LrGEClass = LrBuffDA->BurnEffectClass;
 	}
 	else if (bHasFrozen)
 	{
@@ -159,7 +159,7 @@ void ULrASC::ApplyDamageToTarget(AActor* Target, FDamageEffectParams DamageEffec
 	}
 	else if (bHasPoison)
 	{
-		LrGEClass = LrBuffDA->MeleeAttackEffectClass;
+		LrGEClass = LrBuffDA->PoisonEffectClass;
 	}
 	else if (bHasRepel)
 	{

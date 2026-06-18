@@ -7,7 +7,44 @@
 #include "Engine/DataAsset.h"
 #include "LrExcelConfig.generated.h"
 
+/**
+ * 属性表
+ */
+USTRUCT(BlueprintType)
+struct  FLrProjectileConfigRow : public FTableRowBase
+{
+	GENERATED_BODY()
 
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float Damage = 20.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float Speed = 2000.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float LifeTime = 5.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float CollisionRadius = 20.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bHoming = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float HomingAcceleration = 10000.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bAOE = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float AOERadius = 300.f;
+};
+
+/**
+ * 属性表
+ */
 USTRUCT(BlueprintType)
 struct FLrInitASRow : public FTableRowBase
 {
@@ -40,5 +77,7 @@ public:
 	UDataTable* LrASDT;
 
 	const TArray<FLrInitASRow*> FindAllAS() const;
+	
+	const TArray<FLrProjectileConfigRow*> FindAllProjectileConfig() const;
 
 };
