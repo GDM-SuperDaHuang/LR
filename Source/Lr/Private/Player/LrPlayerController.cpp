@@ -3,14 +3,19 @@
 
 #include "Player/LrPlayerController.h"
 
+#include "EngineUtils.h"
 #include "EnhancedInputSubsystems.h"
+#include "TimerManager.h"
 #include "ASC/LrASC.h"
+#include "Engine/LocalPlayer.h"
 #include "Game/LrGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Pawn/LrHeroPawn.h"
 #include "Player/Input/LrInputComponent.h"
 #include "Tags/LrGameplayTags.h"
+
+
 
 void ALrPlayerController::BeginPlay()
 {
@@ -36,6 +41,13 @@ void ALrPlayerController::BeginPlay()
 	{
 		ULrInputComponent::ApplyPlayerKeyMappings(InputConfig, GI->InputSaveGame, LrIMC);
 	}
+	FTimerHandle HoverTimer;
+	GetWorldTimerManager().SetTimer(
+		HoverTimer,
+		this,
+		&ALrPlayerController::UpdateHoverTarget,
+		0.05f,
+		true);
 
 	// 输入模式：既响应游戏（WASD）也响应 UI（点击 Widget）
 	// FInputModeGameAndUI InputModeData;
@@ -112,7 +124,7 @@ void ALrPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	if (InputTag == FLrGameplayTags::Get().InputTag_Jump)
 	{
 		Jump();
-	}	
+	}
 	else
 	{
 		LrASC->AbilityInputTagReleased(InputTag);
@@ -199,4 +211,93 @@ void ALrPlayerController::Jump() const
 	{
 		ControlledPawn->UpdatePressedJump(true);
 	}
+}
+
+ALrPawnBase* ALrPlayerController::GetNearestPawnToCursor(float MaxScreenDistance)
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+
+	float MouseX;
+	float MouseY;
+
+	if (!GetMousePosition(MouseX, MouseY))
+	{
+		return nullptr;
+	}
+
+	const FVector2D MousePos(MouseX, MouseY);
+	ALrPawnBase* BestPawn = nullptr;
+	float BestDistanceSq = MaxScreenDistance * MaxScreenDistance;
+
+	ALrPawnBase* MyPawn = Cast<ALrPawnBase>(GetPawn());
+	for (TActorIterator<ALrPawnBase> It(World); It; ++It)
+	{
+		ALrPawnBase* TargetPawn = *It;
+
+		if (!IsValid(TargetPawn))
+		{
+			continue;
+		}
+
+		//---------------------------------
+		// 忽略自己
+		//---------------------------------
+
+		if (TargetPawn == MyPawn)
+		{
+			continue;
+		}
+
+		//---------------------------------
+		// 投影到屏幕
+		//---------------------------------
+
+		FVector2D ScreenPos;
+		// FVector WorldPos = TargetPawn->GetActorLocation();
+		// if (UCapsuleComponent* Capsule = TargetPawn->FindComponentByClass<UCapsuleComponent>())
+		// {
+		// 	WorldPos.Z += Capsule->GetScaledCapsuleHalfHeight();
+		// }
+
+		bool bOnScreen = ProjectWorldLocationToScreen(TargetPawn->GetActorLocation(), ScreenPos);
+		if (!bOnScreen)
+		{
+			continue;
+		}
+
+		//---------------------------------
+		// 计算屏幕距离
+		//---------------------------------
+		float DistSq = FVector2D::DistSquared(MousePos, ScreenPos);
+		if (DistSq < BestDistanceSq)
+		{
+			BestDistanceSq = DistSq;
+			BestPawn = TargetPawn;
+		}
+	}
+
+	// 切换选中
+	if (CurrentSelectedPawn && BestPawn == CurrentSelectedPawn)
+	{
+		return BestPawn;
+	}
+
+	if (CurrentSelectedPawn)
+	{
+		CurrentSelectedPawn->SetSelected(false);
+	}
+	CurrentSelectedPawn = BestPawn;
+	if (CurrentSelectedPawn)
+	{
+		CurrentSelectedPawn->SetSelected(true);
+	}
+	return BestPawn;
+}
+void ALrPlayerController::UpdateHoverTarget()
+{
+	GetNearestPawnToCursor();
 }

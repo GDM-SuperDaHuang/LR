@@ -5,11 +5,13 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "NiagaraFunctionLibrary.h"
+#include "TimerManager.h"
 #include "ASC/LrASC.h"
 #include "Component/Combat/LrCombatComponentBase.h"
 #include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
 #include "Data/LrExcelConfig.h"
+#include "Engine/World.h"
 #include "Game/LrTickableWorldSubsystem.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -23,7 +25,7 @@ ALrProjectile::ALrProjectile()
 {
 	// 1. 关闭 Tick， projectile 一般靠 MovementComponent 推进，不需要每帧回调
 	PrimaryActorTick.bCanEverTick = false;
-	bReplicates = true;//需要优化。添加复制Actor运动状态，FRepMovement
+	bReplicates = true; //需要优化。添加复制Actor运动状态，FRepMovement
 
 	Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
 	SetRootComponent(Collision); // 根组件必须是碰撞体，否则 MovementComponent 会警告
@@ -35,13 +37,13 @@ ALrProjectile::ALrProjectile()
 	Collision->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
 	Collision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap); // 打玩家/敌人全靠这一行
 
-	
+
 	Movement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Movement"));
 	Movement->InitialSpeed = 550.0f; // 初始速度
 	Movement->MaxSpeed = 550.0f; // 最大速度（想做成“加速箭”可再把 Max 提高）
 	Movement->ProjectileGravityScale = 0; // 0 = 纯直线，火球冰箭常用；弓箭可把这里调 0.5~1
 	Movement->bRotationFollowsVelocity = true;
-	
+	Movement->bIsHomingProjectile = true;
 }
 
 // Called when the game starts or when spawned
@@ -51,6 +53,7 @@ void ALrProjectile::BeginPlay()
 	//设置寿命
 	SetLifeSpan(5);
 	SetReplicateMovement(true);
+	// Collision->OnComponentHit.AddDynamic(this, &ALrProjectile::OnProjectileHit);
 	Collision->OnComponentHit.AddDynamic(this, &ALrProjectile::OnProjectileHit);
 	if (LoopingSoundComponent)
 	{
@@ -58,20 +61,9 @@ void ALrProjectile::BeginPlay()
 	}
 }
 
-void ALrProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(ALrProjectile, bActive);
-}
-
 void ALrProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (!HasAuthority())
-	{
-		return;
-	}
-	
-	if (!bActive)
 	{
 		return;
 	}
@@ -86,8 +78,8 @@ void ALrProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherA
 		return;
 	}
 
-	UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
-	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
+	// UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
+	// UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
 	if (LoopingSoundComponent)
 	{
 		LoopingSoundComponent->Stop();
@@ -99,39 +91,11 @@ void ALrProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherA
 		ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(OtherActor);
 		if (ULrCombatComponentBase* Combat = OwnerPawn->FindComponentByClass<ULrCombatComponentBase>())
 		{
-			FDamageEffectParams DamageEffectParams;
 			LrASC->ApplyDamageToTarget(OtherActor, DamageEffectParams);
 			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
 		}
 	}
-
 	DeactivateProjectile();
-}
-
-void ALrProjectile::ActivateProjectile(const FVector& StartLocation, const FVector& Direction, AActor* InOwner)
-{
-	if (!HasAuthority())
-	{
-		return;
-	}
-	ProjectileOwner = InOwner;
-	bActive = true;
-	SetActorLocation(StartLocation);
-	SetActorHiddenInGame(false);
-	SetActorEnableCollision(true);
-	
-	Movement->SetUpdatedComponent(Collision);
-	Movement->Velocity = Direction.GetSafeNormal() * Speed;
-	GetWorldTimerManager().ClearTimer(LifeTimer);
-	GetWorldTimerManager().SetTimer(
-		LifeTimer,
-		this,
-		&ALrProjectile::DeactivateProjectile,
-		LifeTime,
-		false);
-
-	//立刻发送同步，不等下一次 NetUpdateFrequency。
-	ForceNetUpdate();
 }
 
 void ALrProjectile::DeactivateProjectile()
@@ -141,29 +105,19 @@ void ALrProjectile::DeactivateProjectile()
 		return;
 	}
 
-	bActive = false;
+	if (LoopingSoundComponent)
+	{
+		LoopingSoundComponent->Stop();
+		LoopingSoundComponent->DestroyComponent();
+	}
+
 	GetWorldTimerManager().ClearTimer(LifeTimer);
 	Movement->StopMovementImmediately();
 	Movement->SetUpdatedComponent(nullptr);
 	SetActorHiddenInGame(true);
 	SetActorEnableCollision(false);
 	GetWorldTimerManager().ClearAllTimersForObject(this);
-	
-	AActor::SetReplicateMovement(false); //需要优化。添加复制Actor运动状态，FRepMovement
-	// ForceNetUpdate();
-	if (ULrTickableWorldSubsystem* Pool = GetWorld()->GetSubsystem<ULrTickableWorldSubsystem>())
-	{
-		Pool->ReleaseProjectile(this);
-	}
-}
 
-//客户端显示
-void ALrProjectile::OnRep_Active()
-{
-	SetActorHiddenInGame(!bActive);
-	SetActorEnableCollision(bActive);
-	if (!bActive)
-	{
-		Movement->StopMovementImmediately();
-	}
+	AActor::SetReplicateMovement(false); //需要优化。添加复制Actor运动状态，FRepMovement
+	
 }

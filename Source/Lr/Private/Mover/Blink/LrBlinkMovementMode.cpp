@@ -8,9 +8,9 @@
 #include "Mover/LrMoverComponent.h"
 #include "Mover/LrAllModes.h"
 
-void ULrBlinkMovementMode::Activate()
+void ULrBlinkMovementMode::Activate(const FMoverEventContext& Context, FName PrevModeName, const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, FMoverSyncState* OutSyncState, FMoverAuxStateContext* OutAuxState)
 {
-	Super::Activate();
+	Super::Activate(Context, PrevModeName, SimContext, StartState, OutSyncState, OutAuxState);
 	ElapsedTime = 0.f;
 
 	ULrMoverComponent* Mover = Cast<ULrMoverComponent>(GetMoverComponent());
@@ -24,8 +24,8 @@ void ULrBlinkMovementMode::Activate()
 
 	// 默认朝向
 	BlinkDirection = DefaultSync->GetOrientation_WorldSpace()
-	                            .Vector()
-	                            .GetSafeNormal2D();
+								.Vector()
+								.GetSafeNormal2D();
 	// 尝试读取输入方向
 	const FMoverInputCmdContext& InputCmd = Mover->GetLastInputCmd();
 	const FLrMoverInputCmd* Inputs = InputCmd.InputCollection.FindDataByType<FLrMoverInputCmd>();
@@ -43,13 +43,9 @@ void ULrBlinkMovementMode::Activate()
 	BlinkDirection.Normalize();
 }
 
-void ULrBlinkMovementMode::Deactivate()
+void ULrBlinkMovementMode::GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
 {
-	Super::Deactivate();
-}
-
-void ULrBlinkMovementMode::GenerateMove_Implementation(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
-{
+	Super::GenerateMove_Implementation(SimContext, StartState, TimeStep, OutProposedMove);
 	float BlinkSpeed = BlinkDistance / BlinkDuration;
 
 	FVector Velocity = BlinkDirection * BlinkSpeed;

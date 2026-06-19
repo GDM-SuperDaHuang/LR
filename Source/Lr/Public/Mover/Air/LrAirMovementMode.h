@@ -16,8 +16,7 @@ class LR_API ULrAirMovementMode : public UBaseMovementMode
 	GENERATED_BODY()
 public:
 	ULrAirMovementMode();
-	// virtual void Activate() override;
-	virtual void GenerateMove_Implementation(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const override;
+	virtual void GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const override;
 	virtual void SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState) override;
 	UPROPERTY()
 	TObjectPtr<ULrMoverComponent> CacheMoverComponent;

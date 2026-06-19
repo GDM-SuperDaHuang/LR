@@ -12,6 +12,7 @@
 #include "Interface/LrCombatInterface.h"
 #include "LrPawnBase.generated.h"
 
+class UMaterialInstanceDynamic;
 class ULrASC;
 class ULrAnimationComponent;
 class ULrMoverComponent;
@@ -44,6 +45,7 @@ public:
 	virtual ULrAS* GetAS() const override;
 	virtual uint8 GetClassID() const;
 	virtual void ToDie(const FLrDieParameters& LrDieConfig) override;
+	virtual FVector GetProjectileLocation() const override;
 	/** 战斗组件 */
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrCombatComponentBase> LrCombatComponent;
@@ -77,6 +79,10 @@ public:
 	/** 导航组件 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="LrNavMoverComponent")
 	TObjectPtr<ULrNavMovementComponent> LrNavMoverComponent;
+
+	/** 选中提示 */
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* SelectionRing;
 
 protected:
 	/** mover写入网络时 */
@@ -123,6 +129,9 @@ public:
 	// 地面摩檫力物理
 	void CheckFloorPhysics(float& OutFrictionMult);
 	void InitAS() const;
+
+	//选中提示
+	void SetSelected(bool bSelected) const;
 
 public:
 	bool bIsJumpJustPressed = false; // 本帧刚刚按下

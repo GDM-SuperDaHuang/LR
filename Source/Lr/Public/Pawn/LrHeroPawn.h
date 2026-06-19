@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GenericTeamAgentInterface.h"
 #include "Interface/LrEquipInterface.h"
 #include "Pawn/LrPawnBase.h"
 #include "LrHeroPawn.generated.h"

@@ -7,9 +7,9 @@
 #include "Mover/LrAllModes.h"
 #include "Mover/LrMoverComponent.h"
 
-void ULrKnockbackMovementMode::Activate()
+void ULrKnockbackMovementMode::Activate(const FMoverEventContext& Context, FName PrevModeName, const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, FMoverSyncState* OutSyncState, FMoverAuxStateContext* OutAuxState)
 {
-	Super::Activate();
+	Super::Activate(Context, PrevModeName, SimContext, StartState, OutSyncState, OutAuxState);
 	ElapsedTime = 0.f;
 	ULrMoverComponent* Mover = Cast<ULrMoverComponent>(GetMoverComponent());
 	if (!Mover) return;
@@ -22,14 +22,16 @@ void ULrKnockbackMovementMode::Activate()
 }
 
 //提议
-void ULrKnockbackMovementMode::GenerateMove_Implementation(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
+void ULrKnockbackMovementMode::GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
 {
+	Super::GenerateMove_Implementation(SimContext, StartState, TimeStep, OutProposedMove);
 	float DeltaTime = TimeStep.StepMs * 0.001f;
 	FVector Velocity = InitialVelocity;
 	// 重力影响（击飞一定要有）
 	Velocity.Z -= Gravity * ElapsedTime;
 	OutProposedMove.LinearVelocity = Velocity;
 }
+
 
 //执行
 void ULrKnockbackMovementMode::SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState)

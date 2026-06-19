@@ -29,20 +29,4 @@ private:
 	TArray<TWeakObjectPtr<ULrWorldBarWidget>> ActiveBars;
 	//////////////////////////////////////////////////////////////////////////
 	
-	//投射物对象池
-
-
-public:
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<ALrProjectile> ProjectileClass;
-	ALrProjectile* AcquireProjectile();
-	void ReleaseProjectile(ALrProjectile* Projectile);
-	void SpawnProjectile(AActor* OwnerPawn, const FVector& StartLocation, const FVector& Direction);
-private:
-	UPROPERTY()
-	TArray<TObjectPtr<ALrProjectile>> AllProjectiles;
-	UPROPERTY()
-	TArray<TObjectPtr<ALrProjectile>> FreeProjectiles;
-	
-	//投射物对象池
 };

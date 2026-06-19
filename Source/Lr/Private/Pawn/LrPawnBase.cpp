@@ -3,11 +3,15 @@
 
 #include "Pawn/LrPawnBase.h"
 
+#include "TimerManager.h"
 #include "ASC/LrASC.h"
 #include "ASC/AS/LrAS.h"
 #include "Component/LrAnimationComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Data/LrExcelConfig.h"
+#include "Engine/World.h"
 #include "Lib/LrCommonLibrary.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Mover/FLrMoverInputCmd.h"
 #include "Mover/LrAllModes.h"
 #include "Mover/LrMoverComponent.h"
@@ -38,6 +42,16 @@ ALrPawnBase::ALrPawnBase()
 	// 动画相关
 	// =========================
 	LrAnimationComponent = CreateDefaultSubobject<ULrAnimationComponent>(TEXT("LrAnimationComponent"));
+
+
+	// =========================
+	// 选中提示相关
+	// =========================
+	SelectionRing = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SelectionRing"));
+	SelectionRing->SetupAttachment(RootComponent);
+	SelectionRing->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SelectionRing->SetCastShadow(false);
+	SelectionRing->SetVisibility(false);
 }
 
 
@@ -81,6 +95,11 @@ uint8 ALrPawnBase::GetClassID() const
 void ALrPawnBase::ToDie(const FLrDieParameters& LrDieConfig)
 {
 	LrMoverComponent->Launch(LrDieConfig.DeathImpulse, LrDieConfig.Duration);
+}
+
+FVector ALrPawnBase::GetProjectileLocation() const
+{
+	return GetActorLocation();
 }
 
 void ALrPawnBase::HandleMoverFinalized(const FMoverSyncState& SyncState, const FMoverAuxStateContext& AuxState)
@@ -324,4 +343,9 @@ void ALrPawnBase::UpdateDissolveProgress()
 		DissolveMIDs.Empty(); // 清空数组释放引用
 		Destroy();
 	}
+}
+
+void ALrPawnBase::SetSelected(bool bSelected) const
+{
+	SelectionRing->SetVisibility(bSelected);
 }

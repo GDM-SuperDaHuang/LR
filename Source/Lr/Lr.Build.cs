@@ -5,12 +5,11 @@ using UnrealBuildTool;
 public class Lr : ModuleRules
 {
 	public Lr(ReadOnlyTargetRules Target) : base(Target)
-	{
+	{ 
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		//关闭优化
-		OptimizeCode = CodeOptimization.Never;
-
+		//OptimizeCode = CodeOptimization.Never;
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"GameplayTasks", "Core", "CoreUObject", "Engine", "UnrealEd", "InputCore", "EnhancedInput", "Mover", "AIModule", "GameplayTags", "GameplayAbilities", "MotionWarping", "AnimationBlueprintLibrary", "AnimGraphRuntime", "AIModule",

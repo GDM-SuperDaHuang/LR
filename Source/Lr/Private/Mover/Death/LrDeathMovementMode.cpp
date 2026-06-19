@@ -5,25 +5,17 @@
 
 #include "Mover/LrMoverComponent.h"
 
-void ULrDeathMovementMode::Activate()
+void ULrDeathMovementMode::Activate(const FMoverEventContext& Context, FName PrevModeName, const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, FMoverSyncState* OutSyncState, FMoverAuxStateContext* OutAuxState)
 {
-	Super::Activate();
+	Super::Activate(Context, PrevModeName, SimContext, StartState, OutSyncState, OutAuxState);
 	bHasEnteredDeath = true;
 	ULrMoverComponent* Mover = Cast<ULrMoverComponent>(GetMoverComponent());
 	if (!Mover) return;
-
-	// 停掉所有输入影响（关键）
-	// Mover->ClearInput();
 }
 
-void ULrDeathMovementMode::Deactivate()
+void ULrDeathMovementMode::GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
 {
-	Super::Deactivate();
-}
-
-void ULrDeathMovementMode::GenerateMove_Implementation(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
-{
-	Super::GenerateMove_Implementation(StartState, TimeStep, OutProposedMove);
+	Super::GenerateMove_Implementation(SimContext, StartState, TimeStep, OutProposedMove);
 	// ❗死亡状态不再产生移动
 	OutProposedMove.LinearVelocity = FVector::ZeroVector;
 	OutProposedMove.AngularVelocityDegrees = FVector::ZeroVector;

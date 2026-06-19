@@ -51,7 +51,12 @@ public:
 	virtual bool IsDead() const = 0;
 	virtual ULrASC* GetASC() const =0;
 	virtual ULrAS* GetAS() const =0;
+	virtual FVector GetProjectileLocation() const =0;
 
 	//去死 可能会倒飞出去
 	virtual void ToDie(const FLrDieParameters& LrDieConfig) = 0;
+
+
+	// virtual FVector GetProjectileLocation() const =0;
+
 };

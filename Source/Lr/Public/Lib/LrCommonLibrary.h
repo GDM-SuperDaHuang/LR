@@ -50,6 +50,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|GE", meta=(DefaultToSelf = "WorldContextObject"))
 	static const ULrBuffDA* GetGEDA(const UObject* WorldContextObject);
 
+	// 在 Forward 方向周围均匀生成旋转数组（当前只返回一个）
+	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|GA", meta=(DefaultToSelf = "WorldContextObject"))
+	static TArray<FRotator> EvenlySpacedRotators(const FVector& Forward, const FVector& Axis, float Spread, int32 NumRotators);
 
 	// 打印信息
 	static void PrintLog(const UObject* WorldContextObject, const APlayerController* PC);

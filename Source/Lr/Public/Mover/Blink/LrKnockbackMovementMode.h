@@ -15,8 +15,8 @@ class LR_API ULrKnockbackMovementMode : public UBaseMovementMode
 	GENERATED_BODY()
 public:
 
-	virtual void Activate() override;
-	virtual void GenerateMove_Implementation(const FMoverTickStartData& StartState,const FMoverTimeStep& TimeStep,FProposedMove& OutProposedMove) const override;
+	virtual void Activate(const FMoverEventContext& Context, FName PrevModeName, const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, FMoverSyncState* OutSyncState, FMoverAuxStateContext* OutAuxState) override;
+	virtual void GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const override;
 	virtual void SimulationTick_Implementation(const FSimulationTickParams& Params,FMoverTickEndData& OutputState) override;
 
 protected:

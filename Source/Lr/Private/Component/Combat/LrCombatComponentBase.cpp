@@ -3,7 +3,12 @@
 
 #include "Component/Combat/LrCombatComponentBase.h"
 
+#include "CollisionQueryParams.h"
+#include "CollisionShape.h"
+#include "DrawDebugHelpers.h"
+#include "Async/ParallelFor.h"
 #include "Engine/OverlapResult.h"
+#include "Engine/World.h"
 #include "Interface/LrCombatInterface.h"
 
 // Sets default values for this component's properties
@@ -11,6 +16,8 @@ ULrCombatComponentBase::ULrCombatComponentBase()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 }
+
+
 
 TWeakObjectPtr<AActor> ULrCombatComponentBase::GetClosestEnemyInCone(const FLrCombatQueryParams& Params)
 {

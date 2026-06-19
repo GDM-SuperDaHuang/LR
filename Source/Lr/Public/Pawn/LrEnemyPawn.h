@@ -18,7 +18,8 @@ class ULrAS;
 class UWidgetComponent;
 class UBehaviorTree;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDeath, ALrEnemyPawn*, DeadEnemy);
+class ALrEnemyPawn;
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEnemyDeath, ALrEnemyPawn*);
 
 // DECLARE_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float);
 
@@ -82,16 +83,14 @@ public:
 
 
 	/** 敌人死亡事件，广播给 AI 控制器和其他监听者 */
-	UPROPERTY(BlueprintAssignable, Category = "Combat")
 	FOnEnemyDeath OnEnemyDeath;
-
 
 protected:
 	// UPROPERTY(VisibleAnywhere)
 	// TObjectPtr<ULrAIStateComponent> AIStateComponent;
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ULrPatrolRouteComponent> PatrolRoute;
-	
+
 
 	UPROPERTY()
 	FVector HomeLocation;

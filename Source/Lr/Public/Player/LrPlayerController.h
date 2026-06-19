@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "LrPlayerController.generated.h"
 
+class ALrPawnBase;
 class ULrSaveGame;
 class ULrASC;
 struct FGameplayTag;
@@ -20,15 +21,15 @@ UCLASS()
 class LR_API ALrPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
 	// virtual void CreateInputComponent(TSubclassOf<UInputComponent> InputComponentToCreate) override;
 private:
-
 	UPROPERTY()
 	TObjectPtr<ULrASC> LrASC;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<ULrInputConfigDA> InputConfig;
 
@@ -42,14 +43,20 @@ private:
 	// TObjectPtr<UInputAction> JumpAction;
 
 
-	
 	void AbilityInputTagPressed(FGameplayTag InputTag);
 	void AbilityInputTagReleased(FGameplayTag InputTag);
 	void AbilityInputTagHeld(FGameplayTag InputTag);
 
-	
+
 	void Move(const FInputActionValue& InputActionValue);
 	void MoveCompleted(const FInputActionValue& InputActionValue);
 	void Jump() const;
 
+public:
+	UFUNCTION()
+	ALrPawnBase* GetNearestPawnToCursor(float MaxScreenDistance = 120.f);
+	void UpdateHoverTarget();
+
+	UPROPERTY()
+	ALrPawnBase* CurrentSelectedPawn;
 };

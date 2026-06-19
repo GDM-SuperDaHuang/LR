@@ -6,6 +6,8 @@
 #include "LrCombatComponentBase.h"
 #include "LrPlayerCombatComponent.generated.h"
 
+class ALrPawnBase;
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class LR_API ULrPlayerCombatComponent : public ULrCombatComponentBase
 {
@@ -13,4 +15,8 @@ class LR_API ULrPlayerCombatComponent : public ULrCombatComponentBase
 
 public:
 	ULrPlayerCombatComponent();
+
+	// 新增：手动选择一个目标
+	virtual TWeakObjectPtr<ALrPawnBase> GetNearestPawnToCursor();
+	
 };

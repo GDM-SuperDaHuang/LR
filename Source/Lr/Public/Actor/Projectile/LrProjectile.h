@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Data/LrExcelConfig.h"
+#include "ASC/GE/LrGEContext.h"
 #include "GameFramework/Actor.h"
 #include "LrProjectile.generated.h"
 
+class UAudioComponent;
 struct FLrProjectileConfigRow;
 class UProjectileMovementComponent;
 class USphereComponent;
@@ -18,20 +19,23 @@ class LR_API ALrProjectile : public AActor
 
 public:
 	ALrProjectile();
-
+	
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UProjectileMovementComponent> Movement;
+	UPROPERTY()
+	TObjectPtr<USceneComponent> HomingTargetSceneComponent;
 protected:
 	virtual void BeginPlay() override;
 
-public:
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+// public:
+// 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	// 选择球形
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USphereComponent> Collision;
 
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UProjectileMovementComponent> Movement;
+	
 
 	UPROPERTY()
 	TObjectPtr<UAudioComponent> LoopingSoundComponent;
@@ -40,19 +44,13 @@ protected:
 	void OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 public:
-	void ActivateProjectile(const FVector& StartLocation, const FVector& Direction, AActor* InOwner);
-
 	void DeactivateProjectile();
-
-public:
-	UPROPERTY(ReplicatedUsing=OnRep_Active)
-	bool bActive = false;
-	UFUNCTION()
-	void OnRep_Active();
 
 	UPROPERTY()
 	TObjectPtr<AActor> ProjectileOwner;
-
+	
+	UPROPERTY()
+	FDamageEffectParams DamageEffectParams;
 public:
 	UPROPERTY(EditDefaultsOnly)
 	float Damage = 10.f;

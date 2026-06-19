@@ -3,6 +3,7 @@
 
 #include "Mover/Air/LrAirMovementMode.h"
 
+#include "Engine/World.h"
 #include "Mover/FLrMoverInputCmd.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/LrAllModes.h"
@@ -15,8 +16,9 @@ ULrAirMovementMode::ULrAirMovementMode()
 }
 
 // 生成提议移动：根据当前状态（速度、输入）计算出本帧的预期速度（不实际移动，仅计算）
-void ULrAirMovementMode::GenerateMove_Implementation(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
+void ULrAirMovementMode::GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
 {
+	Super::GenerateMove_Implementation(SimContext, StartState, TimeStep, OutProposedMove);
 	// 获取当前的同步状态（包含速度、位置等）
 	const FMoverDefaultSyncState* SyncState = StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
 	// 获取当前的输入命令（移动方向、按键状态等）
@@ -92,6 +94,7 @@ void ULrAirMovementMode::GenerateMove_Implementation(const FMoverTickStartData& 
 	// 如果有输入，将输入方向作为意图方向（可用于后续动画或旋转）
 	if (Inputs) OutProposedMove.DirectionIntent = Inputs->GetMoveInput();
 }
+
 
 // 模拟移动：根据提议移动实际移动组件，并处理碰撞和模式切换
 void ULrAirMovementMode::SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState)

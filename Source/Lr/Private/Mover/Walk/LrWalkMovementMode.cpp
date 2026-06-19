@@ -16,9 +16,9 @@ ULrWalkMovementMode::ULrWalkMovementMode()
 	// CacheMoverComponent = Cast<ULrMoverComponent>(GetMoverComponent());//ULrMoverComponent::CDO
 }
 
-void ULrWalkMovementMode::Activate()
+void ULrWalkMovementMode::Activate(const FMoverEventContext& Context, FName PrevModeName, const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, FMoverSyncState* OutSyncState, FMoverAuxStateContext* OutAuxState)
 {
-	Super::Activate();
+	Super::Activate(Context, PrevModeName, SimContext, StartState, OutSyncState, OutAuxState);
 	if (!CacheMoverComponent)
 	{
 		if (ULrMoverComponent* Mover = Cast<ULrMoverComponent>(GetMoverComponent()))
@@ -28,8 +28,9 @@ void ULrWalkMovementMode::Activate()
 	}
 }
 
-void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
+void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
 {
+	Super::GenerateMove_Implementation(SimContext, StartState, TimeStep, OutProposedMove);
 	const FMoverDefaultSyncState* SyncState = StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
 	const FLrMoverInputCmd* Inputs = StartState.InputCmd.InputCollection.FindDataByType<FLrMoverInputCmd>();
 
@@ -107,6 +108,7 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverTickStartData&
 	OutProposedMove.LinearVelocity = Velocity;
 	OutProposedMove.DirectionIntent = MoveIntent;
 }
+
 
 
 void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState)

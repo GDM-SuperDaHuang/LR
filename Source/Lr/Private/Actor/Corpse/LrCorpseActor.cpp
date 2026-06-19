@@ -3,6 +3,8 @@
 
 #include "Actor/Corpse/LrCorpseActor.h"
 
+#include "TimerManager.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Data/LrCorpseConfigDA.h"
 
 // Sets default values

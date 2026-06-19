@@ -6,6 +6,7 @@
 #include "AbilitySystemGlobals.h"
 #include "Data/LrCorpseConfigDA.h"
 #include "Data/LrGAListDA.h"
+#include "Engine/World.h"
 #include "Game/LrGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -85,6 +86,27 @@ const ULrBuffDA* ULrCommonLibrary::GetGEDA(const UObject* WorldContextObject)
 	const ALrGameModeBase* LrGameMode = Cast<ALrGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
 	if (LrGameMode == nullptr) return nullptr;
 	return LrGameMode->LrBuffDA;
+}
+
+TArray<FRotator> ULrCommonLibrary::EvenlySpacedRotators(const FVector& Forward, const FVector& Axis, float Spread, int32 NumRotators)
+{
+	TArray<FRotator> Rotators;
+	const FVector LeftOfSpread = Forward.RotateAngleAxis(-Spread / 2.f, Axis);
+	if (NumRotators > 1)
+	{
+		const float DeltaSpread = Spread / (NumRotators - 1);
+
+		for (int32 i = 0; i < NumRotators; i++)
+		{
+			const FVector Direction = LeftOfSpread.RotateAngleAxis(DeltaSpread * i, FVector::UpVector);
+			Rotators.Add(Direction.Rotation());
+		}
+	}
+	else
+	{
+		Rotators.Add(Forward.Rotation());
+	}
+	return Rotators;
 }
 
 void ULrCommonLibrary::PrintLog(const UObject* WorldContextObject, const APlayerController* PC)

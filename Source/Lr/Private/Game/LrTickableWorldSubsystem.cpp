@@ -32,75 +32,10 @@ void ULrTickableWorldSubsystem::Tick(float DeltaTime)
 			Bar->bIsAnimating = false;
 		}
 	}
+	
 }
 
 void ULrTickableWorldSubsystem::RegisterActiveBar(ULrWorldBarWidget* Bar)
 {
 	ActiveBars.AddUnique(Bar);
-}
-
-ALrProjectile* ULrTickableWorldSubsystem::AcquireProjectile()
-{
-	if (FreeProjectiles.Num() > 0)
-	{
-		ALrProjectile* Projectile = FreeProjectiles.Pop(false);
-		return Projectile;
-	}
-
-	if (!ProjectileClass)
-	{
-		return nullptr;
-	}
-
-	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	ALrProjectile* NewProjectile = GetWorld()->SpawnActor<ALrProjectile>(
-		ProjectileClass,
-		FVector::ZeroVector,
-		FRotator::ZeroRotator,
-		Params);
-
-	if (!NewProjectile)
-	{
-		return nullptr;
-	}
-
-	AllProjectiles.Add(NewProjectile);
-	return NewProjectile;
-}
-
-void ULrTickableWorldSubsystem::ReleaseProjectile(ALrProjectile* Projectile)
-{
-	if (!Projectile)
-	{
-		return;
-	}
-	FreeProjectiles.Add(Projectile);
-}
-
-void ULrTickableWorldSubsystem::SpawnProjectile(AActor* InOwner, const FVector& StartLocation, const FVector& Direction)
-{
-	if (!GetWorld())
-	{
-		return;
-	}
-
-	//客户端不生成
-	if (GetWorld()->GetNetMode() == NM_Client)
-	{
-		return;
-	}
-
-	ALrProjectile* Projectile = AcquireProjectile();
-
-	if (!Projectile)
-	{
-		return;
-	}
-
-	Projectile->ActivateProjectile(
-		StartLocation,
-		Direction,
-		InOwner);
 }
