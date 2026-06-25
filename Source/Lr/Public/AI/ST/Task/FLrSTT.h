@@ -228,6 +228,9 @@ struct FLrActivateAbilityTaskInstanceData
 
 	UPROPERTY(EditAnywhere, Category="Setting")
 	float AttackRange = 120.f; //根据距离
+
+	UPROPERTY(EditDefaultsOnly, Category="Setting")
+	float AttackCooldown = 1.5f; //冷却时间
 };
 
 USTRUCT(meta=(DisplayName="ActivateAbility"))
@@ -235,7 +238,7 @@ struct FLrActivateAbilityTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 
-	using FInstanceDataType = FLrChaseTaskInstanceData;
+	using FInstanceDataType = FLrActivateAbilityTaskInstanceData;
 
 	virtual const UStruct* GetInstanceDataType() const override
 	{
@@ -274,7 +277,7 @@ struct FLrActivateAbilityTask : public FStateTreeTaskCommonBase
 			return EStateTreeRunStatus::Failed;
 		}
 		InstanceData.TargetActor = Patrol->TargetActor;
-		if (!Combat->CanAttack(InstanceData.TargetActor))
+		if (!Combat->CanAttack(InstanceData.TargetActor, InstanceData.AttackRange, InstanceData.AttackCooldown))
 		{
 			return EStateTreeRunStatus::Failed;
 		}

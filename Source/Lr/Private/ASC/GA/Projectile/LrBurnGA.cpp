@@ -28,7 +28,7 @@ void ULrBurnGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 	}
 
 	//选择一个Montage
-	FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(OwnerPawn, GetAssetTags().First());
+	FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAConfig(OwnerPawn, GetAssetTags().First());
 	TArray<UAnimMontage*> AnimMontages = LrDAConfig.MontageList;
 	int32 Length = AnimMontages.Num();
 	if (Length <= 0)
@@ -131,11 +131,26 @@ void ULrBurnGA::SpawnProjectiles(const FVector& ProjectileTargetLocation, bool b
 			Cast<APawn>(GetOwningActorFromActorInfo()), // Instigator（负责计入伤害统计）
 			ESpawnActorCollisionHandlingMethod::AlwaysSpawn); // 碰撞策略：强行生成，不管是否卡墙
 
+		// todo
+		DamageEffectParams.DamageValue = 50;
+		DamageEffectParams.Duration = 2.f;
 		Projectile->DamageEffectParams = DamageEffectParams;
 		//追踪弹
 		if (HomingTarget)
 		{
 			Projectile->Movement->HomingTargetComponent = HomingTarget->GetRootComponent();
+
+			FVector TargetLocation = HomingTarget->GetActorLocation();
+			FVector OwnerLocation = OwnerActor->GetActorLocation();
+
+			// 计算从攻击者指向目标的方向旋转
+			FRotator TargetRotation = (TargetLocation - OwnerLocation).Rotation();
+			ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
+
+			// 通常攻击转向只需要水平转身（Yaw），需要把 Pitch 和 Roll 清零，防止角色发生倾斜
+			TargetRotation.Pitch = 0.f;
+			TargetRotation.Roll = 0.f;
+			OwnerPawn->LrMoverComponent->AttackWarpRotation = TargetRotation;
 		}
 		else
 		{
@@ -165,6 +180,11 @@ void ULrBurnGA::SpawnProjectiles(const FVector& ProjectileTargetLocation, bool b
 
 void ULrBurnGA::OnMontageFinished()
 {
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+	ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
+	if (!OwnerPawn) return;
+	OwnerPawn->LrMoverComponent->bIsInAttackWarp = false;
+	// OwnerPawn->LrMoverComponent->AttackWarpRotation = FRotator::ZeroRotator;
 }
 
 void ULrBurnGA::OnAttackEvent(FGameplayEventData Payload)
@@ -175,19 +195,31 @@ void ULrBurnGA::OnAttackEvent(FGameplayEventData Payload)
 	{
 		ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
 		ConeParams.Origin = OwnerPawn->GetActorLocation();
+		ConeParams.Forward = OwnerPawn->GetActorForwardVector();
+		ConeParams.ConeLength = ConeLength;
 		TargetAActor = AICombat->GetClosestEnemyInCone(ConeParams);
-		OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
+		if (TargetAActor.Get())
+		{
+			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
+		}
 	}
 	else if (ULrPlayerCombatComponent* PlayerCombat = GetAvatarActorFromActorInfo()->FindComponentByClass<ULrPlayerCombatComponent>())
 	{
 		ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
 		ConeParams.Origin = OwnerPawn->GetActorLocation();
-		TargetAActor = PlayerCombat->GetNearestPawnToCursor();
-		OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
+		ConeParams.Forward = OwnerPawn->GetActorForwardVector();
+		ConeParams.ConeLength = ConeLength;
+		// TargetAActor = PlayerCombat->GetNearestPawnToCursor();
+		TargetAActor = PlayerCombat->GetClosestEnemyInCone(ConeParams);
+		//显示箭头
+		if (ALrPawnBase* LrPawnBase = Cast<ALrPawnBase>(TargetAActor))
+		{
+			LrPawnBase->SetSelected(true);
+			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
+		}
 	}
 	if (TargetAActor.IsValid())
 	{
-		SpawnProjectiles(TargetAActor.Get()->GetActorLocation(), true, 60,TargetAActor.Get());
+		SpawnProjectiles(TargetAActor.Get()->GetActorLocation(), false, 60, TargetAActor.Get());
 	}
-
 }

@@ -9,6 +9,7 @@
 #include "Component/LrAnimationComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Data/LrExcelConfig.h"
+#include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -36,7 +37,6 @@ ALrPawnBase::ALrPawnBase()
 	// Mover
 	// =========================
 	LrMoverComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
-	UE_LOG(LogTemp, Warning, TEXT("[ALrPawnBase init] on Mover=%p"), LrMoverComponent.Get());
 
 	// =========================
 	// 动画相关
@@ -48,7 +48,6 @@ ALrPawnBase::ALrPawnBase()
 	// 选中提示相关
 	// =========================
 	SelectionRing = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SelectionRing"));
-	SelectionRing->SetupAttachment(RootComponent);
 	SelectionRing->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SelectionRing->SetCastShadow(false);
 	SelectionRing->SetVisibility(false);
@@ -193,6 +192,14 @@ void ALrPawnBase::BeginPlay()
 	// 通常空中模式会在落地时自动切换到行走模式
 	// Устанавливаем стартовый режим
 	LrMoverComponent->QueueNextMode(LrAllModes::Air);
+
+	// 修复：子类构造函数替换 RootComponent 后，SelectionRing 的 Attach 会失效，需要重新 Attach
+	// if (SelectionRing && SelectionRing->GetAttachParent() != RootComponent)
+	// {
+	// 	SelectionRing->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	// }
+
+
 }
 
 void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)
@@ -348,4 +355,5 @@ void ALrPawnBase::UpdateDissolveProgress()
 void ALrPawnBase::SetSelected(bool bSelected) const
 {
 	SelectionRing->SetVisibility(bSelected);
+	SelectionRing->SetHiddenInGame(false);
 }

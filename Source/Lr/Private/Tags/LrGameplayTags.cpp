@@ -150,6 +150,24 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 	GameplayTags.GA_9 = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GA.9")),
 		FString("GA 9"));
+
+	GameplayTags.GA_Beholder_Attach1 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.Beholder.Attach1")),
+		FString("GA Beholder Attach1"));
+
+	GameplayTags.GA_Beholder_Attach2 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.Beholder.Attach2")),
+		FString("GA Beholder Attach2"));
+
+	GameplayTags.GA_Beholder_Attach3 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.Beholder.Attach3")),
+		FString("GA Beholder Attach3"));
+
+	GameplayTags.GA_Beholder_Attach4 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.Beholder.Attach4")),
+		FString("GA Beholder Attach4"));
+
+
 	// ==========================================================================================
 
 

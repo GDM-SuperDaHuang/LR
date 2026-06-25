@@ -30,6 +30,7 @@ public:
 
 	bool bJumpInitiated = false;
 
+	//攻击转身
 	bool bIsInAttackWarp = false;
 	FRotator AttackWarpRotation = FRotator::ZeroRotator;
 

@@ -3,16 +3,35 @@
 
 #include "Data/LrGAListDA.h"
 
-const FLrGAConfig* ULrGAListDA::FindGAByTag(const FGameplayTag& GATag) const
+// const FLrGAConfig* ULrGAListDA::FindGAByTag(const FGameplayTag& GATag) const
+// {
+// 	for (const FLrGAConfig& GAConfig : GAConfigList)
+// 	{
+// 		if (GAConfig.GATag == GATag)
+// 		{
+// 			return &GAConfig;
+// 		}
+// 	}
+//
+// 	return nullptr;
+// }
+
+const FLrGAConfig* ULrGAListDA::FindGA(const uint16 PawnType, const FGameplayTag& GATag) const
 {
-	for (const FLrGAConfig& GAConfig : GAConfigList)
+	for (const FLrPawnTypeGAConfig& Config : LrAllPawnTypeGAConfig)
 	{
-		if (GAConfig.GATag == GATag)
+		if (Config.PawnType != PawnType )
 		{
-			return &GAConfig;
+			continue;
+		}
+		for (const FLrGAConfig& AllLrGaConfig : Config.AllLrGAConfig)
+		{
+			if (AllLrGaConfig.GATag == GATag)
+			{
+				return &AllLrGaConfig;
+			}
 		}
 	}
-
 	return nullptr;
 }
 
@@ -40,15 +59,15 @@ const FLrWeaponConfig* ULrGAListDA::FindWeaponByID(const int32 WeaponID) const
 	return nullptr;
 }
 
-const FPawnTypeGAConfig* ULrGAListDA::FindPawnTypeGA(const uint16 PawnType) const
-{
-	for (const FPawnTypeGAConfig& PawnTypeGAConfig : PawnTypeGAConfigList)
-	{
-		if (PawnTypeGAConfig.PawnType == PawnType)
-		{
-			return &PawnTypeGAConfig;
-		}
-	}
-	return nullptr;
-}
+// const FPawnTypeGAConfig* ULrGAListDA::FindPawnTypeGA(const uint16 PawnType) const
+// {
+// 	for (const FPawnTypeGAConfig& PawnTypeGAConfig : PawnTypeGAConfigList)
+// 	{
+// 		if (PawnTypeGAConfig.PawnType == PawnType)
+// 		{
+// 			return &PawnTypeGAConfig;
+// 		}
+// 	}
+// 	return nullptr;
+// }
 

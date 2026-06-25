@@ -6,6 +6,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
+#include "Engine/World.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Pawn/LrEnemyPawn.h"
 
@@ -20,13 +21,13 @@ TWeakObjectPtr<AActor> ULrAICombatComponent::GetClosestEnemyInCone(const FLrComb
 	return CachedTargetActor.Get();
 }
 
-bool ULrAICombatComponent::CanAttack(AActor* Target)
+bool ULrAICombatComponent::CanAttack(AActor* Target, const float AttackRange, const float AttackCooldown)
 {
 	if (!Target)
 	{
 		return false;
 	}
-	
+
 	// CD 检查
 	const float Time = GetWorld()->GetTimeSeconds();
 	if (Time - LastAttackTime < AttackCooldown)
@@ -61,12 +62,27 @@ bool ULrAICombatComponent::StartAttack()
 	{
 		return false;
 	}
-	FPawnTypeGAConfig PawnTypeGaConfig = ULrCommonLibrary::FindPawnTypeGAConfig(Enemy, Enemy->PawnType);
-	TArray<FGameplayTag> GameplayTags = PawnTypeGaConfig.GATagList;
-	if (GameplayTags.Num() <= 0)
+
+	// 随机选择一个技能
+	ALrGameModeBase* LrGameModeBase = ULrCommonLibrary::GetLrGameModeBase(Enemy);
+	if (!LrGameModeBase)
 	{
-		return true;
+		return false;
 	}
+	FGameplayTag GATag;
+	if (LrGameModeBase->LrGAListDA)
+	{
+		for (FLrPawnTypeGAConfig LrAllPawnTypeGaConfig : LrGameModeBase->LrGAListDA->LrAllPawnTypeGAConfig)
+		{
+			if (LrAllPawnTypeGaConfig.PawnType == Enemy->PawnType)
+			{
+				int32 Length = LrAllPawnTypeGaConfig.AllLrGAConfig.Num();
+				int32 RandomIndex = FMath::RandRange(0, Length - 1);
+				GATag = LrAllPawnTypeGaConfig.AllLrGAConfig[RandomIndex].GATag;
+			}
+		}
+	}
+
 	// 通过 GAS 蓝图库获取 Pawn 上的 AbilitySystemComponent
 	// 不直接 Cast 是因为 ASC 可能在 PlayerState 或 Pawn 上，蓝图库会统一查找
 	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner());
@@ -76,7 +92,7 @@ bool ULrAICombatComponent::StartAttack()
 	}
 	// 尝试激活所有匹配 AbilityTag 的技能
 	// 如果有多个技能共享同一标签，它们都会被尝试激活
-	const bool bActivated = ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(GameplayTags[1]));
+	const bool bActivated = ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(GATag));
 	if (!bActivated)
 	{
 		return false;
@@ -90,7 +106,3 @@ void ULrAICombatComponent::FinishAttack() const
 {
 	OnAttackFinished.Broadcast();
 }
-
-
-
-

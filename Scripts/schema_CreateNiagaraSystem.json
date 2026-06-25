@@ -1,0 +1,58 @@
+{
+  "description": "创建一个新的Niagara系统资产。\n新系统将基于模板系统，继承其配置和发射器。",
+  "name": "NiagaraToolsets.NiagaraToolset_System.CreateNiagaraSystem",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "assetName": {
+        "type": "string",
+        "description": "新资产的名称（不含路径或扩展名）"
+      },
+      "assetPath": {
+        "type": "string",
+        "description": "新资产将被创建的目录路径"
+      },
+      "templateSystem": {
+        "type": "object",
+        "title": "/Script/Niagara.NiagaraSystem",
+        "description": "新系统所基于的模板系统（必填）",
+        "properties": {
+          "refPath": {
+            "type": "string",
+            "description": "存储为软路径字符串的引用。"
+          }
+        },
+        "required": [
+          "refPath"
+        ]
+      }
+    },
+    "required": [
+      "assetName",
+      "assetPath",
+      "templateSystem"
+    ]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "returnValue": {
+        "type": "object",
+        "title": "/Script/Niagara.NiagaraSystem",
+        "description": "如果成功，则返回新创建的Niagara系统资产，否则返回nullptr",
+        "properties": {
+          "refPath": {
+            "type": "string",
+            "description": "存储为软路径字符串的引用。"
+          }
+        },
+        "required": [
+          "refPath"
+        ]
+      }
+    },
+    "required": [
+      "returnValue"
+    ]
+  }
+}

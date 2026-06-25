@@ -9,6 +9,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "LrCommonLibrary.generated.h"
 
+class ALrPawnBase;
 class ULrBuffDA;
 struct FLrNSConfig;
 class UAbilitySystemComponent;
@@ -32,11 +33,16 @@ public:
 	static FLrCorpseConfig FindCorpseConfigByPawnType(const UObject* WorldContextObject, uint32 PawnType);
 
 	// 根据标签查找技能配置
-	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))
-	static const FLrGAConfig& FindGAByTag(const UObject* WorldContextObject, const FGameplayTag& GATag);
+	// UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))
+	// static const FLrGAConfig& FindGAByTag(const UObject* WorldContextObject, const FGameplayTag& GATag);
+
+
+	// 根据标签查找技能配置
+	UFUNCTION(Category = "ULrCommonLibrary|DA")
+	static const FLrGAConfig& FindGAConfig(const ALrPawnBase* OwnerPawn, const FGameplayTag& GATag);
 
 	// UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))
-	static const FPawnTypeGAConfig& FindPawnTypeGAConfig(const UObject* WorldContextObject, const uint16 PawnType);
+	// static const FPawnTypeGAConfig& FindPawnTypeGAConfig(const UObject* WorldContextObject, const uint16 PawnType);
 
 	// 根据标签查找特效NS
 	UFUNCTION(BlueprintPure, Category = "ULrCommonLibrary|DA", meta=(DefaultToSelf = "WorldContextObject"))

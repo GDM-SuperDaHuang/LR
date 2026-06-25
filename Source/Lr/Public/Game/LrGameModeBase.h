@@ -30,5 +30,6 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Character Class Defaults")
 	TObjectPtr<ULrCorpseConfigDA> LrCorpseConfigDA;
+
 	
 };

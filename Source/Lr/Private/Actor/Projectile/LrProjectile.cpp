@@ -10,9 +10,8 @@
 #include "Component/Combat/LrCombatComponentBase.h"
 #include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
-#include "Data/LrExcelConfig.h"
+#include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
-#include "Game/LrTickableWorldSubsystem.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Lr/Lr.h"
@@ -30,35 +29,83 @@ ALrProjectile::ALrProjectile()
 	Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
 	SetRootComponent(Collision); // 根组件必须是碰撞体，否则 MovementComponent 会警告
 	Collision->SetCollisionProfileName("Projectile");
-	Collision->SetCollisionObjectType(ECC_Projectile);
+	Collision->SetCollisionObjectType(ECC_Projectile); //自身为Projectile类型
 	Collision->SetCollisionEnabled(ECollisionEnabled::QueryOnly); // 先全部忽略
 	Collision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	Collision->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
 	Collision->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
-	Collision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap); // 打玩家/敌人全靠这一行
-
+	Collision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap); //对于pawn，ECR_Block：阻挡的时候触发。ECR_Overlap:重叠时候触发。
 
 	Movement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Movement"));
-	Movement->InitialSpeed = 550.0f; // 初始速度
-	Movement->MaxSpeed = 550.0f; // 最大速度（想做成“加速箭”可再把 Max 提高）
+	Movement->InitialSpeed = Speed; // 初始速度
+	Movement->MaxSpeed = 1500.0f; // 最大速度（想做成“加速箭”可再把 Max 提高）
 	Movement->ProjectileGravityScale = 0; // 0 = 纯直线，火球冰箭常用；弓箭可把这里调 0.5~1
 	Movement->bRotationFollowsVelocity = true;
 	Movement->bIsHomingProjectile = true;
+
+	LrNiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("TrailFX"));
+	LrNiagaraComponent->SetupAttachment(RootComponent);
+
+	LrMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LrFXMesh"));
+	LrMesh->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
 void ALrProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+	if (LrNiagaraComponent)
+	{
+		// LrNiagaraComponent->SetAsset(LrFlightFX);
+		LrNiagaraComponent->Activate(true);
+	}
 	//设置寿命
 	SetLifeSpan(5);
 	SetReplicateMovement(true);
-	// Collision->OnComponentHit.AddDynamic(this, &ALrProjectile::OnProjectileHit);
-	Collision->OnComponentHit.AddDynamic(this, &ALrProjectile::OnProjectileHit);
+	//阻挡才触发
+	Collision->OnComponentBeginOverlap.AddDynamic(this, &ALrProjectile::OnProjectileBeginOverlap);
 	if (LoopingSoundComponent)
 	{
 		LoopingSoundComponent = UGameplayStatics::SpawnSoundAttached(LoopingSound, GetRootComponent());
 	}
+}
+
+void ALrProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	if (!OtherActor)
+	{
+		return;
+	}
+
+	if (OtherActor == ProjectileOwner)
+	{
+		return;
+	}
+
+	// UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
+	// UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
+	if (LoopingSoundComponent)
+	{
+		LoopingSoundComponent->Stop();
+		LoopingSoundComponent->DestroyComponent();
+	}
+
+	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor)))
+	{
+		ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(OtherActor);
+		if (ULrCombatComponentBase* Combat = OwnerPawn->FindComponentByClass<ULrCombatComponentBase>())
+		{
+			LrASC->ApplyDamageToTarget(OtherActor, DamageEffectParams);
+			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
+		}
+	}
+
+	DeactivateProjectile();
 }
 
 void ALrProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -95,6 +142,7 @@ void ALrProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherA
 			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
 		}
 	}
+
 	DeactivateProjectile();
 }
 
@@ -104,20 +152,11 @@ void ALrProjectile::DeactivateProjectile()
 	{
 		return;
 	}
-
+	LrNiagaraComponent->Activate(true);
 	if (LoopingSoundComponent)
 	{
 		LoopingSoundComponent->Stop();
 		LoopingSoundComponent->DestroyComponent();
 	}
-
-	GetWorldTimerManager().ClearTimer(LifeTimer);
-	Movement->StopMovementImmediately();
-	Movement->SetUpdatedComponent(nullptr);
-	SetActorHiddenInGame(true);
-	SetActorEnableCollision(false);
-	GetWorldTimerManager().ClearAllTimersForObject(this);
-
-	AActor::SetReplicateMovement(false); //需要优化。添加复制Actor运动状态，FRepMovement
-	
+	Destroy();
 }

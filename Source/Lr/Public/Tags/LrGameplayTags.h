@@ -66,6 +66,20 @@ public:
 	FGameplayTag GA_7;
 	FGameplayTag GA_8;
 	FGameplayTag GA_9;
+
+	// 眼魔
+	FGameplayTag GA_Beholder_Attach1;
+	FGameplayTag GA_Beholder_Attach2;
+	FGameplayTag GA_Beholder_Attach3;
+	FGameplayTag GA_Beholder_Attach4;
+
+	
+	// 飞行触手怪
+	// FGameplayTag GA_Beholder_Attach1;
+	// FGameplayTag GA_Beholder_Attach2;
+	// FGameplayTag GA_Beholder_Attach3;
+	// FGameplayTag GA_Beholder_Attach4;
+
 	/**************************************** 技能自身 相关 ************************/
 
 

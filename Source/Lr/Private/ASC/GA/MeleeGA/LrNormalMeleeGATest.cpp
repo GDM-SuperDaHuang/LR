@@ -51,7 +51,7 @@ void ULrNormalMeleeGATest::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
 	FLrGameplayTags LrGameplayTags = FLrGameplayTags::Get();
 
-	FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(OwnerPawn, GetAssetTags().First());
+	FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAConfig(OwnerPawn, GetAssetTags().First());
 
 	TArray<UAnimMontage*> AnimMontages = LrDAConfig.MontageList;
 	int32 Length = AnimMontages.Num();

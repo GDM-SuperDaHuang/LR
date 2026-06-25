@@ -49,6 +49,15 @@ struct FEffectProperties
 {
 	GENERATED_BODY()
 	FEffectProperties()
+		: EffectContextHandle() // 如果是结构体，默认构造即可
+		  , SourceASC(nullptr)
+		  , SourceAvatarActor(nullptr)
+		  , SourceController(nullptr)
+		  , SourceCharacter(nullptr)
+		  , TargetASC(nullptr)
+		  , TargetAvatarActor(nullptr)
+		  , TargetController(nullptr)
+		  , TargetCharacter(nullptr)
 	{
 	}
 

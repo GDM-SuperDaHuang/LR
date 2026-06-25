@@ -11,7 +11,6 @@
 #include "ASC/LrASC.h"
 #include "Component/Combat/LrPlayerCombatComponent.h"
 #include "Data/LrGAListDA.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Mover/LrMoverComponent.h"
 #include "Pawn/LrPawnBase.h"
@@ -72,7 +71,7 @@ void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	}
 
 	// ================== 2. 播放 Montage ==================
-	FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(OwnerPawn, GetAssetTags().First());
+	FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAConfig(OwnerPawn, GetAssetTags().First());
 	TArray<UAnimMontage*> AnimMontages = LrDAConfig.MontageList;
 	int32 Length = AnimMontages.Num();
 	if (Length <= 0)
@@ -155,7 +154,7 @@ void ULrNormalMeleeGA::OnMontageFinished()
 	ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
 	if (!OwnerPawn) return;
 	OwnerPawn->LrMoverComponent->bIsInAttackWarp = false;
-	OwnerPawn->LrMoverComponent->AttackWarpRotation = FRotator::ZeroRotator;
+	// OwnerPawn->LrMoverComponent->AttackWarpRotation = FRotator::ZeroRotator;
 }
 
 
@@ -181,8 +180,8 @@ void ULrNormalMeleeGA::OnAttackEvent(FGameplayEventData Payload)
 			if (TargetAActor.Get())
 			{
 				LrASC->ApplyDamageToTarget(TargetAActor.Get(), DamageEffectParams);
+				OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
 			}
-			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
 		}
 	}
 }

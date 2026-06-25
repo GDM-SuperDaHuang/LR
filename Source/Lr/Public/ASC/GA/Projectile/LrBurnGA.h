@@ -33,7 +33,10 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "FireBolt")
 	float ProjectilesSpread = 90.f;
-
+	
+	UPROPERTY(EditDefaultsOnly, Category = "FireBolt")
+	float ConeLength = 2000.f;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "FireBolt")
 	FDamageEffectParams DamageEffectParams;
 

@@ -12,7 +12,6 @@
 #include "Mover/LrMoverComponent.h"
 #include "Pawn/LrPawnBase.h"
 
-
 void ULrGAEnemyMeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
@@ -25,7 +24,7 @@ void ULrGAEnemyMeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	}
 
 	//选择一个Montage
-	FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(OwnerPawn, GetAssetTags().First());
+	FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAConfig(OwnerPawn, GetAssetTags().First());
 	TArray<UAnimMontage*> AnimMontages = LrDAConfig.MontageList;
 	int32 Length = AnimMontages.Num();
 	if (Length <= 0)
@@ -102,7 +101,7 @@ void ULrGAEnemyMeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Han
 void ULrGAEnemyMeleeAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-} 
+}
 
 void ULrGAEnemyMeleeAttack::OnMontageCancelled()
 {

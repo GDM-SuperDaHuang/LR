@@ -17,6 +17,7 @@
 #include "Component/LrPatrolRouteComponent.h"
 #include "Component/Combat/LrAICombatComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Mover/LrMoverComponent.h"
@@ -95,6 +96,11 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// 状态树
 	// =========================
 	LrStateTreeComponent = CreateDefaultSubobject<ULrSTComponent>(TEXT("LrSTComponent"));
+
+	// =========================
+	// 选中提示相关
+	// =========================
+	SelectionRing->SetupAttachment(RootComponent);
 }
 
 void ALrEnemyPawn::BeginPlay()
@@ -156,8 +162,9 @@ void ALrEnemyPawn::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 	LrASC->InitAbilityActorInfo(this, this);
 	OnASCRegistered.Broadcast(LrASC);
-	FPawnTypeGAConfig LrDAConfig = ULrCommonLibrary::FindPawnTypeGAConfig(this, PawnType);
-	LrASC->AddGA(LrDAConfig.GATagList);
+	// FPawnTypeGAConfig LrDAConfig = ULrCommonLibrary::FindPawnTypeGAConfig(this, PawnType);
+	// LrASC->AddGA(LrDAConfig.GATagList);
+	LrASC->AddAllGA(this);
 }
 
 void ALrEnemyPawn::GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const
@@ -324,6 +331,7 @@ void ALrEnemyPawn::PlayDeathMontage(UAnimMontage* Montage)
 		Duration,
 		false);
 }
+
 void ALrEnemyPawn::FinishDeath()
 {
 	// SpawnCorpse();

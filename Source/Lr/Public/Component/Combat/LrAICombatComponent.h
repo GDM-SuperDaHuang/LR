@@ -22,7 +22,7 @@ public:
 	UPROPERTY()
 	TWeakObjectPtr<AActor> CachedTargetActor; //目标可能死亡
 	// 是否能攻击
-	bool CanAttack(AActor* Target);
+	bool CanAttack(AActor* Target, const float AttackRange, const float AttackCooldown);
 	// 开始攻击
 	bool StartAttack();
 
@@ -37,12 +37,12 @@ protected:
 	// virtual void BeginPlay() override;
 
 	// 攻击距离
-	UPROPERTY(EditDefaultsOnly)
-	float AttackRange = 250.f;
+	// UPROPERTY(EditDefaultsOnly)
+	// float AttackRange = 250.f;
 
 	// 攻击 CD
-	UPROPERTY(EditDefaultsOnly)
-	float AttackCooldown = 1.5f;
+	// UPROPERTY(EditDefaultsOnly)
+	// float AttackCooldown = 1.5f;
 
 	// 上次攻击时间
 	float LastAttackTime = -100.f;

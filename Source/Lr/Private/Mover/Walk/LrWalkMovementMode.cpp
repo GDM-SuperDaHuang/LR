@@ -149,7 +149,11 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
 	if (Mover)
 	{
 		bHasExternalLock = Mover->bIsInAttackWarp;
-		ExternalRot = Mover->AttackWarpRotation;
+		if (bHasExternalLock)
+		{
+			ExternalRot = Mover->AttackWarpRotation;
+		}
+		
 	}
 
 	if (bHasExternalLock)

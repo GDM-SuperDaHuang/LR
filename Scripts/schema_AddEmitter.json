@@ -1,0 +1,614 @@
+{
+  "description": "将发射器添加到Niagara系统。\n新发射器将基于模板发射器，继承其配置和模块。\n返回完整的发射器拓扑（无输入值——调用GetEmitterInputValues来获取值）。",
+  "name": "NiagaraToolsets.NiagaraToolset_System.AddEmitter",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "system": {
+        "type": "object",
+        "title": "/Script/Niagara.NiagaraSystem",
+        "description": "要添加发射器的Niagara系统",
+        "properties": {
+          "refPath": {
+            "type": "string",
+            "description": "存储为软路径字符串的引用。"
+          }
+        },
+        "required": [
+          "refPath"
+        ]
+      },
+      "templateEmitter": {
+        "type": "object",
+        "title": "/Script/Niagara.NiagaraEmitter",
+        "description": "用作新发射器模板的发射器资产",
+        "properties": {
+          "refPath": {
+            "type": "string",
+            "description": "存储为软路径字符串的引用。"
+          }
+        },
+        "required": [
+          "refPath"
+        ]
+      },
+      "emitterName": {
+        "type": "string",
+        "description": "新发射器实例的名称"
+      }
+    },
+    "required": [
+      "system",
+      "templateEmitter",
+      "emitterName"
+    ]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "returnValue": {
+        "title": "NiagaraExt_EmitterTopology",
+        "description": "带有所有遍历的脚本和模块的新添加发射器的拓扑",
+        "type": "object",
+        "properties": {
+          "emitterName": {
+            "type": "string",
+            "description": "在FNiagaraExt_StackItemReference中用作EmitterName。"
+          },
+          "bEnabled": {
+            "type": "boolean",
+            "description": "已禁用的发射器仍然存在，但不生成粒子。"
+          },
+          "simTarget": {
+            "type": "string",
+            "title": "ENiagaraSimTarget",
+            "enum": [
+              "CPUSim",
+              "GPUComputeSim"
+            ],
+            "description": "CPUSim或GPUComputeSim。影响哪些数据接口和功能可供使用。"
+          },
+          "rendererClasses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "title": "Class@/Script/Niagara.NiagaraRendererProperties",
+              "properties": {
+                "refPath": {
+                  "type": "string",
+                  "description": "存储为软路径字符串的引用。"
+                }
+              },
+              "required": [
+                "refPath"
+              ]
+            },
+            "description": "此发射器上的不同渲染器类（去重集）。"
+          },
+          "emitterSpawnScript": {
+            "title": "NiagaraExt_ScriptStackTopology",
+            "description": "发射器生成堆栈：模块在创建发射器时运行一次。",
+            "type": "object",
+            "properties": {
+              "scriptName": {
+                "type": "string",
+                "description": "这代表六个脚本堆栈中的哪一个：SystemSpawnScript、SystemUpdateScript、EmitterSpawnScript、EmitterUpdateScript、ParticleSpawnScript、ParticleUpdateScript。"
+              },
+              "modules": {
+                "type": "array",
+                "items": {
+                  "title": "NiagaraExt_ModuleTopology",
+                  "type": "object",
+                  "properties": {
+                    "moduleName": {
+                      "type": "string",
+                      "description": "在FNiagaraExt_StackItemReference中用作模块名。"
+                    },
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "禁用的模块保留在堆栈中，但不执行。"
+                    },
+                    "moduleScript": {
+                      "type": "object",
+                      "title": "/Script/Niagara.NiagaraScript",
+                      "description": "代表对UObject或UClass的引用。",
+                      "properties": {
+                        "refPath": {
+                          "type": "string",
+                          "description": "存储为软路径字符串的引用。"
+                        }
+                      },
+                      "required": [
+                        "refPath"
+                      ]
+                    },
+                    "bIsSetParametersModule": {
+                      "type": "boolean",
+                      "description": "如果此模块是SetParameters（UNiagaraNodeAssignment）模块，而非常规脚本模块，则为true。"
+                    },
+                    "inputs": {
+                      "type": "array",
+                      "items": {
+                        "title": "NiagaraExt_StackInputTopology",
+                        "type": "object",
+                        "properties": {
+                          "bIsVisible": {
+                            "type": "boolean",
+                            "description": "在堆栈UI中可见时为true。如果被静态开关/条件逻辑或VisibleCondition隐藏，则为false。"
+                          },
+                          "bIsEditable": {
+                            "type": "boolean",
+                            "description": "当用户可以编辑此值时为true。需要bIsVisible和通过的编辑条件。当为false时，SetStackInputData拒绝写入。"
+                          },
+                          "bIsDynamic": {
+                            "type": "boolean",
+                            "description": "当此输入的值由动态输入脚本提供时为true。调用GetDynamicInputChain以获取完整的链拓扑和值。"
+                          },
+                          "bIsStaticSwitch": {
+                            "type": "boolean",
+                            "description": "当此输入是一个静态开关参数时为true。改变它会重新编译模块并\n重塑可见/可编辑的子输入集——之前隐藏的子输入可能会\n被暴露，反之亦然。"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "object",
+                            "title": "ToolsetNiagaraTypeDefinition",
+                            "description": "用于FNiagaraTypeDefinition的封装结构体，只公开用于JSON转换的UStruct指针。\n\nFNiagaraTypeDefinition是一个拥有内部状态的复杂结构体。这个封装器只公开结构体域，\n从而简化了JSON转换，这足以进行重构。",
+                            "properties": {
+                              "classStructOrEnum": {
+                                "type": "object",
+                                "title": "/Script/CoreUObject.Object",
+                                "description": "对定义此Niagara类型的UScriptStruct、UEnum或UClass的引用。",
+                                "properties": {
+                                  "refPath": {
+                                    "type": "string",
+                                    "description": "存储为软路径字符串的引用。"
+                                  }
+                                },
+                                "required": [
+                                  "refPath"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "classStructOrEnum"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "bIsVisible",
+                          "bIsEditable",
+                          "bIsDynamic",
+                          "bIsStaticSwitch",
+                          "name",
+                          "type"
+                        ]
+                      },
+                      "description": "此模块上的所有输入按遍历顺序排列。始终填充。"
+                    }
+                  },
+                  "required": [
+                    "moduleName",
+                    "enabled",
+                    "moduleScript",
+                    "bIsSetParametersModule",
+                    "inputs"
+                  ]
+                },
+                "description": "堆栈中的模块，按执行顺序排列。始终填充。"
+              }
+            },
+            "required": [
+              "scriptName",
+              "modules"
+            ]
+          },
+          "emitterUpdateScript": {
+            "title": "NiagaraExt_ScriptStackTopology",
+            "description": "发射器更新堆栈：模块在发射器范围内每帧运行一次（生成速率、爆发、生命周期）。",
+            "type": "object",
+            "properties": {
+              "scriptName": {
+                "type": "string",
+                "description": "这代表六个脚本堆栈中的哪一个：SystemSpawnScript、SystemUpdateScript、EmitterSpawnScript、EmitterUpdateScript、ParticleSpawnScript、ParticleUpdateScript。"
+              },
+              "modules": {
+                "type": "array",
+                "items": {
+                  "title": "NiagaraExt_ModuleTopology",
+                  "type": "object",
+                  "properties": {
+                    "moduleName": {
+                      "type": "string",
+                      "description": "在FNiagaraExt_StackItemReference中用作模块名。"
+                    },
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "禁用的模块保留在堆栈中，但不执行。"
+                    },
+                    "moduleScript": {
+                      "type": "object",
+                      "title": "/Script/Niagara.NiagaraScript",
+                      "description": "代表对UObject或UClass的引用。",
+                      "properties": {
+                        "refPath": {
+                          "type": "string",
+                          "description": "存储为软路径字符串的引用。"
+                        }
+                      },
+                      "required": [
+                        "refPath"
+                      ]
+                    },
+                    "bIsSetParametersModule": {
+                      "type": "boolean",
+                      "description": "如果此模块是SetParameters（UNiagaraNodeAssignment）模块，而非常规脚本模块，则为true。"
+                    },
+                    "inputs": {
+                      "type": "array",
+                      "items": {
+                        "title": "NiagaraExt_StackInputTopology",
+                        "type": "object",
+                        "properties": {
+                          "bIsVisible": {
+                            "type": "boolean",
+                            "description": "在堆栈UI中可见时为true。如果被静态开关/条件逻辑或VisibleCondition隐藏，则为false。"
+                          },
+                          "bIsEditable": {
+                            "type": "boolean",
+                            "description": "当用户可以编辑此值时为true。需要bIsVisible和通过的编辑条件。当为false时，SetStackInputData拒绝写入。"
+                          },
+                          "bIsDynamic": {
+                            "type": "boolean",
+                            "description": "当此输入的值由动态输入脚本提供时为true。调用GetDynamicInputChain以获取完整的链拓扑和值。"
+                          },
+                          "bIsStaticSwitch": {
+                            "type": "boolean",
+                            "description": "当此输入是一个静态开关参数时为true。改变它会重新编译模块并\n重塑可见/可编辑的子输入集——之前隐藏的子输入可能会\n被暴露，反之亦然。"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "object",
+                            "title": "ToolsetNiagaraTypeDefinition",
+                            "description": "用于FNiagaraTypeDefinition的封装结构体，只公开用于JSON转换的UStruct指针。\n\nFNiagaraTypeDefinition是一个拥有内部状态的复杂结构体。这个封装器只公开结构体域，\n从而简化了JSON转换，这足以进行重构。",
+                            "properties": {
+                              "classStructOrEnum": {
+                                "type": "object",
+                                "title": "/Script/CoreUObject.Object",
+                                "description": "对定义此Niagara类型的UScriptStruct、UEnum或UClass的引用。",
+                                "properties": {
+                                  "refPath": {
+                                    "type": "string",
+                                    "description": "存储为软路径字符串的引用。"
+                                  }
+                                },
+                                "required": [
+                                  "refPath"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "classStructOrEnum"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "bIsVisible",
+                          "bIsEditable",
+                          "bIsDynamic",
+                          "bIsStaticSwitch",
+                          "name",
+                          "type"
+                        ]
+                      },
+                      "description": "此模块上的所有输入按遍历顺序排列。始终填充。"
+                    }
+                  },
+                  "required": [
+                    "moduleName",
+                    "enabled",
+                    "moduleScript",
+                    "bIsSetParametersModule",
+                    "inputs"
+                  ]
+                },
+                "description": "堆栈中的模块，按执行顺序排列。始终填充。"
+              }
+            },
+            "required": [
+              "scriptName",
+              "modules"
+            ]
+          },
+          "particleSpawnScript": {
+            "title": "NiagaraExt_ScriptStackTopology",
+            "description": "粒子生成堆栈：每个新生成的粒子运行一次模块。",
+            "type": "object",
+            "properties": {
+              "scriptName": {
+                "type": "string",
+                "description": "这代表六个脚本堆栈中的哪一个：SystemSpawnScript、SystemUpdateScript、EmitterSpawnScript、EmitterUpdateScript、ParticleSpawnScript、ParticleUpdateScript。"
+              },
+              "modules": {
+                "type": "array",
+                "items": {
+                  "title": "NiagaraExt_ModuleTopology",
+                  "type": "object",
+                  "properties": {
+                    "moduleName": {
+                      "type": "string",
+                      "description": "在FNiagaraExt_StackItemReference中用作模块名。"
+                    },
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "禁用的模块保留在堆栈中，但不执行。"
+                    },
+                    "moduleScript": {
+                      "type": "object",
+                      "title": "/Script/Niagara.NiagaraScript",
+                      "description": "代表对UObject或UClass的引用。",
+                      "properties": {
+                        "refPath": {
+                          "type": "string",
+                          "description": "存储为软路径字符串的引用。"
+                        }
+                      },
+                      "required": [
+                        "refPath"
+                      ]
+                    },
+                    "bIsSetParametersModule": {
+                      "type": "boolean",
+                      "description": "如果此模块是SetParameters（UNiagaraNodeAssignment）模块，而非常规脚本模块，则为true。"
+                    },
+                    "inputs": {
+                      "type": "array",
+                      "items": {
+                        "title": "NiagaraExt_StackInputTopology",
+                        "type": "object",
+                        "properties": {
+                          "bIsVisible": {
+                            "type": "boolean",
+                            "description": "在堆栈UI中可见时为true。如果被静态开关/条件逻辑或VisibleCondition隐藏，则为false。"
+                          },
+                          "bIsEditable": {
+                            "type": "boolean",
+                            "description": "当用户可以编辑此值时为true。需要bIsVisible和通过的编辑条件。当为false时，SetStackInputData拒绝写入。"
+                          },
+                          "bIsDynamic": {
+                            "type": "boolean",
+                            "description": "当此输入的值由动态输入脚本提供时为true。调用GetDynamicInputChain以获取完整的链拓扑和值。"
+                          },
+                          "bIsStaticSwitch": {
+                            "type": "boolean",
+                            "description": "当此输入是一个静态开关参数时为true。改变它会重新编译模块并\n重塑可见/可编辑的子输入集——之前隐藏的子输入可能会\n被暴露，反之亦然。"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "object",
+                            "title": "ToolsetNiagaraTypeDefinition",
+                            "description": "用于FNiagaraTypeDefinition的封装结构体，只公开用于JSON转换的UStruct指针。\n\nFNiagaraTypeDefinition是一个拥有内部状态的复杂结构体。这个封装器只公开结构体域，\n从而简化了JSON转换，这足以进行重构。",
+                            "properties": {
+                              "classStructOrEnum": {
+                                "type": "object",
+                                "title": "/Script/CoreUObject.Object",
+                                "description": "对定义此Niagara类型的UScriptStruct、UEnum或UClass的引用。",
+                                "properties": {
+                                  "refPath": {
+                                    "type": "string",
+                                    "description": "存储为软路径字符串的引用。"
+                                  }
+                                },
+                                "required": [
+                                  "refPath"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "classStructOrEnum"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "bIsVisible",
+                          "bIsEditable",
+                          "bIsDynamic",
+                          "bIsStaticSwitch",
+                          "name",
+                          "type"
+                        ]
+                      },
+                      "description": "此模块上的所有输入按遍历顺序排列。始终填充。"
+                    }
+                  },
+                  "required": [
+                    "moduleName",
+                    "enabled",
+                    "moduleScript",
+                    "bIsSetParametersModule",
+                    "inputs"
+                  ]
+                },
+                "description": "堆栈中的模块，按执行顺序排列。始终填充。"
+              }
+            },
+            "required": [
+              "scriptName",
+              "modules"
+            ]
+          },
+          "particleUpdateScript": {
+            "title": "NiagaraExt_ScriptStackTopology",
+            "description": "粒子更新堆栈：模块在每帧中针对每个粒子运行一次（力、速度、生命周期中的颜色）。",
+            "type": "object",
+            "properties": {
+              "scriptName": {
+                "type": "string",
+                "description": "这代表六个脚本堆栈中的哪一个：SystemSpawnScript、SystemUpdateScript、EmitterSpawnScript、EmitterUpdateScript、ParticleSpawnScript、ParticleUpdateScript。"
+              },
+              "modules": {
+                "type": "array",
+                "items": {
+                  "title": "NiagaraExt_ModuleTopology",
+                  "type": "object",
+                  "properties": {
+                    "moduleName": {
+                      "type": "string",
+                      "description": "在FNiagaraExt_StackItemReference中用作模块名。"
+                    },
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "禁用的模块保留在堆栈中，但不执行。"
+                    },
+                    "moduleScript": {
+                      "type": "object",
+                      "title": "/Script/Niagara.NiagaraScript",
+                      "description": "代表对UObject或UClass的引用。",
+                      "properties": {
+                        "refPath": {
+                          "type": "string",
+                          "description": "存储为软路径字符串的引用。"
+                        }
+                      },
+                      "required": [
+                        "refPath"
+                      ]
+                    },
+                    "bIsSetParametersModule": {
+                      "type": "boolean",
+                      "description": "如果此模块是SetParameters（UNiagaraNodeAssignment）模块，而非常规脚本模块，则为true。"
+                    },
+                    "inputs": {
+                      "type": "array",
+                      "items": {
+                        "title": "NiagaraExt_StackInputTopology",
+                        "type": "object",
+                        "properties": {
+                          "bIsVisible": {
+                            "type": "boolean",
+                            "description": "在堆栈UI中可见时为true。如果被静态开关/条件逻辑或VisibleCondition隐藏，则为false。"
+                          },
+                          "bIsEditable": {
+                            "type": "boolean",
+                            "description": "当用户可以编辑此值时为true。需要bIsVisible和通过的编辑条件。当为false时，SetStackInputData拒绝写入。"
+                          },
+                          "bIsDynamic": {
+                            "type": "boolean",
+                            "description": "当此输入的值由动态输入脚本提供时为true。调用GetDynamicInputChain以获取完整的链拓扑和值。"
+                          },
+                          "bIsStaticSwitch": {
+                            "type": "boolean",
+                            "description": "当此输入是一个静态开关参数时为true。改变它会重新编译模块并\n重塑可见/可编辑的子输入集——之前隐藏的子输入可能会\n被暴露，反之亦然。"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "object",
+                            "title": "ToolsetNiagaraTypeDefinition",
+                            "description": "用于FNiagaraTypeDefinition的封装结构体，只公开用于JSON转换的UStruct指针。\n\nFNiagaraTypeDefinition是一个拥有内部状态的复杂结构体。这个封装器只公开结构体域，\n从而简化了JSON转换，这足以进行重构。",
+                            "properties": {
+                              "classStructOrEnum": {
+                                "type": "object",
+                                "title": "/Script/CoreUObject.Object",
+                                "description": "对定义此Niagara类型的UScriptStruct、UEnum或UClass的引用。",
+                                "properties": {
+                                  "refPath": {
+                                    "type": "string",
+                                    "description": "存储为软路径字符串的引用。"
+                                  }
+                                },
+                                "required": [
+                                  "refPath"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "classStructOrEnum"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "bIsVisible",
+                          "bIsEditable",
+                          "bIsDynamic",
+                          "bIsStaticSwitch",
+                          "name",
+                          "type"
+                        ]
+                      },
+                      "description": "此模块上的所有输入按遍历顺序排列。始终填充。"
+                    }
+                  },
+                  "required": [
+                    "moduleName",
+                    "enabled",
+                    "moduleScript",
+                    "bIsSetParametersModule",
+                    "inputs"
+                  ]
+                },
+                "description": "堆栈中的模块，按执行顺序排列。始终填充。"
+              }
+            },
+            "required": [
+              "scriptName",
+              "modules"
+            ]
+          },
+          "renderers": {
+            "type": "array",
+            "items": {
+              "title": "NiagaraExt_RendererRef",
+              "type": "object",
+              "properties": {
+                "rendererIndex": {
+                  "type": "integer",
+                  "description": "此渲染器在其所属发射器的渲染器列表中的索引。与FNiagaraExt_StackItemReference::RendererIndex配对。"
+                },
+                "rendererClass": {
+                  "type": "object",
+                  "title": "Class@/Script/Niagara.NiagaraRendererProperties",
+                  "description": "代表对UObject或UClass的引用。",
+                  "properties": {
+                    "refPath": {
+                      "type": "string",
+                      "description": "存储为软路径字符串的引用。"
+                    }
+                  },
+                  "required": [
+                    "refPath"
+                  ]
+                }
+              },
+              "required": [
+                "rendererIndex",
+                "rendererClass"
+              ]
+            },
+            "description": "渲染器引用（类+索引）。对于属性值，调用GetRendererData。"
+          }
+        },
+        "required": [
+          "emitterName",
+          "bEnabled",
+          "simTarget",
+          "rendererClasses",
+          "emitterSpawnScript",
+          "emitterUpdateScript",
+          "particleSpawnScript",
+          "particleUpdateScript",
+          "renderers"
+        ]
+      }
+    },
+    "required": [
+      "returnValue"
+    ]
+  }
+}

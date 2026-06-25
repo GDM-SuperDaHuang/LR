@@ -7,25 +7,18 @@
 #include "AIController.h"
 #include "MotionWarpingComponent.h"
 #include "NiagaraComponent.h"
-#include "NiagaraSystem.h"
 #include "Actor/Weapon/LrWeaponBase.h"
 #include "ASC/LrASC.h"
-#include "ASC/AS/LrAS.h"
 #include "Camera/CameraComponent.h"
 #include "Component/Combat/LrPlayerCombatComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Data/LrGAListDA.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Mover/LrMoverComponent.h"
-#include "Mover/LrAllModes.h"
 #include "Mover/Air/LrAirMovementMode.h"
-#include "Mover/Blink/LrBlinkMovementMode.h"
-#include "Mover/Blink/LrKnockbackMovementMode.h"
-#include "Mover/Death/LrDeathMovementMode.h"
 #include "Mover/Nav/LrNavMovementComponent.h"
-#include "Mover/Walk/LrWalkMovementMode.h"
-#include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
 #include "Player/PS/LrPS.h"
 
@@ -104,7 +97,12 @@ ALrHeroPawn::ALrHeroPawn()
 	 * 2，NavMesh 生成 / 更新的参与者
 	 */
 	LrCapsuleComponent->SetCanEverAffectNavigation(false);
-	// CharacterMotionComponent->StartingMovementMode = LrAllModes::Walking;
+	
+	// =========================
+	// 选中提示相关
+	// =========================
+	SelectionRing->SetupAttachment(RootComponent);
+
 }
 
 void ALrHeroPawn::BeginPlay()
@@ -123,8 +121,9 @@ void ALrHeroPawn::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 	InitASC();
 	// 初始技能
-	FPawnTypeGAConfig LrDAConfig = ULrCommonLibrary::FindPawnTypeGAConfig(this, PawnType);
-	LrASC->AddGA(LrDAConfig.GATagList);
+	// FPawnTypeGAConfig LrDAConfig = ULrCommonLibrary::FindPawnTypeGAConfig(this, PawnType);
+	// LrASC->AddGA(LrDAConfig.GATagList);
+	LrASC->AddAllGA(this);
 }
 
 void ALrHeroPawn::OnRep_PlayerState()

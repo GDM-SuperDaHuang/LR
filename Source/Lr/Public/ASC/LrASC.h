@@ -7,6 +7,7 @@
 #include "GE/LrGEContext.h"
 #include "LrASC.generated.h"
 
+class ALrPawnBase;
 /**
  * 
  */
@@ -17,7 +18,10 @@ class LR_API ULrASC : public UAbilitySystemComponent
 
 public:
 	// 初始化 技能
-	void AddGA(const TArray<FGameplayTag>& GATagList);
+	// void AddGA(const TArray<FGameplayTag>& GATagList);
+
+	// 初始化 所有的技能
+	void AddAllGA(ALrPawnBase* PawnBase);
 
 	/**************************************** 按钮 技能触发相关 相关 ************************/
 	void AbilityInputTagPressed(const FGameplayTag& InputTags);

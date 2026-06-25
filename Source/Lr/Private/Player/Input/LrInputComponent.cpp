@@ -16,6 +16,8 @@ void ULrInputComponent::ApplyPlayerKeyMappings(const ULrInputConfigDA* InputConf
 
 	// 清空旧映射
 	MappingContext->UnmapAll();
+
+	// 浮点数，技能按键相关
 	for (const FLrDefaultBindInputFKey& Row : InputConfig->LrBindInputFKeyList)
 	{
 		if (!Row.InputAction)

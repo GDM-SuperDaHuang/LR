@@ -53,53 +53,6 @@
 			"Enabled": true
 		},
 		{
-			"Name": "MetaHuman",
-			"Enabled": true,
-			"SupportedTargetPlatforms": [
-				"Win64",
-				"Linux",
-				"Mac"
-			]
-		},
-		{
-			"Name": "MetaHumanCalibrationDiagnostics",
-			"Enabled": true,
-			"SupportedTargetPlatforms": [
-				"Win64",
-				"Linux",
-				"Mac"
-			]
-		},
-		{
-			"Name": "MetaHumanCalibrationProcessing",
-			"Enabled": true,
-			"SupportedTargetPlatforms": [
-				"Win64",
-				"Linux",
-				"Mac"
-			]
-		},
-		{
-			"Name": "MetaHumanCoreTech",
-			"Enabled": true
-		},
-		{
-			"Name": "MetaHumanCharacter",
-			"Enabled": true
-		},
-		{
-			"Name": "MetaHumanCharacterUAF",
-			"Enabled": true
-		},
-		{
-			"Name": "MetaHumanLiveLink",
-			"Enabled": true
-		},
-		{
-			"Name": "MetaHumanRuntime",
-			"Enabled": true
-		},
-		{
 			"Name": "GameplayStateTree",
 			"Enabled": true
 		},
@@ -126,6 +79,18 @@
 		{
 			"Name": "AllToolsets",
 			"Enabled": true
+		},
+		{
+			"Name": "AIAssistant",
+			"Enabled": true
+		},
+		{
+			"Name": "Bridge",
+			"Enabled": false
+		},
+		{
+			"Name": "MetaHumanSDK",
+			"Enabled": false
 		}
 	]
 }

@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "StateTreeSchema.h"
-#include "LrStateTreeSchema.generated.h"
+#include "MovementMode.h"
+#include "LrFlyMovementMode.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class LR_API ULrStateTreeSchema : public UStateTreeSchema
+class LR_API ULrFlyMovementMode : public UBaseMovementMode
 {
 	GENERATED_BODY()
 	

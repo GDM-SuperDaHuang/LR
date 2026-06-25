@@ -11,29 +11,60 @@
 #include "Data/LrGAListDA.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Lr/Lr.h"
+#include "Pawn/LrPawnBase.h"
 #include "Tags/LrGameplayTags.h"
 
-void ULrASC::AddGA(const TArray<FGameplayTag>& GATagList)
+// void ULrASC::AddGA(const TArray<FGameplayTag>& GATagList)
+// {
+// 	for (const FGameplayTag GATag : GATagList)
+// 	{
+// 		FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(GetOwner(), GATag);
+// 		// 创建技能规格（Spec），Level 1，默认不给予输入
+// 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(LrDAConfig.GAClass, 1);
+// 		// 输入绑定
+// 		AbilitySpec.GetDynamicSpecSourceTags().AddTag(LrDAConfig.InputTag); //InputTag
+// 		/**
+// 		* GiveAbility
+// 		* 1. 生成全局唯一 Handle （通常一种技能一个）
+// 		* 2. 实例化 GA 对象（CDO → 实例），里面初始化了AvatarActor ，OwnerActor，PlayerController 
+// 		* 3. 塞进 ActiveAbAbilityInputTagPressedilitySpecs 数组
+// 		* 4. 标记网络脏，客户端会收到复制包并本地生成影子 Spec
+// 		*/
+// 		GiveAbility(AbilitySpec); // 真正交给 ASC 管理
+// 		UE_LOG(LogTemp, Warning, TEXT("Client Ability Count: %d"), GetActivatableAbilities().Num());
+// 		//  todo 技能初始化广播 ？？
+// 		// bStartUpAbilitiesGiven = true;
+// 		// AbilitiesGivenDelegate.Broadcast();
+// 	}
+// }
+
+void ULrASC::AddAllGA(ALrPawnBase* PawnBase)
 {
-	for (const FGameplayTag GATag : GATagList)
+	if (PawnBase)
 	{
-		FLrGAConfig LrDAConfig = ULrCommonLibrary::FindGAByTag(GetOwner(), GATag);
-		// 创建技能规格（Spec），Level 1，默认不给予输入
-		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(LrDAConfig.GAClass, 1);
-		// 输入绑定
-		AbilitySpec.GetDynamicSpecSourceTags().AddTag(LrDAConfig.InputTag); //InputTag
-		/**
-		* GiveAbility
-		* 1. 生成全局唯一 Handle （通常一种技能一个）
-		* 2. 实例化 GA 对象（CDO → 实例），里面初始化了AvatarActor ，OwnerActor，PlayerController 
-		* 3. 塞进 ActiveAbilitySpecs 数组
-		* 4. 标记网络脏，客户端会收到复制包并本地生成影子 Spec
-		*/
-		GiveAbility(AbilitySpec); // 真正交给 ASC 管理
-		UE_LOG(LogTemp, Warning, TEXT("Client Ability Count: %d"), GetActivatableAbilities().Num());
-		//  todo 技能初始化广播 ？？
-		// bStartUpAbilitiesGiven = true;
-		// AbilitiesGivenDelegate.Broadcast();
+		ALrGameModeBase* LrGameModeBase = ULrCommonLibrary::GetLrGameModeBase(GetOwner());
+		if (LrGameModeBase)
+		{
+			ULrGAListDA* LrGaListDa = LrGameModeBase->LrGAListDA;
+			if (LrGaListDa)
+			{
+				for (FLrPawnTypeGAConfig LrAllPawnTypeGaConfig : LrGaListDa->LrAllPawnTypeGAConfig)
+				{
+					if (LrAllPawnTypeGaConfig.PawnType == PawnBase->PawnType)
+					{
+						for (FLrGAConfig LrDAConfig : LrAllPawnTypeGaConfig.AllLrGAConfig)
+						{
+							// 创建技能规格（Spec），Level 1，默认不给予输入
+							FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(LrDAConfig.GAClass, 1);
+							// 输入绑定
+							AbilitySpec.GetDynamicSpecSourceTags().AddTag(LrDAConfig.InputTag); //InputTag
+							GiveAbility(AbilitySpec); // 真正交给 ASC 管理
+						}
+						return;
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -45,7 +76,7 @@ void ULrASC::AbilityInputTagPressed(const FGameplayTag& InputTags)
 	for (FGameplayAbilitySpec AbilitySpec : GameplayAbilitySpecs)
 	{
 		// 匹配输入
-		if (AbilitySpec.GetDynamicSpecSourceTags().HasTag(InputTags))
+		if (AbilitySpec.GetDynamicSpecSourceTags().HasTag(InputTags)) //这里可以优化为一个映射层
 		{
 			AbilitySpecInputPressed(AbilitySpec);
 			if (AbilitySpec.IsActive())

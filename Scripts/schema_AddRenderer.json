@@ -1,0 +1,114 @@
+{
+  "description": "添加渲染器到发射器。\n创建一个指定类型的新渲染器，并将其添加到发射器的渲染器列表。\n返回一个FNiagaraExt_RendererRef，带有新渲染器的索引和RendererClass，\n可直接与SetRendererData / GetRendererData一起使用，无需后续拓扑调用。",
+  "name": "NiagaraToolsets.NiagaraToolset_System.AddRenderer",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "newRendererLocation": {
+        "title": "NiagaraExt_StackItemReference",
+        "description": "指定将渲染器添加到哪个发射器的引用",
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "object",
+            "title": "/Script/Niagara.NiagaraSystem",
+            "description": "代表对UObject或UClass的引用。",
+            "properties": {
+              "refPath": {
+                "type": "string",
+                "description": "存储为软路径字符串的引用。"
+              }
+            },
+            "required": [
+              "refPath"
+            ]
+          },
+          "emitterName": {
+            "type": "string"
+          },
+          "scriptName": {
+            "type": "string"
+          },
+          "moduleName": {
+            "type": "string",
+            "description": "要引用的模块的名称。需要有效的ScriptName。"
+          },
+          "rendererIndex": {
+            "type": "integer",
+            "description": "要引用的渲染器的索引。需要一个有效的发射器名称。"
+          },
+          "inputNameStack": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "输入名称堆栈。需要有效的ScriptName和ModuleName。对于顶层模块输入，这将是一个单独的FName。对于动态输入，这可能是一个由多个嵌套动态输入组成的链。"
+          }
+        },
+        "required": [
+          "system",
+          "emitterName",
+          "scriptName",
+          "moduleName",
+          "rendererIndex",
+          "inputNameStack"
+        ]
+      },
+      "rendererClass": {
+        "type": "object",
+        "title": "Class@/Script/Niagara.NiagaraRendererProperties",
+        "description": "要创建的渲染器类（例如UNiagaraSpriteRendererProperties）",
+        "properties": {
+          "refPath": {
+            "type": "string",
+            "description": "存储为软路径字符串的引用。"
+          }
+        },
+        "required": [
+          "refPath"
+        ]
+      }
+    },
+    "required": [
+      "newRendererLocation",
+      "rendererClass"
+    ]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "returnValue": {
+        "title": "NiagaraExt_RendererRef",
+        "description": "新添加渲染器的渲染器引用（索引+RendererClass）。",
+        "type": "object",
+        "properties": {
+          "rendererIndex": {
+            "type": "integer",
+            "description": "此渲染器在其所属发射器的渲染器列表中的索引。与FNiagaraExt_StackItemReference::RendererIndex配对。"
+          },
+          "rendererClass": {
+            "type": "object",
+            "title": "Class@/Script/Niagara.NiagaraRendererProperties",
+            "description": "代表对UObject或UClass的引用。",
+            "properties": {
+              "refPath": {
+                "type": "string",
+                "description": "存储为软路径字符串的引用。"
+              }
+            },
+            "required": [
+              "refPath"
+            ]
+          }
+        },
+        "required": [
+          "rendererIndex",
+          "rendererClass"
+        ]
+      }
+    },
+    "required": [
+      "returnValue"
+    ]
+  }
+}

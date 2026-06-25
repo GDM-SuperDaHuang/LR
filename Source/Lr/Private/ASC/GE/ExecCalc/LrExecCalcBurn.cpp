@@ -47,24 +47,27 @@ void ULrExecCalcBurn::Execute_Implementation(const FGameplayEffectCustomExecutio
 	//取出运行时伤害值
 	float Damage = Spec.GetSetByCallerMagnitude(LrGameplayTags.Damage_Base, false, 0.f);
 
+	//------------------------------------
+	// 层数
+	//------------------------------------
 	// 当前燃烧层数
-	int32 StackCount = Spec.GetStackCount();
+	int32 StackCount = FMath::Max(Spec.GetStackCount(), 1);;
 	// 每层增加伤害
 	Damage *= StackCount;
-
-
+ 
 	uint8 Flags = Spec.GetSetByCallerMagnitude(LrGEKeys::Flags, false);
 	float SpeedCutRate = Spec.GetSetByCallerMagnitude(LrGEKeys::SpeedCutRate, false);
 	float Duration = Spec.GetSetByCallerMagnitude(LrGEKeys::Duration, false);
 	float DamageValue = Spec.GetSetByCallerMagnitude(LrGEKeys::DamageValue, false);
 
+
 	//防御
 	float Defense = 0.f;
 	FAggregatorEvaluateParameters EvaluateParameters;
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().DefenseDef, EvaluateParameters, Defense);
-
 	Defense = FMath::Clamp(Defense, 0.f, 100.f);
 	Damage = Damage - Defense;
+
 
 	if (Damage > 0.f)
 	{

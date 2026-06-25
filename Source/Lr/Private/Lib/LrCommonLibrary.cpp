@@ -9,6 +9,7 @@
 #include "Engine/World.h"
 #include "Game/LrGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Pawn/LrPawnBase.h"
 
 UAbilitySystemComponent* ULrCommonLibrary::GetASC(AActor* Actor)
 {
@@ -32,29 +33,41 @@ FLrCorpseConfig ULrCommonLibrary::FindCorpseConfigByPawnType(const UObject* Worl
 	return *FindGaByTag;
 }
 
-const FLrGAConfig& ULrCommonLibrary::FindGAByTag(const UObject* WorldContextObject, const FGameplayTag& GATag)
+// const FLrGAConfig& ULrCommonLibrary::FindGAByTag(const UObject* WorldContextObject, const FGameplayTag& GATag)
+// {
+// 	static const FLrGAConfig EmptyConfig;
+// 	const ALrGameModeBase* LrGameMode = Cast<ALrGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
+// 	if (LrGameMode == nullptr) return EmptyConfig;
+// 	TObjectPtr<ULrGAListDA> LrGAListDA = LrGameMode->LrGAListDA;
+// 	if (LrGAListDA == nullptr) return EmptyConfig;
+// 	const FLrGAConfig* FindGaByTag = LrGAListDA.Get()->FindGAByTag(GATag);
+// 	if (FindGaByTag == nullptr) return EmptyConfig;
+// 	return *FindGaByTag;
+// }
+
+const FLrGAConfig& ULrCommonLibrary::FindGAConfig(const ALrPawnBase* OwnerPawn, const FGameplayTag& GATag)
 {
 	static const FLrGAConfig EmptyConfig;
-	const ALrGameModeBase* LrGameMode = Cast<ALrGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
+	const ALrGameModeBase* LrGameMode = Cast<ALrGameModeBase>(UGameplayStatics::GetGameMode(OwnerPawn));
 	if (LrGameMode == nullptr) return EmptyConfig;
 	TObjectPtr<ULrGAListDA> LrGAListDA = LrGameMode->LrGAListDA;
 	if (LrGAListDA == nullptr) return EmptyConfig;
-	const FLrGAConfig* FindGaByTag = LrGAListDA.Get()->FindGAByTag(GATag);
+	const FLrGAConfig* FindGaByTag = LrGAListDA.Get()->FindGA(OwnerPawn->PawnType, GATag);
 	if (FindGaByTag == nullptr) return EmptyConfig;
 	return *FindGaByTag;
 }
 
-const FPawnTypeGAConfig& ULrCommonLibrary::FindPawnTypeGAConfig(const UObject* WorldContextObject, const uint16 PawnType)
-{
-	static const FPawnTypeGAConfig EmptyConfig;
-	const ALrGameModeBase* LrGameMode = Cast<ALrGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
-	if (LrGameMode == nullptr) return EmptyConfig;
-	TObjectPtr<ULrGAListDA> LrGAListDA = LrGameMode->LrGAListDA;
-	if (LrGAListDA == nullptr) return EmptyConfig;
-	const FPawnTypeGAConfig* FindGaByTag = LrGAListDA.Get()->FindPawnTypeGA(PawnType);
-	if (FindGaByTag == nullptr) return EmptyConfig;
-	return *FindGaByTag;
-}
+// const FPawnTypeGAConfig& ULrCommonLibrary::FindPawnTypeGAConfig(const UObject* WorldContextObject, const uint16 PawnType)
+// {
+// 	static const FPawnTypeGAConfig EmptyConfig;
+// 	const ALrGameModeBase* LrGameMode = Cast<ALrGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
+// 	if (LrGameMode == nullptr) return EmptyConfig;
+// 	TObjectPtr<ULrGAListDA> LrGAListDA = LrGameMode->LrGAListDA;
+// 	if (LrGAListDA == nullptr) return EmptyConfig;
+// 	const FPawnTypeGAConfig* FindGaByTag = LrGAListDA.Get()->FindPawnTypeGA(PawnType);
+// 	if (FindGaByTag == nullptr) return EmptyConfig;
+// 	return *FindGaByTag;
+// }
 
 
 FLrNSConfig ULrCommonLibrary::FindNSByTag(const UObject* WorldContextObject, const FGameplayTag& GATag)

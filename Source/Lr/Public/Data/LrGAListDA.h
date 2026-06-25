@@ -8,8 +8,11 @@
 #include "LrGAListDA.generated.h"
 
 
+class USoundBase;
+class UAnimMontage;
 class UNiagaraSystem;
 class UGameplayAbility;
+
 
 USTRUCT(BlueprintType)
 struct FLrGAConfig
@@ -19,10 +22,10 @@ struct FLrGAConfig
 	TSubclassOf<UGameplayAbility> GAClass; //技能
 
 	UPROPERTY(EditDefaultsOnly)
-	FGameplayTag GATag = FGameplayTag(); // 技能本身，AssetTag
+	FGameplayTag GATag = FGameplayTag(); // 技能本身，AssetTag，唯一
 
 	UPROPERTY(EditDefaultsOnly)
-	FGameplayTag MontageEvent = FGameplayTag(); // 蒙太奇事件结束触发技的标签。
+	FGameplayTag MontageEvent = FGameplayTag(); // 蒙太奇事件结束触发技的标签。伤害触发桢
 
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag InputTag = FGameplayTag(); // 输入触发标签。
@@ -35,17 +38,30 @@ struct FLrGAConfig
 };
 
 //生物对应的技能
+// USTRUCT(BlueprintType)
+// struct FPawnTypeGAConfig
+// {
+// 	GENERATED_BODY()
+//
+// 	UPROPERTY(EditDefaultsOnly)
+// 	uint16 PawnType = 0; //生物类型
+//
+// 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+// 	TArray<FGameplayTag> GATagList;
+// };
+
+// 每种生物对于的技能
 USTRUCT(BlueprintType)
-struct FPawnTypeGAConfig
+struct FLrPawnTypeGAConfig
 {
 	GENERATED_BODY()
-
 	UPROPERTY(EditDefaultsOnly)
 	uint16 PawnType = 0; //生物类型
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<FGameplayTag> GATagList;
+	TArray<FLrGAConfig> AllLrGAConfig;
 };
+
 
 // 特效配置
 USTRUCT(BlueprintType)
@@ -80,26 +96,32 @@ struct FLrWeaponConfig
  * 
  */
 UCLASS()
-class LR_API ULrGAListDA : public UDataAsset 
+class LR_API ULrGAListDA : public UDataAsset
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<FLrGAConfig> GAConfigList;
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	// TArray<FLrGAConfig> GAConfigList;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<FPawnTypeGAConfig> PawnTypeGAConfigList;
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	// TArray<FPawnTypeGAConfig> PawnTypeGAConfigList;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FLrNSConfig> NSConfigList;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FLrWeaponConfig> LrWeaponConfigList;
-	
-	const FLrGAConfig* FindGAByTag(const FGameplayTag& GATag) const;
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FLrPawnTypeGAConfig> LrAllPawnTypeGAConfig;
+
+
+	// const FLrGAConfig* FindGAByTag(const FGameplayTag& GATag) const;
+	const FLrGAConfig* FindGA(const uint16 PawnType, const FGameplayTag& GATag) const;
+
 	const FLrNSConfig* FindNSByTag(const FGameplayTag& Tag) const;
 	const FLrWeaponConfig* FindWeaponByID(const int32 WeaponID) const;
-	const FPawnTypeGAConfig* FindPawnTypeGA(const uint16 PawnType) const;
-
+	// const FPawnTypeGAConfig* FindPawnTypeGA(const uint16 PawnType) const;
 };
