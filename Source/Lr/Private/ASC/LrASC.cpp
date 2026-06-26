@@ -204,7 +204,13 @@ void ULrASC::ApplyDamageToTarget(AActor* Target, FDamageEffectParams DamageEffec
 	{
 		LrGEClass = LrBuffDA->DefaultEffectClass;
 	}
+
 	const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(LrGEClass, 1, EffectContextHandle);
+	//设置时长
+	if (bHasBurn || bHasPoison)
+	{
+		SpecHandle.Data->SetDuration(LrContext->Duration, true);
+	}
 
 	// 有问题？
 	// 5. 【SetByCaller动态赋值】—— 运行时注入伤害值，避免硬编码
@@ -213,6 +219,7 @@ void ULrASC::ApplyDamageToTarget(AActor* Target, FDamageEffectParams DamageEffec
 	UAbilitySystemBlueprintLibrary::AssignSetByCallerMagnitude(SpecHandle, LrGEKeys::SpeedCutRate, DamageEffectParams.SpeedCutRate);
 	UAbilitySystemBlueprintLibrary::AssignSetByCallerMagnitude(SpecHandle, LrGEKeys::Duration, DamageEffectParams.Duration);
 	UAbilitySystemBlueprintLibrary::AssignSetByCallerMagnitude(SpecHandle, LrGEKeys::DamageValue, DamageEffectParams.DamageValue);
+
 	// 7. 【应用效果到目标】—— 最终触发ExecCalc_Damage::Execute_Implementation(),需要蓝图中配置ExecCalc_Damage计算类
 	// 注意：这里无论是否预测都会执行，但客户端的预测版本会被服务器校正
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);

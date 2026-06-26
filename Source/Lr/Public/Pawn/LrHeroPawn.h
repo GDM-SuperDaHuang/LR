@@ -10,7 +10,6 @@
 class UCapsuleComponent;
 class UAIPerceptionStimuliSourceComponent;
 class UAIPerceptionComponent;
-class UNiagaraSystem;
 class ALrWeaponBase;
 class UGameplayAbility;
 class USpringArmComponent;

@@ -3,6 +3,7 @@
 
 #include "Pawn/LrPawnBase.h"
 
+#include "NiagaraComponent.h"
 #include "TimerManager.h"
 #include "ASC/LrASC.h"
 #include "ASC/AS/LrAS.h"
@@ -21,6 +22,7 @@
 #include "Mover/Blink/LrKnockbackMovementMode.h"
 #include "Mover/Death/LrDeathMovementMode.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
+#include "Tags/LrGameplayTags.h"
 
 // Sets default values
 ALrPawnBase::ALrPawnBase()
@@ -51,6 +53,28 @@ ALrPawnBase::ALrPawnBase()
 	SelectionRing->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SelectionRing->SetCastShadow(false);
 	SelectionRing->SetVisibility(false);
+
+	// =========================
+	// 身上特效相关
+	// =========================
+	SpeedCutFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Debuff_SpeedCut"));
+	SpeedCutFX->SetAutoActivate(false);
+
+	VertigoFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Debuff_Vertigo"));
+	VertigoFX->SetAutoActivate(false);
+
+	BurnFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Debuff_BurnFX"));
+	BurnFX->SetAutoActivate(false);
+
+	FrozenFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Debuff_Frozen"));
+	FrozenFX->SetAutoActivate(false);
+
+	PoisonFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Debuff_Poison"));
+	PoisonFX->SetAutoActivate(false);
+
+	StiffnessFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Debuff_Stiffness"));
+	StiffnessFX->SetAutoActivate(false);
+	
 }
 
 
@@ -73,7 +97,7 @@ uint8 ALrPawnBase::GetTeamID() const
 
 bool ALrPawnBase::IsDead() const
 {
-	return false;
+	return bIsDead;
 }
 
 ULrASC* ALrPawnBase::GetASC() const
@@ -198,8 +222,6 @@ void ALrPawnBase::BeginPlay()
 	// {
 	// 	SelectionRing->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	// }
-
-
 }
 
 void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)

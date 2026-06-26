@@ -9,12 +9,15 @@
 #include "Game/LrTickableWorldSubsystem.h"
 #include "Tags/LrGameplayTags.h"
 
-// void ULrWorldBarWidget::InitWidget(ALrEnemyPawn* InEnemy)
-// {
-// 	OwnerEnemy = InEnemy;
-// }
+void ULrWorldBarWidget::InitWidget()
+{
+	if (ULrTickableWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<ULrTickableWorldSubsystem>())
+	{
+		Subsystem->RegisterActiveBar(this);
+	}
+}
 
-void ULrWorldBarWidget::UpdateChance(FGameplayTag ASTag, float Current, float Max) 
+void ULrWorldBarWidget::UpdateChance(FGameplayTag ASTag, float Current, float Max)
 {
 	FLrGameplayTags LrTags = FLrGameplayTags::Get();
 	if (ASTag == LrTags.As_HP)
@@ -31,10 +34,10 @@ void ULrWorldBarWidget::UpdateHealth(float Current, float Max)
 	{
 		MainBar->SetPercent(TargetPercent);
 	}
-	if (ULrTickableWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<ULrTickableWorldSubsystem>())
-	{
-		Subsystem->RegisterActiveBar(this);
-	}
+	// if (ULrTickableWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<ULrTickableWorldSubsystem>())
+	// {
+	// 	Subsystem->RegisterActiveBar(this);
+	// }
 }
 
 void ULrWorldBarWidget::NativeConstruct()

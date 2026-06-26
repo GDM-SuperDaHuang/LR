@@ -6,6 +6,8 @@
 #include "GameplayCueNotify_Actor.h"
 #include "LrGCNBurn.generated.h"
 
+class ALrPawnBase;
+class UAudioComponent;
 class UNiagaraComponent;
 class UNiagaraSystem;
 /**
@@ -20,20 +22,20 @@ class LR_API ALrGCNBurn : public AGameplayCueNotify_Actor
 
 protected:
 	// 燃烧 Niagara 特效
-	UPROPERTY(EditDefaultsOnly, Category="Burn")
-	TObjectPtr<UNiagaraSystem> BurnNiagara;
+	// UPROPERTY(EditDefaultsOnly, Category="Burn")
+	// TObjectPtr<UNiagaraSystem> BurnNiagara;
 
 	// 循环燃烧音效
 	UPROPERTY(EditDefaultsOnly, Category="Burn")
 	TObjectPtr<USoundBase> BurnLoopSound;
 
-	// Niagara 组件实例
-	UPROPERTY()
-	TObjectPtr<UNiagaraComponent> NiagaraComponent;
-
 	// 音效组件实例
 	UPROPERTY()
 	TObjectPtr<UAudioComponent> AudioComponent;
+
+	// 自身
+	UPROPERTY()
+	ALrPawnBase* LrPawn;
 
 public:
 	// GE Apply 时

@@ -6,6 +6,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Components/AudioComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Pawn/LrPawnBase.h"
 
@@ -20,12 +21,14 @@ ALrGCNBurn::ALrGCNBurn()
 
 bool ALrGCNBurn::OnActive_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters)
 {
+	FGameplayTag CueTag = Parameters.MatchedTagName;
+
 	if (!MyTarget)
 	{
 		return false;
 	}
-
-	ALrPawnBase* LrPawn = Cast<ALrPawnBase>(MyTarget);
+	// 目标对象
+	LrPawn = Cast<ALrPawnBase>(MyTarget);
 	if (!LrPawn)
 	{
 		return false;
@@ -36,20 +39,22 @@ bool ALrGCNBurn::OnActive_Implementation(AActor* MyTarget, const FGameplayCuePar
 	{
 		return false;
 	}
-
-	// 创建 Niagara
-	if (BurnNiagara)
+	UNiagaraSystem* NiagaraSystem = LrPawn->BurnFX->GetAsset();
+	if (!NiagaraSystem)
 	{
-		NiagaraComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			BurnNiagara,
-			Mesh,
-			TEXT("spine_03"),
-			FVector::ZeroVector,
-			FRotator::ZeroRotator,
-			EAttachLocation::SnapToTarget,
-			false);
-		UpdateBurnIntensity(Parameters);
+		return false;
 	}
+	// 创建 Niagara
+	LrPawn->BurnFX = UNiagaraFunctionLibrary::SpawnSystemAttached(
+		NiagaraSystem,
+		Mesh,
+		TEXT("spine_03"),
+		FVector::ZeroVector,
+		FRotator::ZeroRotator,
+		EAttachLocation::SnapToTarget,
+		true);
+	
+	UpdateBurnIntensity(Parameters);
 
 	// 播放循环音效
 	if (BurnLoopSound)
@@ -65,11 +70,18 @@ bool ALrGCNBurn::OnActive_Implementation(AActor* MyTarget, const FGameplayCuePar
 
 bool ALrGCNBurn::OnRemove_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters)
 {
-	// 关闭 Niagara
-	if (NiagaraComponent)
+	FGameplayTag CueTag = Parameters.MatchedTagName;
+
+	if (!LrPawn)
 	{
-		NiagaraComponent->Deactivate();
-		NiagaraComponent = nullptr;
+		return false;
+	}
+
+	if (LrPawn->BurnFX)
+	{
+		LrPawn->BurnFX->SetVisibility(false);
+		// LrPawn->BurnFX->Deactivate();
+		// LrPawn->BurnFX = nullptr;
 	}
 
 	// 停止音效
@@ -91,7 +103,7 @@ bool ALrGCNBurn::WhileActive_Implementation(AActor* MyTarget, const FGameplayCue
 
 void ALrGCNBurn::UpdateBurnIntensity(const FGameplayCueParameters& Parameters)
 {
-	if (!NiagaraComponent)
+	if (!LrPawn->BurnFX)
 	{
 		return;
 	}
@@ -102,5 +114,5 @@ void ALrGCNBurn::UpdateBurnIntensity(const FGameplayCueParameters& Parameters)
 		1.f);
 
 	// 给 Niagara 设置一个运行时参数
-	NiagaraComponent->SetVariableFloat(TEXT("BurnIntensity"), Intensity); 
+	LrPawn->BurnFX->SetVariableFloat(TEXT("BurnIntensity"), Intensity);
 }

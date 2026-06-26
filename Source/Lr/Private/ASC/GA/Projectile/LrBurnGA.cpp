@@ -132,9 +132,10 @@ void ULrBurnGA::SpawnProjectiles(const FVector& ProjectileTargetLocation, bool b
 			ESpawnActorCollisionHandlingMethod::AlwaysSpawn); // 碰撞策略：强行生成，不管是否卡墙
 
 		// todo
-		DamageEffectParams.DamageValue = 50;
-		DamageEffectParams.Duration = 2.f;
+		DamageEffectParams.DamageValue = 11;
+		DamageEffectParams.Duration = 10.f;
 		Projectile->DamageEffectParams = DamageEffectParams;
+		Projectile->ProjectileOwner = OwnerActor;
 		//追踪弹
 		if (HomingTarget)
 		{

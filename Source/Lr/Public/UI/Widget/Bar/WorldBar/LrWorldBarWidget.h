@@ -19,7 +19,8 @@ class LR_API ULrWorldBarWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	// void InitWidget(ALrEnemyPawn* InEnemy);
+	
+	void InitWidget();
 	void UpdateChance(FGameplayTag ASTag, float Current, float Max);
 
 	void UpdateHealth(float Current, float Max);

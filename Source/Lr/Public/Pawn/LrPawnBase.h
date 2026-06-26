@@ -12,6 +12,7 @@
 #include "Interface/LrCombatInterface.h"
 #include "LrPawnBase.generated.h"
 
+class UNiagaraComponent;
 class UMaterialInstanceDynamic;
 class ULrASC;
 class ULrAnimationComponent;
@@ -83,6 +84,21 @@ public:
 	/** 选中提示 */
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* SelectionRing;
+
+
+	// Niagara 组件实例
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FX")
+	TObjectPtr<UNiagaraComponent> SpeedCutFX;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FX")
+	TObjectPtr<UNiagaraComponent> VertigoFX;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FX")
+	TObjectPtr<UNiagaraComponent> BurnFX;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FX")
+	TObjectPtr<UNiagaraComponent> FrozenFX;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FX")
+	TObjectPtr<UNiagaraComponent> PoisonFX;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FX")
+	TObjectPtr<UNiagaraComponent> StiffnessFX;
 
 protected:
 	/** mover写入网络时 */
@@ -156,6 +172,9 @@ protected:
 	FTimerHandle DissolveTimerHandle;
 	float DissolveStartTime;
 	float DissolveDuration = 3.f;
+
+	UPROPERTY()
+	bool bIsDead = false;
 
 	void UpdateDissolveProgress();
 };

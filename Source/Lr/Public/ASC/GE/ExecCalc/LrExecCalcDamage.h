@@ -4,17 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "GameplayEffectExecutionCalculation.h"
-#include "LrExecCalcBurn.generated.h"
+#include "ASC/GE/LrGEContext.h"
+#include "LrExecCalcDamage.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class LR_API ULrExecCalcBurn : public UGameplayEffectExecutionCalculation
+class LR_API ULrExecCalcDamage : public UGameplayEffectExecutionCalculation
 {
 	GENERATED_BODY()
 
 public:
-	ULrExecCalcBurn();
+	ULrExecCalcDamage();
 	virtual void Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const override;
+
 };

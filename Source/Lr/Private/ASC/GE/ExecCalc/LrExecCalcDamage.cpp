@@ -1,9 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ASC/GE/ExecCalc/LrExecCalcBurn.h"
+#include "ASC/GE/ExecCalc/LrExecCalcDamage.h"
 
 #include "ASC/AS/LrAS.h"
+#include "ASC/GE/LrGEContext.h"
+#include "Data/LrBuffDA.h"
+#include "Lib/LrCommonLibrary.h"
 #include "Lr/Lr.h"
 #include "Tags/LrGameplayTags.h"
 
@@ -24,15 +27,14 @@ static const FLrBurnStatics& DamageStatics()
 	return DStatices;
 }
 
-ULrExecCalcBurn::ULrExecCalcBurn()
+ULrExecCalcDamage::ULrExecCalcDamage()
 {
 	RelevantAttributesToCapture.Add(DamageStatics().DefenseDef);
 }
 
-void ULrExecCalcBurn::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
+void ULrExecCalcDamage::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
 {
 	Super::Execute_Implementation(ExecutionParams, OutExecutionOutput);
-
 	/**
 	 * GAS 传进来的执行参数
 	 * 包含：
@@ -53,13 +55,11 @@ void ULrExecCalcBurn::Execute_Implementation(const FGameplayEffectCustomExecutio
 	// 当前燃烧层数
 	int32 StackCount = FMath::Max(Spec.GetStackCount(), 1);;
 	// 每层增加伤害
-	Damage *= StackCount;
- 
+	// Damage *= StackCount;
 	uint8 Flags = Spec.GetSetByCallerMagnitude(LrGEKeys::Flags, false);
 	float SpeedCutRate = Spec.GetSetByCallerMagnitude(LrGEKeys::SpeedCutRate, false);
-	float Duration = Spec.GetSetByCallerMagnitude(LrGEKeys::Duration, false);
 	float DamageValue = Spec.GetSetByCallerMagnitude(LrGEKeys::DamageValue, false);
-
+	Damage += DamageValue;
 
 	//防御
 	float Defense = 0.f;
@@ -67,7 +67,6 @@ void ULrExecCalcBurn::Execute_Implementation(const FGameplayEffectCustomExecutio
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().DefenseDef, EvaluateParameters, Defense);
 	Defense = FMath::Clamp(Defense, 0.f, 100.f);
 	Damage = Damage - Defense;
-
 
 	if (Damage > 0.f)
 	{

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
+#include "Engine/DataTable.h"
 #include "LrExcelConfig.generated.h"
 
 /**

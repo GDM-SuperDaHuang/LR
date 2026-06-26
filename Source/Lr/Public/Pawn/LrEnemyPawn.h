@@ -6,6 +6,7 @@
 #include "Pawn/LrPawnBase.h"
 #include "LrEnemyPawn.generated.h"
 
+class UAnimMontage;
 class ULrSTComponent;
 class ULrWorldBarWidget;
 class ULrWorldWidgetComponent;

@@ -97,12 +97,22 @@ ALrHeroPawn::ALrHeroPawn()
 	 * 2，NavMesh 生成 / 更新的参与者
 	 */
 	LrCapsuleComponent->SetCanEverAffectNavigation(false);
-	
+
 	// =========================
 	// 选中提示相关
 	// =========================
 	SelectionRing->SetupAttachment(RootComponent);
 
+
+	// =========================
+	// 身上特效相关
+	// =========================
+	SpeedCutFX->SetupAttachment(RootComponent);
+	VertigoFX->SetupAttachment(RootComponent);
+	BurnFX->SetupAttachment(RootComponent);
+	FrozenFX->SetupAttachment(RootComponent);
+	PoisonFX->SetupAttachment(RootComponent);
+	StiffnessFX->SetupAttachment(RootComponent);
 }
 
 void ALrHeroPawn::BeginPlay()

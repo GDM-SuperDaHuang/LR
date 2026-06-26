@@ -50,6 +50,17 @@ struct FDamageEffectParams
 	//////////
 	UPROPERTY()
 	FVector RepelVector = FVector::ZeroVector; //击退位置
+
+	//添加标志
+	FORCEINLINE void AddFlag(EDamageFlags InFlag)
+	{
+		Flags |= InFlag;
+	}
+	//移除标志
+	FORCEINLINE void RemoveFlag(EDamageFlags InFlag)
+	{
+		Flags &= ~InFlag;
+	}
 };
 
 /**

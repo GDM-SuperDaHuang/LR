@@ -100,6 +100,8 @@ void ALrProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 		ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(OtherActor);
 		if (ULrCombatComponentBase* Combat = OwnerPawn->FindComponentByClass<ULrCombatComponentBase>())
 		{
+			// todo
+			DamageEffectParams.AddFlag(EDamageFlags::Burn);
 			LrASC->ApplyDamageToTarget(OtherActor, DamageEffectParams);
 			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
 		}
@@ -138,6 +140,7 @@ void ALrProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherA
 		ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(OtherActor);
 		if (ULrCombatComponentBase* Combat = OwnerPawn->FindComponentByClass<ULrCombatComponentBase>())
 		{
+			DamageEffectParams.AddFlag(EDamageFlags::Burn);
 			LrASC->ApplyDamageToTarget(OtherActor, DamageEffectParams);
 			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
 		}

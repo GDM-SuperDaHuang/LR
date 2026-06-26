@@ -8,6 +8,7 @@
 #include "ASC/GE/LrGEContext.h"
 #include "Data/LrBuffDA.h"
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
+#include "Lib/LrCommonLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Pawn/LrPawnBase.h"
 #include "Tags/LrGameplayTags.h"
@@ -119,7 +120,7 @@ void ULrAS::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackDat
 		{
 			if (LrGEContext->HasFlag(EDamageFlags::Burn))
 			{
-				ApplyDebuff(*LrGEContext, Props);
+				// ApplyDebuff(*LrGEContext, Props);
 			}
 		}
 
@@ -137,23 +138,28 @@ void ULrAS::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackDat
 		}
 
 		float NewHP = GetHP() - Damage;
-		if (NewHP <= 0) //死亡
+		ILrCombatInterface* CombatInterface = Cast<ILrCombatInterface>(Props.TargetAvatarActor);
+		bool bIsDead = CombatInterface->IsDead();
+		if (NewHP <= 0 && !bIsDead) //死亡
 		{
-			ILrCombatInterface* CombatInterface = Cast<ILrCombatInterface>(Props.TargetAvatarActor);
 			// 击退方向
 			FVector KnockDir = (Data.Target.GetAvatarActor()->GetActorLocation() - Props.SourceAvatarActor->GetActorLocation()).GetSafeNormal();
 			// 竖直分量
 			KnockDir.Z = 0.3f;
 			FVector Impulse = KnockDir * 200.f + FVector(0, 0, 200.f); //击飞力*800 + 额外向上力 
-			FLrDieParameters LrDieConfig ;
+			FLrDieParameters LrDieConfig;
 			LrDieConfig.PawnType = Props.TargetCharacter->PawnType;
 			LrDieConfig.DeathImpulse = Impulse;
 			CombatInterface->ToDie(LrDieConfig);
 		}
+
 		/*
 		 * HP
 		 */
-		SetHP(FMath::Clamp(NewHP, 0.f, GetMaxHP()));
+		if (!bIsDead)
+		{
+			SetHP(FMath::Clamp(NewHP, 0.f, GetMaxHP()));
+		}
 	}
 
 	/*
@@ -204,67 +210,6 @@ void ULrAS::OnRepEndurance(const FGameplayAttributeData& OldValue) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ULrAS, Endurance, OldValue);
 }
-
-void ULrAS::ApplyDebuff(const FLrGameplayEffectContext& LrGEContext, const FEffectProperties& Props)
-{
-	if (!Props.SourceASC || !Props.TargetASC)
-	{
-		return;
-	}
-
-	FLrGameplayTags GameplayTags = FLrGameplayTags::Get();
-
-	// 创建 Context
-	FGameplayEffectContextHandle EffectContext = Props.SourceASC->MakeEffectContext();
-
-	// 设置来源对象
-	EffectContext.AddSourceObject(Props.SourceAvatarActor);
-
-	// 最终要应用的 GE
-	TSubclassOf<UGameplayEffect> EffectClass = nullptr;
-
-	// 根据 Debuff 类型选择 GE
-	if (LrGEContext.HasFlag(EDamageFlags::Burn))
-	{
-		EffectClass = LrBuffDA->BurnEffectClass;
-	}
-	else if (LrGEContext.HasFlag(EDamageFlags::Poison))
-	{
-		EffectClass = LrBuffDA->PoisonEffectClass;
-	}
-
-	if (!EffectClass)
-	{
-		return;
-	}
-
-	// 创建 Spec
-	FGameplayEffectSpecHandle SpecHandle = Props.SourceASC->MakeOutgoingSpec(
-		EffectClass,
-		1.f,
-		EffectContext);
-
-	if (!SpecHandle.IsValid())
-	{
-		return;
-	}
-
-	// 设置 DOT 伤害
-	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(
-		SpecHandle,
-		GameplayTags.Damage_Base,
-		LrGEContext.DamageValue);
-
-	// 设置持续时间
-	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(
-		SpecHandle,
-		GameplayTags.Damage_Base,
-		LrGEContext.Duration);
-
-	// Apply 到目标
-	Props.TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-}
-
 
 /* ---------- 工具：提取上下文 ---------- */
 void ULrAS::SetEffectProperties(const struct FGameplayEffectModCallbackData& Data, FEffectProperties& props) const

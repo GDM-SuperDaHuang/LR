@@ -7,6 +7,7 @@
 #include "ASC/AS/LrAS.h"
 #include "Components/CapsuleComponent.h"
 #include "MotionWarpingComponent.h"
+#include "NiagaraComponent.h"
 #include "TimerManager.h"
 #include "Actor/Corpse/LrCorpseActor.h"
 #include "AI/Controller/LrAIControllerBase.h"
@@ -55,6 +56,7 @@ ALrEnemyPawn::ALrEnemyPawn()
 	LrSkeletalMeshComponent->SetOwnerNoSee(false);
 	LrSkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	LrSkeletalMeshComponent->SetCanEverAffectNavigation(false);
+	
 	// =========================
 	// 武器 →骨架
 	// =========================
@@ -101,6 +103,16 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// 选中提示相关
 	// =========================
 	SelectionRing->SetupAttachment(RootComponent);
+	
+	// =========================
+	// 身上特效相关
+	// =========================
+	SpeedCutFX->SetupAttachment(RootComponent);
+	VertigoFX->SetupAttachment(RootComponent);
+	BurnFX->SetupAttachment(RootComponent);
+	FrozenFX->SetupAttachment(RootComponent);
+	PoisonFX->SetupAttachment(RootComponent);
+	StiffnessFX->SetupAttachment(RootComponent);
 }
 
 void ALrEnemyPawn::BeginPlay()
@@ -129,6 +141,7 @@ void ALrEnemyPawn::BeginPlay()
 	LrWidgetComponent->InitWidget();
 
 	ULrWorldBarWidget* BarWidget = Cast<ULrWorldBarWidget>(LrWidgetComponent->GetUserWidgetObject());
+	BarWidget->InitWidget();
 	ULrAS* As = GetAS();
 
 	if (BarWidget)
@@ -181,6 +194,14 @@ uint8 ALrEnemyPawn::GetClassID() const
 
 void ALrEnemyPawn::ToDie(const FLrDieParameters& DieParam)
 {
+	bIsDead = true;
+	// 隐藏组件（不再渲染）
+	LrWidgetComponent->SetVisibility(false);
+	// 同时隐藏内部 UUserWidget，防止它被其他系统激活
+	if (UUserWidget* BarWidget = LrWidgetComponent->GetUserWidgetObject())
+	{
+		BarWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
 	if (DieParam.DeathMontage)
 	{
 		PlayDeathMontage(DieParam.DeathMontage);

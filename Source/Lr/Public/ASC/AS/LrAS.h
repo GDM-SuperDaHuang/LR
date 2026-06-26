@@ -94,10 +94,7 @@ class LR_API ULrAS : public UAttributeSet
 
 public:
 	ULrAS();
-
-	UPROPERTY(EditDefaultsOnly, Category = "DA")
-	TObjectPtr<ULrBuffDA> LrBuffDA;
-
+	
 	// 网络复制支持：定义哪些属性需要复制到客户端
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;;
 
@@ -172,6 +169,6 @@ public:
 	void OnRepEndurance(const FGameplayAttributeData& OldValue) const;
 
 protected:
-	void ApplyDebuff(const FLrGameplayEffectContext& LrGEContext, const FEffectProperties& Props);
+
 	void SetEffectProperties(const struct FGameplayEffectModCallbackData& Data, FEffectProperties& props) const;
 };
