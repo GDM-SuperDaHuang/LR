@@ -8,6 +8,7 @@
 #include "ASC/LrASC.h"
 #include "ASC/AS/LrAS.h"
 #include "Component/LrAnimationComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Data/LrExcelConfig.h"
 #include "Engine/StaticMesh.h"
@@ -22,7 +23,6 @@
 #include "Mover/Blink/LrKnockbackMovementMode.h"
 #include "Mover/Death/LrDeathMovementMode.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
-#include "Tags/LrGameplayTags.h"
 
 // Sets default values
 ALrPawnBase::ALrPawnBase()
@@ -47,6 +47,15 @@ ALrPawnBase::ALrPawnBase()
 
 
 	// =========================
+	// 骨骼
+	// =========================
+	LrSkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrMesh"));
+	LrSkeletalMeshComponent->SetRelativeLocation(FVector(0, 0, -88));
+	LrSkeletalMeshComponent->SetOnlyOwnerSee(false);
+	LrSkeletalMeshComponent->SetOwnerNoSee(false);
+
+
+	// =========================
 	// 选中提示相关
 	// =========================
 	SelectionRing = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SelectionRing"));
@@ -59,22 +68,27 @@ ALrPawnBase::ALrPawnBase()
 	// =========================
 	SpeedCutFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Debuff_SpeedCut"));
 	SpeedCutFX->SetAutoActivate(false);
+	SpeedCutFX->SetupAttachment(LrSkeletalMeshComponent);
 
 	VertigoFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Debuff_Vertigo"));
 	VertigoFX->SetAutoActivate(false);
+	VertigoFX->SetupAttachment(LrSkeletalMeshComponent);
 
 	BurnFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Debuff_BurnFX"));
 	BurnFX->SetAutoActivate(false);
+	BurnFX->SetupAttachment(LrSkeletalMeshComponent);
 
 	FrozenFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Debuff_Frozen"));
 	FrozenFX->SetAutoActivate(false);
+	FrozenFX->SetupAttachment(LrSkeletalMeshComponent);
 
 	PoisonFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Debuff_Poison"));
 	PoisonFX->SetAutoActivate(false);
+	PoisonFX->SetupAttachment(LrSkeletalMeshComponent);
 
 	StiffnessFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Debuff_Stiffness"));
 	StiffnessFX->SetAutoActivate(false);
-	
+	StiffnessFX->SetupAttachment(LrSkeletalMeshComponent);
 }
 
 

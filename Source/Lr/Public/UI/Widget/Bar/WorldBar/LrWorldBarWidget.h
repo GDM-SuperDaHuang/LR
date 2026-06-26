@@ -19,7 +19,6 @@ class LR_API ULrWorldBarWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	
 	void InitWidget();
 	void UpdateChance(FGameplayTag ASTag, float Current, float Max);
 
@@ -52,7 +51,7 @@ protected:
 	TObjectPtr<UWidgetAnimation> DamageAnimRef;
 
 public:
-	bool bIsAnimating = false;
+	bool bIsAnimating = false; //是否刷新
 	float LastGhostPercent = 1.f;
 	float CurrentValue = 0.f;
 	float TargetPercent = 1.f;

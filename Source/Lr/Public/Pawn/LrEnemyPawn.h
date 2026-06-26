@@ -44,6 +44,9 @@ public:
 
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 	virtual uint8 GetClassID() const override;
+
+	static void OnAttackMontageEnded(UAnimMontage* AnimMontage, bool bArg);
+	
 	virtual void ToDie(const FLrDieParameters& DieParam) override;
 	/** 面向相关 */
 	//面向移动方向

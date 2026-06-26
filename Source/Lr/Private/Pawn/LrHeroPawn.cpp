@@ -5,7 +5,6 @@
 
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
-#include "MotionWarpingComponent.h"
 #include "NiagaraComponent.h"
 #include "Actor/Weapon/LrWeaponBase.h"
 #include "ASC/LrASC.h"
@@ -53,11 +52,11 @@ ALrHeroPawn::ALrHeroPawn()
 	// =========================
 	// 骨骼 →碰撞体
 	// =========================
-	LrSkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrMesh"));
+	// LrSkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrMesh"));
 	LrSkeletalMeshComponent->SetupAttachment(LrCapsuleComponent);
-	LrSkeletalMeshComponent->SetRelativeLocation(FVector(0, 0, -88));
-	LrSkeletalMeshComponent->SetOnlyOwnerSee(false);
-	LrSkeletalMeshComponent->SetOwnerNoSee(false);
+	// LrSkeletalMeshComponent->SetRelativeLocation(FVector(0, 0, -88));
+	// LrSkeletalMeshComponent->SetOnlyOwnerSee(false);
+	// LrSkeletalMeshComponent->SetOwnerNoSee(false);
 
 	// =========================
 	// 武器 →骨架
@@ -70,13 +69,7 @@ ALrHeroPawn::ALrHeroPawn()
 	// =========================
 	// NS→武器
 	// =========================
-
-
-	// =========================
-	// 运动扭曲 
-	// =========================
-	LrMotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
-
+	
 
 	// =========================
 	// Mover
@@ -102,17 +95,7 @@ ALrHeroPawn::ALrHeroPawn()
 	// 选中提示相关
 	// =========================
 	SelectionRing->SetupAttachment(RootComponent);
-
-
-	// =========================
-	// 身上特效相关
-	// =========================
-	SpeedCutFX->SetupAttachment(RootComponent);
-	VertigoFX->SetupAttachment(RootComponent);
-	BurnFX->SetupAttachment(RootComponent);
-	FrozenFX->SetupAttachment(RootComponent);
-	PoisonFX->SetupAttachment(RootComponent);
-	StiffnessFX->SetupAttachment(RootComponent);
+	
 }
 
 void ALrHeroPawn::BeginPlay()

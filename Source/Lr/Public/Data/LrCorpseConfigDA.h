@@ -6,6 +6,8 @@
 #include "Engine/DataAsset.h"
 #include "LrCorpseConfigDA.generated.h"
 
+class UAnimMontage;
+
 USTRUCT(BlueprintType)
 struct FLrCorpseConfig
 {
@@ -14,6 +16,8 @@ struct FLrCorpseConfig
 	UPROPERTY(EditDefaultsOnly, Category = "Corpse")
 	UPhysicsAsset* CustomPhysicsAsset = nullptr; // 某些怪可能需要特殊的物理资产
 
+	UPROPERTY(EditDefaultsOnly, Category = "Corpse")
+	UAnimMontage* CorpseMontage = nullptr;
 	// UPROPERTY(EditDefaultsOnly, Category = "Corpse")
 	// USkeletalMeshComponent* CorpseMesh = nullptr;;
 

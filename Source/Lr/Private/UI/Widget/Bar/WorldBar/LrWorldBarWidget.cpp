@@ -67,7 +67,7 @@ void ULrWorldBarWidget::PlayDamageAnimation(float DamageValue)
 void ULrWorldBarWidget::Tick(float DeltaTime)
 {
 	const float NewGhost = FMath::FInterpTo(LastGhostPercent, TargetPercent, DeltaTime, InterpSpeed);
-	if (GhostBar)
+	if (GhostBar && bIsAnimating)
 	{
 		GhostBar->SetPercent(NewGhost);
 	}

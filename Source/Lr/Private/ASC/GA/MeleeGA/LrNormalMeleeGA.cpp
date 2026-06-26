@@ -62,11 +62,11 @@ void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 			       OwnerPawn->GetActorRotation().Yaw,
 			       TargetRotation.Yaw);
 			// 使用带有 Rotation 的函数版本
-			OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(
-				FName("FacingTarget"),
-				TargetLocation,
-				TargetRotation
-			);
+			// OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(
+			// 	FName("FacingTarget"),
+			// 	TargetLocation,
+			// 	TargetRotation
+			// );
 		}
 	}
 
@@ -123,24 +123,6 @@ void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 
 	EventTask->EventReceived.AddDynamic(this, &ULrNormalMeleeGA::OnAttackEvent);
 	EventTask->ReadyForActivation();
-
-	// ========== 7. 能力结束时机 ==========
-	// 让蒙太age 的 AnimNotify 在播放到“收刀”帧时调用 EndAbility；
-	// 如果 Notify 没触发，也设个兜底超时
-	// FTimerHandle TimerHandle;
-	// GetWorld()->GetTimerManager().SetTimer(
-	// 	TimerHandle,
-	// 	[this, Handle, ActorInfo, ActivationInfo]()
-	// 	{
-	// 		if (IsActive())
-	// 		{
-	// 			//todo？？？
-	// 			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-	// 		}
-	// 	},
-	// 	3.0f, // Montage 最大时间 + buffer
-	// 	false
-	// );
 }
 
 void ULrNormalMeleeGA::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)

@@ -60,11 +60,11 @@ void ULrGAEnemyMeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Han
 			       OwnerPawn->GetActorRotation().Yaw,
 			       TargetRotation.Yaw);
 			// 使用带有 Rotation 的函数版本
-			OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(
-				FName("FacingTarget"),
-				TargetLocation,
-				TargetRotation
-			);
+			// OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(
+			// 	FName("FacingTarget"),
+			// 	TargetLocation,
+			// 	TargetRotation
+			// );
 		}
 	}
 

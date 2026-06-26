@@ -28,11 +28,17 @@ void ULrTickableWorldSubsystem::Tick(float DeltaTime)
 		Bar->Tick(DeltaTime);
 		if (FMath::IsNearlyEqual(Bar->LastGhostPercent, Bar->TargetPercent, 0.001f))
 		{
-			ActiveBars.RemoveAtSwap(i);
+			if (FMath::IsNearlyEqual(Bar->LastGhostPercent, 0.f, 0.001f))
+			{
+				ActiveBars.RemoveAtSwap(i);
+			}
 			Bar->bIsAnimating = false;
 		}
+		else
+		{
+			Bar->bIsAnimating = true;
+		}
 	}
-	
 }
 
 void ULrTickableWorldSubsystem::RegisterActiveBar(ULrWorldBarWidget* Bar)

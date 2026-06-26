@@ -44,16 +44,10 @@ bool ALrGCNBurn::OnActive_Implementation(AActor* MyTarget, const FGameplayCuePar
 	{
 		return false;
 	}
-	// 创建 Niagara
-	LrPawn->BurnFX = UNiagaraFunctionLibrary::SpawnSystemAttached(
-		NiagaraSystem,
-		Mesh,
-		TEXT("spine_03"),
-		FVector::ZeroVector,
-		FRotator::ZeroRotator,
-		EAttachLocation::SnapToTarget,
-		true);
 	
+	LrPawn->BurnFX->SetAsset(NiagaraSystem);
+	LrPawn->BurnFX->Activate(true);
+
 	UpdateBurnIntensity(Parameters);
 
 	// 播放循环音效
@@ -62,7 +56,7 @@ bool ALrGCNBurn::OnActive_Implementation(AActor* MyTarget, const FGameplayCuePar
 		AudioComponent = UGameplayStatics::SpawnSoundAttached(
 			BurnLoopSound,
 			Mesh,
-			TEXT("spine_03")); //骨骼位置
+			NAME_None); //骨骼位置
 	}
 
 	return true;
@@ -79,9 +73,7 @@ bool ALrGCNBurn::OnRemove_Implementation(AActor* MyTarget, const FGameplayCuePar
 
 	if (LrPawn->BurnFX)
 	{
-		LrPawn->BurnFX->SetVisibility(false);
-		// LrPawn->BurnFX->Deactivate();
-		// LrPawn->BurnFX = nullptr;
+		LrPawn->BurnFX->Deactivate();
 	}
 
 	// 停止音效

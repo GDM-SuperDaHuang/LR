@@ -6,7 +6,6 @@
 #include "ASC/LrASC.h"
 #include "ASC/AS/LrAS.h"
 #include "Components/CapsuleComponent.h"
-#include "MotionWarpingComponent.h"
 #include "NiagaraComponent.h"
 #include "TimerManager.h"
 #include "Actor/Corpse/LrCorpseActor.h"
@@ -49,11 +48,11 @@ ALrEnemyPawn::ALrEnemyPawn()
 	LrCapsuleComponent->SetCanEverAffectNavigation(false);
 	LrCapsuleComponent->SetCollisionObjectType(ECC_Pawn);
 
-	LrSkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrEnemyMesh"));
+	// LrSkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrEnemyMesh"));
 	LrSkeletalMeshComponent->SetupAttachment(LrCapsuleComponent);
-	LrSkeletalMeshComponent->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
-	LrSkeletalMeshComponent->SetOnlyOwnerSee(false);
-	LrSkeletalMeshComponent->SetOwnerNoSee(false);
+	// LrSkeletalMeshComponent->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
+	// LrSkeletalMeshComponent->SetOnlyOwnerSee(false);
+	// LrSkeletalMeshComponent->SetOwnerNoSee(false);
 	LrSkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	LrSkeletalMeshComponent->SetCanEverAffectNavigation(false);
 	
@@ -62,12 +61,7 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// =========================
 	EquippedWeaponComponent = CreateDefaultSubobject<UChildActorComponent>(TEXT("EnemyEquippedWeapon"));
 	EquippedWeaponComponent->SetupAttachment(LrSkeletalMeshComponent);
-
-	// =========================
-	// 运动扭曲 
-	// =========================
-	LrMotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("EnemyMotionWarping"));
-
+	
 	// =========================
 	// Mover
 	// =========================
@@ -104,15 +98,7 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// =========================
 	SelectionRing->SetupAttachment(RootComponent);
 	
-	// =========================
-	// 身上特效相关
-	// =========================
-	SpeedCutFX->SetupAttachment(RootComponent);
-	VertigoFX->SetupAttachment(RootComponent);
-	BurnFX->SetupAttachment(RootComponent);
-	FrozenFX->SetupAttachment(RootComponent);
-	PoisonFX->SetupAttachment(RootComponent);
-	StiffnessFX->SetupAttachment(RootComponent);
+
 }
 
 void ALrEnemyPawn::BeginPlay()
@@ -192,6 +178,8 @@ uint8 ALrEnemyPawn::GetClassID() const
 	return 100;
 }
 
+
+
 void ALrEnemyPawn::ToDie(const FLrDieParameters& DieParam)
 {
 	bIsDead = true;
@@ -230,11 +218,23 @@ void ALrEnemyPawn::ToDie(const FLrDieParameters& DieParam)
 		AI->UnPossess();
 	}
 
+	
+	FLrCorpseConfig CorpseConfig = ULrCommonLibrary::FindCorpseConfigByPawnType(this, DieParam.PawnType);
+	
+	// ========== 3. 播放近战 Montage ==========
+	UAnimInstance* AnimInstance = LrSkeletalMeshComponent->GetAnimInstance();
+	if (AnimInstance)
+	{
+		AnimInstance->Montage_Play(CorpseConfig.CorpseMontage);
+		FOnMontageEnded EndDelegate;
+		EndDelegate.BindUObject(this, &ALrEnemyPawn::OnAttackMontageEnded);
+		AnimInstance->Montage_SetEndDelegate(EndDelegate, CorpseConfig.CorpseMontage);
+	}	
+
 	// ====== 2. 核心：生成独立的尸体 Actor ======
 	USkeletalMeshComponent* NewSMComponent = nullptr;
 	if (ALrCorpseActor* CorpseActor = GetWorld()->SpawnActor<ALrCorpseActor>(ALrCorpseActor::StaticClass(), GetActorLocation(), GetActorRotation()))
 	{
-		FLrCorpseConfig CorpseConfig = ULrCommonLibrary::FindCorpseConfigByPawnType(this, DieParam.PawnType);
 		// 让尸体复制当前 Mesh 的动作，并飞出去
 		NewSMComponent = CorpseActor->InitializeCorpse(LrSkeletalMeshComponent, DieParam.DeathImpulse, CorpseConfig);
 	}
@@ -297,6 +297,18 @@ void ALrEnemyPawn::ToDie(const FLrDieParameters& DieParam)
 	else
 	{
 		Destroy();
+	}
+}
+
+void ALrEnemyPawn::OnAttackMontageEnded(UAnimMontage* AnimMontage, bool bInterrupted)
+{
+	if (bInterrupted)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Montage 被打断"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Montage 正常结束"));
 	}
 }
 

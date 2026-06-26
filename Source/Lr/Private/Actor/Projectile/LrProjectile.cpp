@@ -103,7 +103,6 @@ void ALrProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 			// todo
 			DamageEffectParams.AddFlag(EDamageFlags::Burn);
 			LrASC->ApplyDamageToTarget(OtherActor, DamageEffectParams);
-			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
 		}
 	}
 
@@ -142,7 +141,6 @@ void ALrProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherA
 		{
 			DamageEffectParams.AddFlag(EDamageFlags::Burn);
 			LrASC->ApplyDamageToTarget(OtherActor, DamageEffectParams);
-			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
 		}
 	}
 

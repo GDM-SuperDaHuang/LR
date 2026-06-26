@@ -5,9 +5,11 @@
 
 #include "AbilitySystemComponent.h"
 #include "MotionWarpingComponent.h"
+#include "TimerManager.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Data/LrGAListDA.h"
+#include "Engine/World.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Pawn/LrPawnBase.h"
 #include "Tags/LrGameplayTags.h"
@@ -45,7 +47,7 @@ void ULrNormalMeleeGATest::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
 	// ========== 2. 设置 Motion Warping ==========
 	// 需要和蒙太奇运动扭曲轨道，
-	OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocation("FacingTarget", TargetLocation);
+	// OwnerPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocation("FacingTarget", TargetLocation);
 
 	// ================== 2. 播放 Montage ==================
 
