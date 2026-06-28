@@ -19,8 +19,8 @@ enum class EDamageFlags : uint8
 	Burn = 1 << 3,
 	Frozen = 1 << 4,
 	Poison = 1 << 5,
-	Repel = 1 << 6,
-	Stiffness = 1 << 7,
+	Repel = 1 << 6, //击飞
+	Stiffness = 1 << 7, //僵直
 };
 
 ENUM_CLASS_FLAGS(EDamageFlags)
@@ -56,6 +56,7 @@ struct FDamageEffectParams
 	{
 		Flags |= InFlag;
 	}
+
 	//移除标志
 	FORCEINLINE void RemoveFlag(EDamageFlags InFlag)
 	{

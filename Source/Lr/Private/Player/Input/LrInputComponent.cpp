@@ -28,7 +28,7 @@ void ULrInputComponent::ApplyPlayerKeyMappings(const ULrInputConfigDA* InputConf
 		const FLrPlayerKeyMapping* PlayerMapping = SaveGame->KeyMappings.FindByPredicate(
 			[&](const FLrPlayerKeyMapping& Data)
 			{
-				return Data.InputTag == Row.InputTag;
+				return Data.InputId == Row.InputId;
 			});
 
 		// 玩家自定义

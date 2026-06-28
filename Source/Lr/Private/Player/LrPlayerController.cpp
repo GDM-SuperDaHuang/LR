@@ -9,12 +9,13 @@
 #include "ASC/LrASC.h"
 #include "Engine/LocalPlayer.h"
 #include "Game/LrGameInstance.h"
+#include "Game/LrTickableWorldSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Lib/LrCommonLibrary.h"
+#include "Lr/Lr.h"
 #include "Pawn/LrHeroPawn.h"
 #include "Player/Input/LrInputComponent.h"
 #include "Tags/LrGameplayTags.h"
-
 
 
 void ALrPlayerController::BeginPlay()
@@ -31,7 +32,6 @@ void ALrPlayerController::BeginPlay()
 	{
 		Subsystem->AddMappingContext(LrIMC, 0);
 	}
-
 
 	bShowMouseCursor = true; //显示鼠标光标
 	DefaultMouseCursor = EMouseCursor::Default; // 设置默认鼠标光标样式
@@ -73,14 +73,21 @@ void ALrPlayerController::SetupInputComponent()
 	ULrInputComponent* AuraInputComponent = CastChecked<ULrInputComponent>(InputComponent);
 	check(AuraInputComponent);
 	// 一键批量绑定所有“技能输入 Tag”到三个回调
+	// AuraInputComponent->BindAbilityActions(
+	// 	InputConfig, // 数据资产里配了 IA <-> Tag 表
+	// 	this,
+	// 	LrIMC,
+	// 	&ThisClass::AbilityInputTagPressed,
+	// 	&ThisClass::AbilityInputTagReleased,
+	// 	&ThisClass::AbilityInputTagHeld);
+
 	AuraInputComponent->BindAbilityActions(
 		InputConfig, // 数据资产里配了 IA <-> Tag 表
 		this,
 		LrIMC,
-		&ThisClass::AbilityInputTagPressed,
-		&ThisClass::AbilityInputTagReleased,
-		&ThisClass::AbilityInputTagHeld);
-
+		&ThisClass::AbilityInputTagPressed0,
+		&ThisClass::AbilityInputTagReleased0,
+		&ThisClass::AbilityInputTagHeld0);
 	/**
 	 * 普通移动轴绑定 
 	 * ETriggerEvent::Started:(按下：调用,只这一下)
@@ -102,18 +109,57 @@ void ALrPlayerController::SetupInputComponent()
 }
 
 // 按下
-void ALrPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
+// void ALrPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
+// {
+// 	if (LrASC == nullptr)
+// 	{
+// 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
+// 		if (LrASC == nullptr) return;
+// 	}
+// 	LrASC->AbilityInputTagPressed(InputTag);
+// }
+//
+// // 释放
+// void ALrPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
+// {
+// 	if (LrASC == nullptr)
+// 	{
+// 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
+// 		if (LrASC == nullptr) return;
+// 	}
+// 	//可能不触发ASC
+// 	if (InputTag == FLrGameplayTags::Get().InputTag_Jump)
+// 	{
+// 		Jump();
+// 	}
+// 	else
+// 	{
+// 		LrASC->AbilityInputTagReleased(InputTag);
+// 	}
+// }
+//
+// // 一直按
+// void ALrPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
+// {
+// 	if (LrASC == nullptr)
+// 	{
+// 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
+// 		if (LrASC == nullptr) return;
+// 	}
+// 	LrASC->AbilityInputTagHeld(InputTag);
+// }
+
+void ALrPlayerController::AbilityInputTagPressed0(int32 InputId)
 {
 	if (LrASC == nullptr)
 	{
 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
 		if (LrASC == nullptr) return;
 	}
-	LrASC->AbilityInputTagPressed(InputTag);
+	LrASC->AbilityInputTagPressed0(InputId);
 }
 
-// 释放
-void ALrPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
+void ALrPlayerController::AbilityInputTagReleased0(int32 InputId)
 {
 	if (LrASC == nullptr)
 	{
@@ -121,26 +167,26 @@ void ALrPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 		if (LrASC == nullptr) return;
 	}
 	//可能不触发ASC
-	if (InputTag == FLrGameplayTags::Get().InputTag_Jump)
+	if (InputId == LrInputID::Jump)
 	{
 		Jump();
 	}
 	else
 	{
-		LrASC->AbilityInputTagReleased(InputTag);
+		LrASC->AbilityInputTagReleased0(InputId);
 	}
 }
 
-// 一直按
-void ALrPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
+void ALrPlayerController::AbilityInputTagHeld0(int32 InputId)
 {
 	if (LrASC == nullptr)
 	{
 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
 		if (LrASC == nullptr) return;
 	}
-	LrASC->AbilityInputTagHeld(InputTag);
+	LrASC->AbilityInputTagHeld0(InputId);
 }
+
 
 void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 {
@@ -297,6 +343,7 @@ ALrPawnBase* ALrPlayerController::GetNearestPawnToCursor(float MaxScreenDistance
 	}
 	return BestPawn;
 }
+
 void ALrPlayerController::UpdateHoverTarget()
 {
 	GetNearestPawnToCursor();

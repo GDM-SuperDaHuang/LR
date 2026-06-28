@@ -54,6 +54,9 @@ public:
 	FGameplayTag InputTag_U;
 	FGameplayTag InputTag_I;
 	FGameplayTag InputTag_O;
+	FGameplayTag InputTag_Lightning;
+
+	
 	/**************************************** 输入 相关 ************************/
 
 
@@ -65,7 +68,9 @@ public:
 	FGameplayTag GA_6;
 	FGameplayTag GA_7;
 	FGameplayTag GA_8;
-	FGameplayTag GA_9;
+	FGameplayTag GA_Lightning;
+
+	
 
 	// 眼魔
 	FGameplayTag GA_Beholder_Attach1;

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/LrCorpseConfigDA.h"
 #include "Pawn/LrPawnBase.h"
 #include "LrEnemyPawn.generated.h"
 
@@ -44,9 +45,10 @@ public:
 
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 	virtual uint8 GetClassID() const override;
+	//生成尸体
+	void SpawnCorpse(const FLrDieParameters& DieParam, FLrCorpseConfig CorpseConfig);
 
-	static void OnAttackMontageEnded(UAnimMontage* AnimMontage, bool bArg);
-	
+
 	virtual void ToDie(const FLrDieParameters& DieParam) override;
 	/** 面向相关 */
 	//面向移动方向

@@ -3,6 +3,8 @@
 
 #include "Mover/Nav/LrNavMovementComponent.h"
 
+#include "Component/LrAnimationComponent.h"
+#include "Engine/World.h"
 #include "Mover/LrMoverComponent.h"
 #include "Pawn/LrEnemyPawn.h"
 
@@ -21,6 +23,12 @@ void ULrNavMovementComponent::RequestDirectMove(const FVector& MoveVelocity, boo
 	Super::RequestDirectMove(MoveVelocity, bForceMaxSpeed);
 	if (!LrEnemyPawn)
 	{
+		return;
+	}
+	if (LrEnemyPawn->LrAnimationComponent->MovementData.Status == 1)
+	{
+		LrEnemyPawn->LrMoverComponent;
+		LrEnemyPawn->UpdateMove(FVector::ZeroVector);
 		return;
 	}
 	// 转换成方向输入

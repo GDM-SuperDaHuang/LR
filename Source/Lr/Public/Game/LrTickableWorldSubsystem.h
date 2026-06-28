@@ -6,6 +6,7 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "LrTickableWorldSubsystem.generated.h"
 
+class ALrLightning;
 class ALrPawnBase;
 struct FLrProjectileConfigRow;
 class ALrProjectile;
@@ -28,5 +29,14 @@ public:
 private:
 	TArray<TWeakObjectPtr<ULrWorldBarWidget>> ActiveBars;
 	//////////////////////////////////////////////////////////////////////////
-	
+public:
+	//////////////////////////////////////////////////////////////////////////
+	// 闪电特效对象池
+	/** 闪电 Actor 蓝图模板（ALrLightning 子类） */
+	UPROPERTY()
+	TMap<ALrPawnBase*, ALrLightning*> LrLightningPool;
+	ALrLightning* RegisterLightning(ALrPawnBase* LrPawnBase);
+	void RemoveLightning(const ALrPawnBase* ALrPawnBas);
+	ALrLightning* GetLightning( ALrPawnBase* ALrPawnBas);
+	//////////////////////////////////////////////////////////////////////////
 };

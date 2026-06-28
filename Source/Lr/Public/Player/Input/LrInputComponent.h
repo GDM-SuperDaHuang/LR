@@ -50,7 +50,7 @@ void ULrInputComponent::BindAbilityActions(const ULrInputConfigDA* InputConfig,
 	// }
 	for (const FLrDefaultBindInputFKey& BindInfo : InputConfig->LrBindInputFKeyList)
 	{
-		if (!BindInfo.InputAction || !BindInfo.InputTag.IsValid())
+		if (!BindInfo.InputAction)
 			continue;
 		// 动态绑定按键
 		// for (const FKey& Key : BindInfo.BoundKeys)
@@ -64,16 +64,21 @@ void ULrInputComponent::BindAbilityActions(const ULrInputConfigDA* InputConfig,
 		// 按键绑定触发函数
 		if (PressedFunc)
 		{
-			BindAction(BindInfo.InputAction, ETriggerEvent::Started, Object, PressedFunc, BindInfo.InputTag);
+			// BindAction(BindInfo.InputAction, ETriggerEvent::Started, Object, PressedFunc, BindInfo.InputTag);
+			BindAction(BindInfo.InputAction, ETriggerEvent::Started, Object, PressedFunc, BindInfo.InputId);
+
 		}
 		if (ReleasedFunc)
 		{
-			BindAction(BindInfo.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, BindInfo.InputTag);
+			// BindAction(BindInfo.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, BindInfo.InputTag);
+			BindAction(BindInfo.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, BindInfo.InputId);
+
 		}
 
 		if (HeldFunc)
 		{
-			BindAction(BindInfo.InputAction, ETriggerEvent::Triggered, Object, HeldFunc, BindInfo.InputTag);
+			// BindAction(BindInfo.InputAction, ETriggerEvent::Triggered, Object, HeldFunc, BindInfo.InputTag);
+			BindAction(BindInfo.InputAction, ETriggerEvent::Triggered, Object, HeldFunc, BindInfo.InputId);
 		}
 	}
 }

@@ -40,7 +40,7 @@ void ULrGameInstance::SaveInput()
 	}
 }
 
-void ULrGameInstance::RebindKey(FGameplayTag InputTag, FKey NewKey)
+void ULrGameInstance::RebindKey(int32 InputId, FKey NewKey)
 {
 	if (!InputSaveGame)
 	{
@@ -51,7 +51,7 @@ void ULrGameInstance::RebindKey(FGameplayTag InputTag, FKey NewKey)
 		InputSaveGame->KeyMappings.FindByPredicate(
 			[&](const FLrPlayerKeyMapping& Data)
 			{
-				return Data.InputTag == InputTag;
+				return Data.InputId == InputId;
 			});
 
 	if (Mapping)
@@ -63,7 +63,7 @@ void ULrGameInstance::RebindKey(FGameplayTag InputTag, FKey NewKey)
 	{
 		FLrPlayerKeyMapping NewMapping;
 
-		NewMapping.InputTag = InputTag;
+		NewMapping.InputId = InputId;
 		NewMapping.CustomKeys.Add(NewKey);
 
 		InputSaveGame->KeyMappings.Add(NewMapping);

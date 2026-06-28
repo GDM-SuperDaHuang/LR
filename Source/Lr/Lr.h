@@ -28,3 +28,12 @@ namespace LrGEKeys
 	static const FName Duration = TEXT("3");
 	static const FName DamageValue = TEXT("4");
 };
+
+
+namespace LrInputID
+{
+	constexpr int32 Jump = 1;
+
+	constexpr int32 Hold = 100;
+	
+}

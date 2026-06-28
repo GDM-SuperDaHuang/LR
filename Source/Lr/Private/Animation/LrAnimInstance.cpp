@@ -4,7 +4,8 @@
 #include "Animation/LrAnimInstance.h"
 
 #include "Component/LrAnimationComponent.h"
-#include "Mover/LrMoverComponent.h"
+#include "GameFramework/Pawn.h"
+#include "Pawn/LrPawnBase.h"
 
 void ULrAnimInstance::NativeInitializeAnimation()
 {
@@ -33,4 +34,8 @@ void ULrAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 void ULrAnimInstance::OnMovementDataUpdated(const FLrAnimMovementData& NewData)
 {
 	MovementData = NewData;
+	if (MovementData.Status==1)
+	{
+		Montage_Stop(0.1f);
+	}
 }

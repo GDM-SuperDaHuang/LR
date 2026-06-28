@@ -16,6 +16,11 @@
 #include "Pawn/LrPawnBase.h"
 
 
+ULrNormalMeleeGA::ULrNormalMeleeGA()
+{
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerExecution;
+}
+
 void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
@@ -161,6 +166,7 @@ void ULrNormalMeleeGA::OnAttackEvent(FGameplayEventData Payload)
 		{
 			if (TargetAActor.Get())
 			{
+				DamageEffectParams.DamageValue = 5;
 				LrASC->ApplyDamageToTarget(TargetAActor.Get(), DamageEffectParams);
 				OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
 			}

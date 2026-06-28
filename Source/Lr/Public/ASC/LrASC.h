@@ -24,9 +24,13 @@ public:
 	void AddAllGA(ALrPawnBase* PawnBase);
 
 	/**************************************** 按钮 技能触发相关 相关 ************************/
-	void AbilityInputTagPressed(const FGameplayTag& InputTags);
-	void AbilityInputTagHeld(const FGameplayTag& InputTags);
-	void AbilityInputTagReleased(const FGameplayTag& InputTags);
+	// void AbilityInputTagPressed(const FGameplayTag& InputTags);
+	// void AbilityInputTagHeld(const FGameplayTag& InputTags);
+	// void AbilityInputTagReleased(const FGameplayTag& InputTags);
+
+	void AbilityInputTagPressed0(const int32 InputId);
+	void AbilityInputTagHeld0(const int32& InputId);
+	void AbilityInputTagReleased0(const int32& InputId);
 	/**************************************** 按钮 技能触发相关 相关 ************************/
 
 	// void ApplyDamageToTarget(AActor* Target, const FHitResult& Hit);

@@ -37,11 +37,7 @@ public:
 	TObjectPtr<UStaticMeshComponent> LrMesh;
 	UPROPERTY(EditAnywhere, Category="Info")
 	TObjectPtr<UNiagaraComponent> LrNiagaraComponent; //同一个 Component 只能播放一个 NiagaraSystem。
-	
-	// 闪电需要
-	UPROPERTY(EditAnywhere, Category="Info")
-	TObjectPtr<USoundBase> LoopingSound;
-
+	 
 	// 命中特效
 	UPROPERTY(EditAnywhere, Category="Info")
 	TObjectPtr<UNiagaraSystem> ImpactEffect;
@@ -53,10 +49,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
-protected:
-	UPROPERTY()
-	TObjectPtr<UAudioComponent> LoopingSoundComponent;
 
 protected:
 	UFUNCTION()

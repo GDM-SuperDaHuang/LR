@@ -20,8 +20,12 @@ struct FLrDefaultBindInputFKey
 	const class UInputAction* InputAction = nullptr;
 
 	// 操作标识（例如 "Action.Jump"）
+	// UPROPERTY(EditDefaultsOnly)
+	// FGameplayTag InputTag;
+
+	// 操作标识（例如 "Action.Jump"）
 	UPROPERTY(EditDefaultsOnly)
-	FGameplayTag InputTag;
+	int32 InputId;
 
 	// 新增：该动作绑定的具体按键（可多个）
 	UPROPERTY(EditDefaultsOnly)

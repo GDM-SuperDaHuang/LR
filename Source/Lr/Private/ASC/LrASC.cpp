@@ -57,8 +57,10 @@ void ULrASC::AddAllGA(ALrPawnBase* PawnBase)
 							// 创建技能规格（Spec），Level 1，默认不给予输入
 							FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(LrDAConfig.GAClass, 1);
 							// 输入绑定
-							AbilitySpec.GetDynamicSpecSourceTags().AddTag(LrDAConfig.InputTag); //InputTag
-							GiveAbility(AbilitySpec); // 真正交给 ASC 管理
+							// AbilitySpec.GetDynamicSpecSourceTags().AddTag(LrDAConfig.InputTag); //InputTag
+							AbilitySpec.InputID = LrDAConfig.InputId;
+							GiveAbility(FGameplayAbilitySpec(LrDAConfig.GAClass, 1, LrDAConfig.InputId));// 真正交给 ASC 管理
+							// GiveAbility(AbilitySpec); // 真正交给 ASC 管理
 						}
 						return;
 					}
@@ -68,71 +70,141 @@ void ULrASC::AddAllGA(ALrPawnBase* PawnBase)
 	}
 }
 
-void ULrASC::AbilityInputTagPressed(const FGameplayTag& InputTags)
+// void ULrASC::AbilityInputTagPressed(const FGameplayTag& InputTags)
+// {
+// 	if (!InputTags.IsValid()) return;
+// 	FScopedAbilityListLock ActiveScopeLoc(*this);
+// 	TArray<FGameplayAbilitySpec> GameplayAbilitySpecs = GetActivatableAbilities();
+// 	for (FGameplayAbilitySpec AbilitySpec : GameplayAbilitySpecs)
+// 	{
+// 		// 匹配输入
+// 		if (AbilitySpec.GetDynamicSpecSourceTags().HasTag(InputTags)) //这里可以优化为一个映射层
+// 		{
+// 			AbilitySpecInputPressed(AbilitySpec);
+// 			if (!AbilitySpec.IsActive())
+// 			{
+// 				TryActivateAbility(AbilitySpec.Handle); //释放技能
+// 			}
+// 		}
+// 	}
+// }
+//
+// /**
+//  * 输入系统回调：某输入标签被“按住”时调用
+//  * 遍历所有已拥有的技能，找到 DynamicAbilityTags 匹配的标签 → 尝试激活
+//  */
+// void ULrASC::AbilityInputTagHeld(const FGameplayTag& InputTags)
+// {
+// 	if (!InputTags.IsValid()) return;
+// 	FScopedAbilityListLock ActiveScopeLoc(*this);
+// 	// GetActivatableAbilities() 返回当前可被激活的技能 Spec,GiveAbility(AbilitySpec);
+// 	for (FGameplayAbilitySpec AbilitySpec : GetActivatableAbilities())
+// 	{
+// 		//查找 AbilitySpec.DynamicAbilityTags.AddTag(AuraAbility->StartupInputTag); 之前存进的标签 
+// 		if (AbilitySpec.GetDynamicSpecSourceTags().HasTag(InputTags))
+// 		{
+// 			// 标记“输入按下”状态，用于冷却、消耗等预判,把 AbilitySpec 里的 InputPressed 标志设为 true,Ability 内部可以查询：IsInputPressed()
+// 			AbilitySpecInputPressed(AbilitySpec);
+// 			if (AbilitySpec.IsActive())
+// 			{
+// 				if (UGameplayAbility* AbilityInstance = AbilitySpec.GetPrimaryInstance())
+// 				{
+// 					InvokeReplicatedEvent(
+// 						EAbilityGenericReplicatedEvent::InputPressed,
+// 						AbilitySpec.Handle,
+// 						AbilityInstance->GetCurrentActivationInfo().GetActivationPredictionKey()
+// 					);
+// 				}
+// 			}
+// 		}
+// 	}
+// }
+//
+// /**
+//  * 输入系统回调：某输入标签“松开”时调用
+//  * 同样按标签找到对应技能，标记“输入释放”
+//  */
+// void ULrASC::AbilityInputTagReleased(const FGameplayTag& InputTags)
+// {
+// 	if (!InputTags.IsValid()) return;
+// 	FScopedAbilityListLock ActiveScopeLoc(*this);
+// 	for (FGameplayAbilitySpec AbilitySpec : GetActivatableAbilities())
+// 	{
+// 		if (AbilitySpec.GetDynamicSpecSourceTags().HasTag(InputTags) && AbilitySpec.IsActive())
+// 		{
+// 			AbilitySpecInputReleased(AbilitySpec);
+// 			if (UGameplayAbility* AbilityInstance = AbilitySpec.GetPrimaryInstance())
+// 			{
+// 				InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased, AbilitySpec.Handle, AbilityInstance->GetCurrentActivationInfo().GetActivationPredictionKey());
+// 			}
+// 		}
+// 	}
+// }
+
+void ULrASC::AbilityInputTagPressed0(const int32 InputId)
 {
-	if (!InputTags.IsValid()) return;
+	//防止你在遍历 Ability 列表时，它被同时修改（比如添加/移除 Ability）
 	FScopedAbilityListLock ActiveScopeLoc(*this);
 	TArray<FGameplayAbilitySpec> GameplayAbilitySpecs = GetActivatableAbilities();
 	for (FGameplayAbilitySpec AbilitySpec : GameplayAbilitySpecs)
 	{
-		// 匹配输入
-		if (AbilitySpec.GetDynamicSpecSourceTags().HasTag(InputTags)) //这里可以优化为一个映射层
+		if (AbilitySpec.InputID == InputId)
 		{
-			AbilitySpecInputPressed(AbilitySpec);
-			if (AbilitySpec.IsActive())
+			if (InputId < LrInputID::Hold) //短按技能
 			{
-				if (UGameplayAbility* AbilityInstance = AbilitySpec.GetPrimaryInstance())
-				{
-					InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputPressed, AbilitySpec.Handle, AbilityInstance->GetCurrentActivationInfo().GetActivationPredictionKey());
-				}
+				TryActivateAbility(AbilitySpec.Handle);
+			}
+			else //长按技能
+			{
+				// 标记按下
+				// AbilitySpecInputPressed(AbilitySpec);
+				// GAS 输入链路，WaitInputRelease 依赖它
+				AbilityLocalInputPressed(InputId);
 			}
 		}
 	}
 }
 
-/**
- * 输入系统回调：某输入标签被“按住”时调用
- * 遍历所有已拥有的技能，找到 DynamicAbilityTags 匹配的标签 → 尝试激活
- */
-void ULrASC::AbilityInputTagHeld(const FGameplayTag& InputTags)
+void ULrASC::AbilityInputTagHeld0(const int32& InputId)
 {
-	if (!InputTags.IsValid()) return;
+	// ✔ 仍然走标准输入
 	FScopedAbilityListLock ActiveScopeLoc(*this);
 	// GetActivatableAbilities() 返回当前可被激活的技能 Spec,GiveAbility(AbilitySpec);
 	for (FGameplayAbilitySpec AbilitySpec : GetActivatableAbilities())
 	{
 		//查找 AbilitySpec.DynamicAbilityTags.AddTag(AuraAbility->StartupInputTag); 之前存进的标签 
-		if (AbilitySpec.GetDynamicSpecSourceTags().HasTag(InputTags))
+		// ✔ 仍然走标准输入
+		if (AbilitySpec.InputID == InputId)
 		{
-			// 标记“输入按下”状态，用于冷却、消耗等预判
-			AbilitySpecInputPressed(AbilitySpec);
-			// 如果技能没激活，则尝试激活（服务器仲裁）
-			if (!AbilitySpec.IsActive())
+			// 已激活就什么也不用做
+			if (AbilitySpec.IsActive())
 			{
-				TryActivateAbility(AbilitySpec.Handle); //释放技能
+				continue;
 			}
+			if (InputId < LrInputID::Hold) //短按技能
+			{
+				TryActivateAbility(AbilitySpec.Handle);
+			}
+			// AbilityLocalInputPressed(InputId);
 		}
 	}
 }
 
-/**
- * 输入系统回调：某输入标签“松开”时调用
- * 同样按标签找到对应技能，标记“输入释放”
- */
-void ULrASC::AbilityInputTagReleased(const FGameplayTag& InputTags)
+void ULrASC::AbilityInputTagReleased0(const int32& InputId)
 {
-	if (!InputTags.IsValid()) return;
 	FScopedAbilityListLock ActiveScopeLoc(*this);
 	for (FGameplayAbilitySpec AbilitySpec : GetActivatableAbilities())
 	{
-		if (AbilitySpec.GetDynamicSpecSourceTags().HasTag(InputTags) && AbilitySpec.IsActive())
+		if (AbilitySpec.InputID == InputId)
 		{
-			AbilitySpecInputReleased(AbilitySpec);
-
-			if (UGameplayAbility* AbilityInstance = AbilitySpec.GetPrimaryInstance())
+			if (InputId < LrInputID::Hold)
 			{
-				InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased, AbilitySpec.Handle, AbilityInstance->GetCurrentActivationInfo().GetActivationPredictionKey());
+				continue;
 			}
+			// 标记释放
+			// AbilitySpecInputReleased(AbilitySpec);
+			// GAS 输入释放链路，WaitInputRelease 必须
+			AbilityLocalInputReleased(InputId);
 		}
 	}
 }

@@ -113,6 +113,10 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 		FName(TEXT("InputTag.Jump")),
 		FString("InputTag Jump"));
 
+	GameplayTags.InputTag_Lightning = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("InputTag.Lightning")),
+		FString("InputTag Lightning"));
+
 	// ==========================================================================================
 
 
@@ -147,9 +151,9 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 		FName(TEXT("GA.8")),
 		FString("GA 8"));
 
-	GameplayTags.GA_9 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.9")),
-		FString("GA 9"));
+	GameplayTags.GA_Lightning = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.Lightning")),
+		FString("GA Lightning"));
 
 	GameplayTags.GA_Beholder_Attach1 = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GA.Beholder.Attach1")),

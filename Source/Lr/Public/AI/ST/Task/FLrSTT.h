@@ -91,6 +91,10 @@ struct FLrPatrolTask : public FStateTreeTaskCommonBase
 		}
 		const FVector NextPoint = Patrol->GetNextPatrolPoint();
 		ALrAIControllerBase* AI = Cast<ALrAIControllerBase>(Enemy.GetController());
+		if (!AI)
+		{
+			return EStateTreeRunStatus::Failed;
+		}
 		if (AI->MoveState == EMoveState::Finish)
 		{
 			InstanceData.CurrentDestination = NextPoint;

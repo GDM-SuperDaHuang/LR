@@ -55,13 +55,13 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// LrSkeletalMeshComponent->SetOwnerNoSee(false);
 	LrSkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	LrSkeletalMeshComponent->SetCanEverAffectNavigation(false);
-	
+
 	// =========================
 	// 武器 →骨架
 	// =========================
 	EquippedWeaponComponent = CreateDefaultSubobject<UChildActorComponent>(TEXT("EnemyEquippedWeapon"));
 	EquippedWeaponComponent->SetupAttachment(LrSkeletalMeshComponent);
-	
+
 	// =========================
 	// Mover
 	// =========================
@@ -97,8 +97,6 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// 选中提示相关
 	// =========================
 	SelectionRing->SetupAttachment(RootComponent);
-	
-
 }
 
 void ALrEnemyPawn::BeginPlay()
@@ -179,58 +177,8 @@ uint8 ALrEnemyPawn::GetClassID() const
 }
 
 
-
-void ALrEnemyPawn::ToDie(const FLrDieParameters& DieParam)
+void ALrEnemyPawn::SpawnCorpse(const FLrDieParameters& DieParam, FLrCorpseConfig CorpseConfig)
 {
-	bIsDead = true;
-	// 隐藏组件（不再渲染）
-	LrWidgetComponent->SetVisibility(false);
-	// 同时隐藏内部 UUserWidget，防止它被其他系统激活
-	if (UUserWidget* BarWidget = LrWidgetComponent->GetUserWidgetObject())
-	{
-		BarWidget->SetVisibility(ESlateVisibility::Hidden);
-	}
-	if (DieParam.DeathMontage)
-	{
-		PlayDeathMontage(DieParam.DeathMontage);
-	}
-	else
-	{
-		FinishDeath();
-	}
-
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
-	{
-		// 强制取消所有技能，这样攻击技能就会提前走 EndAbility，而不会在死后还尝试去绑定 Task
-		ASC->CancelAllAbilities();
-	}
-	if (ALrAIControllerBase* AI = Cast<ALrAIControllerBase>(GetController()))
-	{
-		// 禁止移动
-		AI->StopMovement();
-		// 尝试寻找 StateTree 组件（通常挂在 AIController 上）
-		if (UStateTreeComponent* StateTreeComp = AI->FindComponentByClass<UStateTreeComponent>())
-		{
-			// 显式停止 StateTree 运行，防止其继续 Tick 并访问已死亡的 Pawn
-			StateTreeComp->StopLogic(TEXT("Pawn Died"));
-		}
-		// 安全地解除控制
-		AI->UnPossess();
-	}
-
-	
-	FLrCorpseConfig CorpseConfig = ULrCommonLibrary::FindCorpseConfigByPawnType(this, DieParam.PawnType);
-	
-	// ========== 3. 播放近战 Montage ==========
-	UAnimInstance* AnimInstance = LrSkeletalMeshComponent->GetAnimInstance();
-	if (AnimInstance)
-	{
-		AnimInstance->Montage_Play(CorpseConfig.CorpseMontage);
-		FOnMontageEnded EndDelegate;
-		EndDelegate.BindUObject(this, &ALrEnemyPawn::OnAttackMontageEnded);
-		AnimInstance->Montage_SetEndDelegate(EndDelegate, CorpseConfig.CorpseMontage);
-	}	
-
 	// ====== 2. 核心：生成独立的尸体 Actor ======
 	USkeletalMeshComponent* NewSMComponent = nullptr;
 	if (ALrCorpseActor* CorpseActor = GetWorld()->SpawnActor<ALrCorpseActor>(ALrCorpseActor::StaticClass(), GetActorLocation(), GetActorRotation()))
@@ -300,15 +248,59 @@ void ALrEnemyPawn::ToDie(const FLrDieParameters& DieParam)
 	}
 }
 
-void ALrEnemyPawn::OnAttackMontageEnded(UAnimMontage* AnimMontage, bool bInterrupted)
+void ALrEnemyPawn::ToDie(const FLrDieParameters& DieParam)
 {
-	if (bInterrupted)
+	bIsDead = true;
+	// 隐藏组件（不再渲染）
+	LrWidgetComponent->SetVisibility(false);
+	// 同时隐藏内部 UUserWidget，防止它被其他系统激活
+	if (UUserWidget* BarWidget = LrWidgetComponent->GetUserWidgetObject())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Montage 被打断"));
+		BarWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
-	else
+
+
+	FLrCorpseConfig CorpseConfig = ULrCommonLibrary::FindCorpseConfigByPawnType(this, DieParam.PawnType);
+	// ========== 3. 播放近战 Montage ==========
+	UAnimInstance* AnimInstance = LrSkeletalMeshComponent->GetAnimInstance();
+	if (AnimInstance)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Montage 正常结束"));
+		AnimInstance->Montage_Play(CorpseConfig.CorpseMontage);
+		FOnMontageEnded EndDelegate;
+		EndDelegate.BindLambda(
+			[this, DieParam,CorpseConfig](UAnimMontage* Montage, bool bInterrupted)
+			{
+				if (DieParam.DeathMontage)
+				{
+					PlayDeathMontage(DieParam.DeathMontage);
+				}
+				else
+				{
+					FinishDeath();
+				}
+
+				if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+				{
+					// 强制取消所有技能，这样攻击技能就会提前走 EndAbility，而不会在死后还尝试去绑定 Task
+					ASC->CancelAllAbilities();
+				}
+				if (ALrAIControllerBase* AI = Cast<ALrAIControllerBase>(GetController()))
+				{
+					// 禁止移动
+					AI->StopMovement();
+					// 尝试寻找 StateTree 组件（通常挂在 AIController 上）
+					if (UStateTreeComponent* StateTreeComp = AI->FindComponentByClass<UStateTreeComponent>())
+					{
+						// 显式停止 StateTree 运行，防止其继续 Tick 并访问已死亡的 Pawn
+						StateTreeComp->StopLogic(TEXT("Pawn Died"));
+					}
+					// 安全地解除控制
+					AI->UnPossess();
+				}
+
+				SpawnCorpse(DieParam, CorpseConfig);
+			});
+		AnimInstance->Montage_SetEndDelegate(EndDelegate, CorpseConfig.CorpseMontage);
 	}
 }
 

@@ -5,43 +5,35 @@
 #include "CoreMinimal.h"
 #include "ASC/GA/LrGABase.h"
 #include "ASC/GE/LrGEContext.h"
-#include "Pawn/LrPawnBase.h"
-#include "LrNormalMeleeGA.generated.h"
+#include "Component/Combat/LrCombatComponentBase.h"
+#include "LrLightningGA.generated.h"
+
+class ALrLightning;
+class ALrPawnBase;
 
 /**
- * 普通近战攻击
+ * 链式闪电技能
  */
 UCLASS()
-class LR_API ULrNormalMeleeGA : public ULrGABase
+class LR_API ULrLightningGA : public ULrGABase
 {
 	GENERATED_BODY()
+	
 
 public:
-	ULrNormalMeleeGA();
+	ULrLightningGA();
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+
+	UFUNCTION()
+	void OnInputReleased(float TimeHeld);
 
 	UFUNCTION()
 	void OnMontageFinished();
 
-
+	/** Montage 伤害触发帧回调 */
 	UFUNCTION()
 	void OnAttackEvent(FGameplayEventData Payload);
-
-	void SpawnWeaponTrailFX(ALrPawnBase* OwnerPawn);
-	void PerformMeleeTrace(ALrPawnBase* OwnerPawn, TArray<FHitResult>& Array);
-
-	// void OnAttackEventReceived(const FGameplayEventData* GameplayEventData) const;
-
-	UPROPERTY(BlueprintReadWrite, meta=(ExposeOnSpawn = true))
-	FDamageEffectParams DamageEffectParams;
 	
-	UPROPERTY(EditDefaultsOnly)
-	FLrCombatQueryParams ConeParams;
-
-	// 单体类型
-	UPROPERTY()
-	TWeakObjectPtr<AActor> TargetAActor; //目标可能死亡
-
+	
 };

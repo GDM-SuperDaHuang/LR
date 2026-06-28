@@ -18,7 +18,6 @@ ULrCombatComponentBase::ULrCombatComponentBase()
 }
 
 
-
 TWeakObjectPtr<AActor> ULrCombatComponentBase::GetClosestEnemyInCone(const FLrCombatQueryParams& Params)
 {
 	// 1. 复用现有的扇形 AOE 查询，获取扇形内的所有合法目标
@@ -396,4 +395,21 @@ void ULrCombatComponentBase::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
+}
+
+
+// 距离排序
+void ULrCombatComponentBase::SortActorsByDistance(TArray<TWeakObjectPtr<AActor>>& InOutActors, const FVector& Origin)
+{
+	InOutActors.Sort([&](const TWeakObjectPtr<AActor>& A, const TWeakObjectPtr<AActor>& B)
+	{
+		// 无效对象排在最后
+		if (!A.IsValid() && !B.IsValid()) return false;
+		if (!A.IsValid()) return false;
+		if (!B.IsValid()) return true;
+
+		const float DistA = FVector::DistSquared(Origin, A->GetActorLocation());
+		const float DistB = FVector::DistSquared(Origin, B->GetActorLocation());
+		return DistA < DistB; // 升序：近 -> 远
+	});
 }

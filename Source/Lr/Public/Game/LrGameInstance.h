@@ -27,7 +27,9 @@ public:
 	void SaveInput();
 
 	// 改键
-	void RebindKey(FGameplayTag InputTag, FKey NewKey);
+	// void RebindKey(FGameplayTag InputTag, FKey NewKey);
+	// 改键
+	void RebindKey(int32 InputId, FKey NewKey);
 
 	//ui调用 GI->RebindKey(...);
 	void RefreshInputBind(UInputMappingContext* MappingContext, const ULrInputConfigDA* InputConfig) const;

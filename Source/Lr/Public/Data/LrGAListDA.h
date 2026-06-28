@@ -8,6 +8,7 @@
 #include "LrGAListDA.generated.h"
 
 
+class ALrLightning;
 class USoundBase;
 class UAnimMontage;
 class UNiagaraSystem;
@@ -27,8 +28,12 @@ struct FLrGAConfig
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag MontageEvent = FGameplayTag(); // 蒙太奇事件结束触发技的标签。伤害触发桢
 
+	// UPROPERTY(EditDefaultsOnly)
+	// FGameplayTag InputTag = FGameplayTag(); // 输入触发标签。
+
 	UPROPERTY(EditDefaultsOnly)
-	FGameplayTag InputTag = FGameplayTag(); // 输入触发标签。
+	int32 InputId = 0; // 输入触发标签。
+
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<UAnimMontage*> MontageList;
@@ -36,19 +41,6 @@ struct FLrGAConfig
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	USoundBase* ImpactSound = nullptr;
 };
-
-//生物对应的技能
-// USTRUCT(BlueprintType)
-// struct FPawnTypeGAConfig
-// {
-// 	GENERATED_BODY()
-//
-// 	UPROPERTY(EditDefaultsOnly)
-// 	uint16 PawnType = 0; //生物类型
-//
-// 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-// 	TArray<FGameplayTag> GATagList;
-// };
 
 // 每种生物对于的技能
 USTRUCT(BlueprintType)
@@ -101,8 +93,8 @@ class LR_API ULrGAListDA : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	// TArray<FLrGAConfig> GAConfigList;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<ALrLightning> LightningClass;
 
 	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	// TArray<FPawnTypeGAConfig> PawnTypeGAConfigList;

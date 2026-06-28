@@ -43,10 +43,13 @@ private:
 	// TObjectPtr<UInputAction> JumpAction;
 
 
-	void AbilityInputTagPressed(FGameplayTag InputTag);
-	void AbilityInputTagReleased(FGameplayTag InputTag);
-	void AbilityInputTagHeld(FGameplayTag InputTag);
+	// void AbilityInputTagPressed(FGameplayTag InputTag);
+	// void AbilityInputTagReleased(FGameplayTag InputTag);
+	// void AbilityInputTagHeld(FGameplayTag InputTag);
 
+	void AbilityInputTagPressed0(int32 InputId);
+	void AbilityInputTagReleased0(int32 InputId);
+	void AbilityInputTagHeld0(int32 InputId);
 
 	void Move(const FInputActionValue& InputActionValue);
 	void MoveCompleted(const FInputActionValue& InputActionValue);

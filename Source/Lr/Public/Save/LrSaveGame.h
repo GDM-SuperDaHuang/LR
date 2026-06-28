@@ -12,8 +12,11 @@ struct FLrPlayerKeyMapping
 {
 	GENERATED_BODY()
 
+	// UPROPERTY(EditAnywhere)
+	// FGameplayTag InputTag;
+
 	UPROPERTY(EditAnywhere)
-	FGameplayTag InputTag;
+	int32 InputId;
 
 	UPROPERTY(EditAnywhere)
 	TArray<FKey> CustomKeys;

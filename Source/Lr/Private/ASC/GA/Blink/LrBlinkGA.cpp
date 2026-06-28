@@ -10,6 +10,7 @@
 void ULrBlinkGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	UE_LOG(LogTemp, Warning, TEXT("======ActivateAbility ULrBlinkGA"));
 
 	// ========== 0. 合法性校验 ==========
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))

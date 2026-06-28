@@ -64,10 +64,7 @@ void ALrProjectile::BeginPlay()
 	SetReplicateMovement(true);
 	//阻挡才触发
 	Collision->OnComponentBeginOverlap.AddDynamic(this, &ALrProjectile::OnProjectileBeginOverlap);
-	if (LoopingSoundComponent)
-	{
-		LoopingSoundComponent = UGameplayStatics::SpawnSoundAttached(LoopingSound, GetRootComponent());
-	}
+
 }
 
 void ALrProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -85,14 +82,6 @@ void ALrProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 	if (OtherActor == ProjectileOwner)
 	{
 		return;
-	}
-
-	// UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
-	// UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
-	if (LoopingSoundComponent)
-	{
-		LoopingSoundComponent->Stop();
-		LoopingSoundComponent->DestroyComponent();
 	}
 
 	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor)))
@@ -125,14 +114,7 @@ void ALrProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherA
 	{
 		return;
 	}
-
-	// UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
-	// UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
-	if (LoopingSoundComponent)
-	{
-		LoopingSoundComponent->Stop();
-		LoopingSoundComponent->DestroyComponent();
-	}
+	
 
 	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor)))
 	{
@@ -154,10 +136,5 @@ void ALrProjectile::DeactivateProjectile()
 		return;
 	}
 	LrNiagaraComponent->Activate(true);
-	if (LoopingSoundComponent)
-	{
-		LoopingSoundComponent->Stop();
-		LoopingSoundComponent->DestroyComponent();
-	}
 	Destroy();
 }

@@ -37,6 +37,9 @@ struct FLrAnimMovementData
 
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsFalling = false; //是否掉落
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 Status = 0; //状态，1:触电
 };
 
 DECLARE_DELEGATE_OneParam(FOnMovementDataChanged, const FLrAnimMovementData&);
@@ -61,7 +64,7 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category="Animation")
 	FLrAnimMovementData MovementData;
-	
+
 	FLrAnimMovementData& GetMovementData()
 	{
 		return MovementData;
@@ -71,7 +74,6 @@ public:
 	FOnMovementDataChanged OnMovementDataChanged;
 
 protected:
-
 	// /** 检查数据是否有显著变化（避免微小浮点差异触发广播） */
 	// bool HasDataChangedSignificantly(const FLrAnimMovementData& NewData);
 

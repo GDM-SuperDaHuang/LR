@@ -117,6 +117,8 @@ public:
 	// 角度判断
 	bool IsInsideCone(const FVector& Origin, const FVector& Forward, const FVector& TargetLocation, float ConeHalfAngleDeg) const;
 
+	// 距离排序
+	static void SortActorsByDistance(TArray<TWeakObjectPtr<AActor>>& InOutActors, const FVector& Origin);
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

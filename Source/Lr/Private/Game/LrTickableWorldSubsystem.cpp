@@ -3,7 +3,10 @@
 
 #include "Game/LrTickableWorldSubsystem.h"
 
+#include "Actor/Lightning/LrLightning.h"
 #include "Actor/Projectile/LrProjectile.h"
+#include "Lib/LrCommonLibrary.h"
+#include "Pawn/LrPawnBase.h"
 #include "UI/Widget/Bar/WorldBar/LrWorldBarWidget.h"
 
 TStatId ULrTickableWorldSubsystem::GetStatId() const
@@ -44,4 +47,40 @@ void ULrTickableWorldSubsystem::Tick(float DeltaTime)
 void ULrTickableWorldSubsystem::RegisterActiveBar(ULrWorldBarWidget* Bar)
 {
 	ActiveBars.AddUnique(Bar);
+}
+
+void ULrTickableWorldSubsystem::RemoveLightning(const ALrPawnBase* ALrPawnBas)
+{
+	LrLightningPool.Remove(ALrPawnBas);
+}
+
+ALrLightning* ULrTickableWorldSubsystem::GetLightning(ALrPawnBase* LrPawnBas)
+{
+	ALrLightning** LrLightning = LrLightningPool.Find(LrPawnBas);
+	if (LrLightning == nullptr)
+	{
+		return RegisterLightning(LrPawnBas);
+	}
+	if (*LrLightning)
+	{
+		return *LrLightning;
+	}
+	return nullptr;
+}
+
+ALrLightning* ULrTickableWorldSubsystem::RegisterLightning(ALrPawnBase* LrPawnBase)
+{
+	// todo 从对象池获取
+	// FActorSpawnParameters Params;
+	// Params.Owner = ALrPawnBas;
+	// Params.Instigator = ALrPawnBas;
+	if (ALrGameModeBase* LrGameModeBase = ULrCommonLibrary::GetLrGameModeBase(LrPawnBase))
+	{
+		ULrGAListDA* LrGaListDa = LrGameModeBase->LrGAListDA;
+		ALrLightning* LrLightning = GetWorld()->SpawnActor<ALrLightning>(LrGaListDa->LightningClass, LrPawnBase->GetActorTransform(), FActorSpawnParameters());
+		LrLightning->Init(LrPawnBase);
+		LrLightningPool.Add(LrPawnBase, LrLightning);
+		return LrLightning;
+	}
+	return nullptr;
 }
