@@ -98,36 +98,36 @@ void ALrProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 	DeactivateProjectile();
 }
 
-void ALrProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
-{
-	if (!HasAuthority())
-	{
-		return;
-	}
-
-	if (!OtherActor)
-	{
-		return;
-	}
-
-	if (OtherActor == ProjectileOwner)
-	{
-		return;
-	}
-	
-
-	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor)))
-	{
-		ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(OtherActor);
-		if (ULrCombatComponentBase* Combat = OwnerPawn->FindComponentByClass<ULrCombatComponentBase>())
-		{
-			DamageEffectParams.AddFlag(EDamageFlags::Burn);
-			LrASC->ApplyDamageToTarget(OtherActor, DamageEffectParams);
-		}
-	}
-
-	DeactivateProjectile();
-}
+// void ALrProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+// {
+// 	if (!HasAuthority())
+// 	{
+// 		return;
+// 	}
+//
+// 	if (!OtherActor)
+// 	{
+// 		return;
+// 	}
+//
+// 	if (OtherActor == ProjectileOwner)
+// 	{
+// 		return;
+// 	}
+// 	
+//
+// 	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor)))
+// 	{
+// 		ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(OtherActor);
+// 		if (ULrCombatComponentBase* Combat = OwnerPawn->FindComponentByClass<ULrCombatComponentBase>())
+// 		{
+// 			DamageEffectParams.AddFlag(EDamageFlags::Burn);
+// 			LrASC->ApplyDamageToTarget(OtherActor, DamageEffectParams);
+// 		}
+// 	}
+//
+// 	DeactivateProjectile();
+// }
 
 void ALrProjectile::DeactivateProjectile()
 {
