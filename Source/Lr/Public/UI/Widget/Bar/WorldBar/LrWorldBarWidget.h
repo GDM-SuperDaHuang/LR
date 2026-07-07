@@ -53,7 +53,10 @@ protected:
 public:
 	bool bIsAnimating = false; //是否刷新
 	float LastGhostPercent = 1.f;
-	float CurrentValue = 0.f;
 	float TargetPercent = 1.f;
 	float InterpSpeed = 4.f;
+	
+	//收到伤害显示
+	float LastHpValue = 0.f;
+	float KeepShowTime = 3.f;
 };

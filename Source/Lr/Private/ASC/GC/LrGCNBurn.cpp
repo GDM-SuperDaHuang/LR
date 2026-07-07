@@ -44,7 +44,7 @@ bool ALrGCNBurn::OnActive_Implementation(AActor* MyTarget, const FGameplayCuePar
 	{
 		return false;
 	}
-	
+
 	LrPawn->BurnFX->SetAsset(NiagaraSystem);
 	LrPawn->BurnFX->Activate(true);
 
@@ -53,10 +53,13 @@ bool ALrGCNBurn::OnActive_Implementation(AActor* MyTarget, const FGameplayCuePar
 	// 播放循环音效
 	if (BurnLoopSound)
 	{
-		AudioComponent = UGameplayStatics::SpawnSoundAttached(
-			BurnLoopSound,
-			Mesh,
-			NAME_None); //骨骼位置
+		if (AudioComponent == nullptr)
+		{
+			AudioComponent = UGameplayStatics::SpawnSoundAttached(
+				BurnLoopSound,
+				Mesh,
+				NAME_None); //骨骼位置
+		}
 	}
 
 	return true;

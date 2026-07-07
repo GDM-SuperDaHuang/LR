@@ -22,6 +22,7 @@
 #include "Mover/Blink/LrBlinkMovementMode.h"
 #include "Mover/Blink/LrKnockbackMovementMode.h"
 #include "Mover/Death/LrDeathMovementMode.h"
+#include "Mover/Empty/LrEmptyMovementMode.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
 
 // Sets default values
@@ -222,7 +223,9 @@ void ALrPawnBase::BeginPlay()
 	LrMoverComponent->MovementModes.Add(LrAllModes::Blink, NewObject<ULrBlinkMovementMode>(LrMoverComponent));
 	LrMoverComponent->MovementModes.Add(LrAllModes::Knock, NewObject<ULrKnockbackMovementMode>(LrMoverComponent));
 	LrMoverComponent->MovementModes.Add(LrAllModes::Death, NewObject<ULrDeathMovementMode>(LrMoverComponent));
+	LrMoverComponent->MovementModes.Add(LrAllModes::Empty, NewObject<ULrEmptyMovementMode>(LrMoverComponent));
 
+	
 	// 清空显式的状态转换表（转换逻辑已内置于各移动模式内部）
 	LrMoverComponent->Transitions.Empty();
 
@@ -260,7 +263,13 @@ void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdCon
 	}
 
 	// 填充输入数据
-	Inputs.ControlRotation = GetControlRotation(); // 当前控制器旋转（相机朝向）
+	// Inputs.ControlRotation = GetControlRotation(); // 当前控制器旋转（相机朝向）
+
+	// 俯视角固定相机：使用 PlayerCameraManager 获取相机旋转，而非 ControlRotation
+	// 确保 Mover 系统的移动方向与屏幕显示一致
+	Inputs.ControlRotation = GetWorld() && GetWorld()->GetFirstPlayerController() && GetWorld()->GetFirstPlayerController()->PlayerCameraManager
+		? GetWorld()->GetFirstPlayerController()->PlayerCameraManager->GetCameraRotation()
+		: GetControlRotation();
 	if (!EffectiveInput.IsNearlyZero())
 	{
 		// 设置移动意图类型为方向性意图，并传入移动方向

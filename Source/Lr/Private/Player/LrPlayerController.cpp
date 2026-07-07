@@ -101,7 +101,6 @@ void ALrPlayerController::SetupInputComponent()
 	// 停止
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ALrPlayerController::MoveCompleted);
 
-	// AuraInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ALrPlayerController::Jump);
 
 
 	//跳
@@ -151,6 +150,10 @@ void ALrPlayerController::SetupInputComponent()
 
 void ALrPlayerController::AbilityInputTagPressed0(int32 InputId)
 {
+	if (InhibitoryInput)
+	{
+		return;
+	}
 	if (LrASC == nullptr)
 	{
 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
@@ -161,6 +164,10 @@ void ALrPlayerController::AbilityInputTagPressed0(int32 InputId)
 
 void ALrPlayerController::AbilityInputTagReleased0(int32 InputId)
 {
+	if (InhibitoryInput)
+	{
+		return;
+	}
 	if (LrASC == nullptr)
 	{
 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
@@ -179,6 +186,10 @@ void ALrPlayerController::AbilityInputTagReleased0(int32 InputId)
 
 void ALrPlayerController::AbilityInputTagHeld0(int32 InputId)
 {
+	if (InhibitoryInput)
+	{
+		return;
+	}
 	if (LrASC == nullptr)
 	{
 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
@@ -190,6 +201,10 @@ void ALrPlayerController::AbilityInputTagHeld0(int32 InputId)
 
 void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 {
+	if (InhibitoryInput)
+	{
+		return;
+	}
 	// ULrCommonLibrary::PrintLog(GetWorld(), this);
 	if (LrASC == nullptr)
 	{
@@ -208,9 +223,20 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 	else
 	{
 		// 增强输入默认返回 FVector2D
+		// FVector2D InputVector = InputActionValue.Get<FVector2D>();
+		// const FRotator Rotation = GetControlRotation();
+		// const FRotator YawRotation(0, Rotation.Yaw, 0);
+		// const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		// const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		// Input = (ForwardDirection * InputVector.X) + (RightDirection * InputVector.Y);
+		// Input.Normalize();
+
+		// 增强输入默认返回 FVector2D
 		FVector2D InputVector = InputActionValue.Get<FVector2D>();
-		const FRotator Rotation = GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		// 俯视角固定相机：移动方向始终基于相机的世界朝向，而非 ControlRotation
+		// 这样无论 PlayerStart 的 Yaw 是多少，WASD 始终与屏幕上下左右一致
+		const FRotator CameraRotation = PlayerCameraManager ? PlayerCameraManager->GetCameraRotation() : GetControlRotation();
+		const FRotator YawRotation(0, CameraRotation.Yaw, 0);
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		Input = (ForwardDirection * InputVector.X) + (RightDirection * InputVector.Y);

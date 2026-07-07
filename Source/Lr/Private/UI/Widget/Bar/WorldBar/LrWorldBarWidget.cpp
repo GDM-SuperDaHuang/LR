@@ -29,6 +29,11 @@ void ULrWorldBarWidget::UpdateChance(FGameplayTag ASTag, float Current, float Ma
 
 void ULrWorldBarWidget::UpdateHealth(float Current, float Max)
 {
+	if (!FMath::IsNearlyEqual(LastHpValue, Current, 0.001f))
+	{
+		KeepShowTime = 3.f;
+		LastHpValue = Current;
+	}
 	TargetPercent = Max <= 0.f ? 0.f : Current / Max;
 	if (MainBar)
 	{

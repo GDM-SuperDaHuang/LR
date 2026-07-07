@@ -7,10 +7,12 @@
 #include "AbilitySystemGlobals.h"
 #include "ASC/GA/LrGABase.h"
 #include "ASC/GE/LrGEContext.h"
+#include "Component/LrPatrolRouteComponent.h"
 #include "Data/LrBuffDA.h"
 #include "Data/LrGAListDA.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Lr/Lr.h"
+#include "Pawn/LrEnemyPawn.h"
 #include "Pawn/LrPawnBase.h"
 #include "Tags/LrGameplayTags.h"
 
@@ -59,7 +61,7 @@ void ULrASC::AddAllGA(ALrPawnBase* PawnBase)
 							// 输入绑定
 							// AbilitySpec.GetDynamicSpecSourceTags().AddTag(LrDAConfig.InputTag); //InputTag
 							AbilitySpec.InputID = LrDAConfig.InputId;
-							GiveAbility(FGameplayAbilitySpec(LrDAConfig.GAClass, 1, LrDAConfig.InputId));// 真正交给 ASC 管理
+							GiveAbility(FGameplayAbilitySpec(LrDAConfig.GAClass, 1, LrDAConfig.InputId)); // 真正交给 ASC 管理
 							// GiveAbility(AbilitySpec); // 真正交给 ASC 管理
 						}
 						return;
@@ -209,10 +211,16 @@ void ULrASC::AbilityInputTagReleased0(const int32& InputId)
 	}
 }
 
-
-void ULrASC::ApplyDamageToTarget(AActor* Target, FDamageEffectParams DamageEffectParams) const
+/**
+ * 
+ * @param SourceActor 施加者
+ * @param Target 受害者
+ * @param DamageEffectParams 伤害参数
+ */
+void ULrASC::ApplyDamageToTarget(AActor* SourceActor, AActor* Target, FDamageEffectParams DamageEffectParams) const
 {
-	UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+	// GetOwner() 可能是ps
+	UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(SourceActor);
 	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
 	if (!TargetASC || !SourceASC) return;
 	const FLrGameplayTags GameplayTags = FLrGameplayTags::Get();
@@ -223,7 +231,7 @@ void ULrASC::ApplyDamageToTarget(AActor* Target, FDamageEffectParams DamageEffec
 	// Context.AddHitResult(Hit);
 
 	// 记录伤害来源（用于仇恨、击杀统计）
-	EffectContextHandle.AddSourceObject(Target);
+	EffectContextHandle.AddSourceObject(SourceActor);
 
 	// 2. 【扩展上下文数据】—— 这是核心创新点！
 	// 将物理反馈参数存入自定义上下文，供ExecutionCalculation读取
@@ -295,4 +303,11 @@ void ULrASC::ApplyDamageToTarget(AActor* Target, FDamageEffectParams DamageEffec
 	// 7. 【应用效果到目标】—— 最终触发ExecCalc_Damage::Execute_Implementation(),需要蓝图中配置ExecCalc_Damage计算类
 	// 注意：这里无论是否预测都会执行，但客户端的预测版本会被服务器校正
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+
+	// 仇恨
+	if (ALrEnemyPawn* TargetPawn = Cast<ALrEnemyPawn>(Target))
+	{
+		TargetPawn->GetPatrolRoute()->TargetActor = SourceActor;
+	}
+	
 }

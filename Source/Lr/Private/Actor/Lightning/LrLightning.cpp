@@ -44,10 +44,10 @@ void ALrLightning::Attack(ALrPawnBase* InCaster)
 			FDamageEffectParams DamageEffectParams;
 			DamageEffectParams.AddFlag(EDamageFlags::Stiffness);
 			DamageEffectParams.DamageValue = 5;
-			LrASC->ApplyDamageToTarget(Target.Get(), DamageEffectParams);
+			LrASC->ApplyDamageToTarget(Caster, Target.Get(), DamageEffectParams);
 			InCaster->LrMoverComponent->bIsInAttackWarp = true;
 		}
-		
+
 		//发布
 		Target->LrAnimationComponent->MovementData.Status = 1;
 		Target->LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(Target->LrAnimationComponent->MovementData);
@@ -116,6 +116,7 @@ void ALrLightning::Clear()
 	Targets.Empty();
 	bDirty = true;
 }
+
 // LrAnimationComponent->MovementData.bIsJumping = LrMoverComponent->bJumpInitiated;
 
 // 添加目标并绑定死亡监听，重复目标会被忽略
@@ -157,12 +158,6 @@ UNiagaraComponent* ALrLightning::CreateBeam()
 		FRotator::ZeroRotator,
 		EAttachLocation::KeepWorldPosition,
 		false);
-	// UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-	// GetWorld(),
-	// BeamSystem,
-	// FVector::ZeroVector,
-	// FRotator::ZeroRotator);
-
 	if (NiagaraComp)
 	{
 		NiagaraComp->bAutoActivate = false;

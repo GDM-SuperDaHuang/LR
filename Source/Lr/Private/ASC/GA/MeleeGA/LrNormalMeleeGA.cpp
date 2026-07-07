@@ -167,7 +167,7 @@ void ULrNormalMeleeGA::OnAttackEvent(FGameplayEventData Payload)
 			if (TargetAActor.Get())
 			{
 				DamageEffectParams.DamageValue = 5;
-				LrASC->ApplyDamageToTarget(TargetAActor.Get(), DamageEffectParams);
+				LrASC->ApplyDamageToTarget(GetAvatarActorFromActorInfo(), TargetAActor.Get(), DamageEffectParams);
 				OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
 			}
 		}

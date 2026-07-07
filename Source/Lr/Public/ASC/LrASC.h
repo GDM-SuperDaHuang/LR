@@ -33,6 +33,6 @@ public:
 	void AbilityInputTagReleased0(const int32& InputId);
 	/**************************************** 按钮 技能触发相关 相关 ************************/
 
-	// void ApplyDamageToTarget(AActor* Target, const FHitResult& Hit);
-	void ApplyDamageToTarget(AActor* Target, FDamageEffectParams DamageEffectParams) const;
+	//
+	void ApplyDamageToTarget(AActor* SourceActor, AActor* Target, FDamageEffectParams DamageEffectParams) const;
 };

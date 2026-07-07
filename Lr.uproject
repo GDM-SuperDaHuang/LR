@@ -91,6 +91,14 @@
 		{
 			"Name": "MetaHumanSDK",
 			"Enabled": false
+		},
+		{
+			"Name": "DirectMeshControl",
+			"Enabled": true
+		},
+		{
+			"Name": "Locomotor",
+			"Enabled": true
 		}
 	]
 }

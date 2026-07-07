@@ -4,20 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "MovementMode.h"
-#include "LrAirMovementMode.generated.h"
+#include "LrEmptyMovementMode.generated.h"
 
-class ULrMoverComponent;
 /**
- * 处理角色自由落体
+ * 
  */
 UCLASS()
-class LR_API ULrAirMovementMode : public UBaseMovementMode
+class LR_API ULrEmptyMovementMode : public UBaseMovementMode
 {
 	GENERATED_BODY()
+
 public:
-	ULrAirMovementMode();
 	virtual void GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const override;
 	virtual void SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState) override;
-	UPROPERTY()
-	TObjectPtr<ULrMoverComponent> CacheMoverComponent;
 };

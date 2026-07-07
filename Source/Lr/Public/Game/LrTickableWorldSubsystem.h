@@ -6,8 +6,14 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "LrTickableWorldSubsystem.generated.h"
 
-class ALrLightning;
+class ULevelSequence;
 class ALrPawnBase;
+class ALrEnemyPawn;
+class ACameraActor;
+class ALevelSequenceActor;
+class ULevelSequencePlayer;
+class ALrHeroPawn;
+class ALrLightning;
 struct FLrProjectileConfigRow;
 class ALrProjectile;
 class ULrWorldBarWidget;
@@ -37,6 +43,46 @@ public:
 	TMap<ALrPawnBase*, ALrLightning*> LrLightningPool;
 	ALrLightning* RegisterLightning(ALrPawnBase* LrPawnBase);
 	void RemoveLightning(const ALrPawnBase* ALrPawnBas);
-	ALrLightning* GetLightning( ALrPawnBase* ALrPawnBas);
+	ALrLightning* GetLightning(ALrPawnBase* ALrPawnBas);
+	//////////////////////////////////////////////////////////////////////////
+
+
+	//////////////////////////////////////////////////////////////////////////
+	/// 吓人
+	void PlayJumpScare(ALrHeroPawn* Player, ALrEnemyPawn* Monster);
+
+protected:
+	void BuildRuntimeSequence();
+
+	void SetupCamera();
+	
+	UFUNCTION()
+	void OnJumpScareFinished();
+
+	UPROPERTY()
+	TObjectPtr<ULevelSequence> SequenceTemplate;
+
+	UPROPERTY()
+	ULevelSequencePlayer* PlayerSeq;
+
+	UPROPERTY()
+	ALevelSequenceActor* SeqActor;
+
+	UPROPERTY()
+	TObjectPtr<ACameraActor> RuntimeCamera;
+
+	UPROPERTY()
+	TObjectPtr<ALrHeroPawn> PlayerPawn;
+
+	UPROPERTY()
+	TObjectPtr<ALrEnemyPawn> MonsterPawn;
+
+	UPROPERTY()
+	float FaceOffset = 25.f;
+
+	UPROPERTY()
+	float CoolTime = 28.f;
+	UPROPERTY()
+	bool IsScare = true;
 	//////////////////////////////////////////////////////////////////////////
 };

@@ -87,7 +87,7 @@ struct FLrCombatQueryParams
 	 * - 开启后会在编辑器中实时画出绿/蓝/红色的检测范围，非常便于美术和策划对齐特效
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bDrawDebug = true;
+	bool bDrawDebug = false;
 
 	/**
 	 *Origin 与 Forward 的联动

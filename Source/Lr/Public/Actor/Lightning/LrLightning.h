@@ -34,6 +34,18 @@ struct FLrLightningBeam
 	TWeakObjectPtr<ALrPawnBase> EndActor = nullptr;
 };
 
+USTRUCT()
+struct FLrTargetInfo
+{
+	GENERATED_BODY()
+
+	/** 链目标 */
+	UPROPERTY()
+	TWeakObjectPtr<ALrPawnBase> Target;
+
+	UPROPERTY()
+	float ElapsedTime = 0.f;
+};
 
 UCLASS()
 class LR_API ALrLightning : public AActor
@@ -103,7 +115,11 @@ private:
 	/** 链目标 */
 	UPROPERTY()
 	TArray<TWeakObjectPtr<ALrPawnBase>> Targets;
+	
+	// UPROPERTY()
+	// TArray<TWeakObjectPtr<FLrTargetInfo>> Targets;
 
+	
 	/** Beam池 */
 	UPROPERTY()
 	TArray<FLrLightningBeam> BeamPool;
@@ -126,7 +142,7 @@ private:
 
 	/** 检查频率 */
 	UPROPERTY(EditDefaultsOnly, Category="Lightning")
-	float CheckFrequency = 0.5f;
+	float CheckFrequency = 0.2f;
 
 	/** 攻击频率 */
 	UPROPERTY(EditDefaultsOnly, Category="Lightning")

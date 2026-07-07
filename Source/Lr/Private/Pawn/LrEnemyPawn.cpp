@@ -125,12 +125,12 @@ void ALrEnemyPawn::BeginPlay()
 	LrWidgetComponent->InitWidget();
 
 	ULrWorldBarWidget* BarWidget = Cast<ULrWorldBarWidget>(LrWidgetComponent->GetUserWidgetObject());
-	BarWidget->InitWidget();
 	ULrAS* As = GetAS();
 
 	if (BarWidget)
 	{
-		// BarWidget->InitWidget(this);
+		BarWidget->InitWidget();
+		BarWidget->SetVisibility(ESlateVisibility::Hidden);
 		for (TPair<FGameplayTag, FGameplayAttribute(*)()> Pair : As->TagsASMap)
 		{
 			LrASC->GetGameplayAttributeValueChangeDelegate(Pair.Value()).AddLambda(

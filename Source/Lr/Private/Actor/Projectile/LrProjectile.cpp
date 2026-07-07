@@ -7,13 +7,11 @@
 #include "NiagaraFunctionLibrary.h"
 #include "TimerManager.h"
 #include "ASC/LrASC.h"
-#include "Component/Combat/LrCombatComponentBase.h"
 #include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "Lr/Lr.h"
 #include "Mover/LrMoverComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -38,10 +36,11 @@ ALrProjectile::ALrProjectile()
 
 	Movement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Movement"));
 	Movement->InitialSpeed = Speed; // 初始速度
-	Movement->MaxSpeed = 1500.0f; // 最大速度（想做成“加速箭”可再把 Max 提高）
+	Movement->MaxSpeed = 1500.0f; // 最大速度（想做成"加速箭"可再把 Max 提高）
 	Movement->ProjectileGravityScale = 0; // 0 = 纯直线，火球冰箭常用；弓箭可把这里调 0.5~1
 	Movement->bRotationFollowsVelocity = true;
 	Movement->bIsHomingProjectile = true;
+	// Movement->HomingAccelerationMagnitude = 3000.f; // 追踪加速度，值越大转向越迅猛
 
 	LrNiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("TrailFX"));
 	LrNiagaraComponent->SetupAttachment(RootComponent);
@@ -64,7 +63,6 @@ void ALrProjectile::BeginPlay()
 	SetReplicateMovement(true);
 	//阻挡才触发
 	Collision->OnComponentBeginOverlap.AddDynamic(this, &ALrProjectile::OnProjectileBeginOverlap);
-
 }
 
 void ALrProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -84,15 +82,18 @@ void ALrProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 		return;
 	}
 
-	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor)))
+	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(ProjectileOwner)))
 	{
-		ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(OtherActor);
-		if (ULrCombatComponentBase* Combat = OwnerPawn->FindComponentByClass<ULrCombatComponentBase>())
-		{
-			// todo
-			DamageEffectParams.AddFlag(EDamageFlags::Burn);
-			LrASC->ApplyDamageToTarget(OtherActor, DamageEffectParams);
-		}
+		// ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(OtherActor);
+		// if (ULrCombatComponentBase* Combat = OwnerPawn->FindComponentByClass<ULrCombatComponentBase>())
+		// {
+		// 	// todo
+		// 	DamageEffectParams.AddFlag(EDamageFlags::Burn);
+		// 	LrASC->ApplyDamageToTarget(OtherActor, DamageEffectParams);
+		// }
+
+		DamageEffectParams.AddFlag(EDamageFlags::Burn);
+		LrASC->ApplyDamageToTarget(ProjectileOwner, OtherActor, DamageEffectParams);
 	}
 
 	DeactivateProjectile();

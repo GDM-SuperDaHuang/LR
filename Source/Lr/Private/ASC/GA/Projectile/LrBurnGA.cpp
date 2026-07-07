@@ -140,6 +140,7 @@ void ULrBurnGA::SpawnProjectiles(const FVector& ProjectileTargetLocation, bool b
 		if (HomingTarget)
 		{
 			Projectile->Movement->HomingTargetComponent = HomingTarget->GetRootComponent();
+			Projectile->Movement->HomingAccelerationMagnitude = 50.f; // 追踪加速度，值越大转向越迅猛
 
 			FVector TargetLocation = HomingTarget->GetActorLocation();
 			FVector OwnerLocation = OwnerActor->GetActorLocation();

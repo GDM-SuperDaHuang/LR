@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "LrGameModeBase.generated.h"
 
+class ULrLeveSequenceDA;
 class ULrCorpseConfigDA;
 class ULrExcelConfig;
 class ULrBuffDA;
@@ -30,6 +31,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Character Class Defaults")
 	TObjectPtr<ULrCorpseConfigDA> LrCorpseConfigDA;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Character Class Defaults")
+	TObjectPtr<ULrLeveSequenceDA> LrLeveSequenceDA;
 
 	
 };

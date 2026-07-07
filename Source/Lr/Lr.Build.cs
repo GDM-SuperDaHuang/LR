@@ -5,7 +5,7 @@ using UnrealBuildTool;
 public class Lr : ModuleRules
 {
 	public Lr(ReadOnlyTargetRules Target) : base(Target)
-	{ 
+	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		//关闭优化
@@ -13,10 +13,10 @@ public class Lr : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"GameplayTasks", "Core", "CoreUObject", "Engine", "UnrealEd", "InputCore", "EnhancedInput", "Mover", "AIModule", "GameplayTags", "GameplayAbilities", "MotionWarping", "AnimationBlueprintLibrary", "AnimGraphRuntime", "AIModule",
-			"NavigationSystem", "StateTreeModule","GameplayStateTreeModule"
+			"NavigationSystem", "StateTreeModule", "GameplayStateTreeModule", "LevelSequence", "MovieScene"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "Engine", "Core", "NetCore", "Networking", "PacketHandler", "Niagara", "AlembicLib" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Engine", "Core", "NetCore", "Networking", "PacketHandler", "Niagara", "AlembicLib", "LevelSequence", "LevelSequence", "MovieScene" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

@@ -49,17 +49,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
 
+	
+	/** 相机 弹簧臂*/
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USpringArmComponent> CameraBoom;
+public:
 	/** 相机 弹簧臂*/
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCameraComponent> TopDownCameraComponent;
-
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<USpringArmComponent> CameraBoom;
-	/** 相机 弹簧臂*/
-
-	/** 感知组件 */
-	//敌我区分
-	// UPROPERTY(VisibleAnywhere, Category="Team")
-	// TObjectPtr<UAIPerceptionStimuliSourceComponent>StimuliSource;
-	/** 感知组件 */
+	
 };

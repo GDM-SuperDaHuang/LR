@@ -138,7 +138,7 @@ void ULrGAEnemyMeleeAttack::OnAttackEvent(FGameplayEventData Payload)
 			TargetAActor = Combat->GetClosestEnemyInCone(ConeParams);
 			if (TargetAActor.Get())
 			{
-				LrASC->ApplyDamageToTarget(TargetAActor.Get(), DamageEffectParams);
+				LrASC->ApplyDamageToTarget(GetAvatarActorFromActorInfo(), TargetAActor.Get(), DamageEffectParams);
 			}
 			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
 		}

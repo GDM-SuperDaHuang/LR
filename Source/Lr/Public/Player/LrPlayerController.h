@@ -39,14 +39,6 @@ private:
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> MoveAction;
 
-	// UPROPERTY(EditAnywhere, Category="Input")
-	// TObjectPtr<UInputAction> JumpAction;
-
-
-	// void AbilityInputTagPressed(FGameplayTag InputTag);
-	// void AbilityInputTagReleased(FGameplayTag InputTag);
-	// void AbilityInputTagHeld(FGameplayTag InputTag);
-
 	void AbilityInputTagPressed0(int32 InputId);
 	void AbilityInputTagReleased0(int32 InputId);
 	void AbilityInputTagHeld0(int32 InputId);
@@ -62,4 +54,6 @@ public:
 
 	UPROPERTY()
 	ALrPawnBase* CurrentSelectedPawn;
+
+	bool InhibitoryInput = false;
 };

@@ -1,9 +1,13 @@
 #pragma once
 
+#include "DrawDebugHelpers.h"
 #include "StateTreeEvaluatorBase.h"
 #include "StateTreeExecutionContext.h"
 #include "StateTreeLinker.h"
 #include "Component/LrPatrolRouteComponent.h"
+#include "Engine/World.h"
+#include "Game/LrTickableWorldSubsystem.h"
+#include "GameFramework/PlayerController.h"
 #include "Pawn/LrEnemyPawn.h"
 #include "Pawn/LrHeroPawn.h"
 #include "FLrStateTreeEvaluator.generated.h"
@@ -22,6 +26,9 @@ struct FLrEvaluatorInstanceData
 
 	UPROPERTY()
 	float ElapsedTime = 0.f;
+
+	UPROPERTY(EditAnywhere, Category="AI")
+	bool IsJumpScare = false; //是否会吓人
 };
 
 USTRUCT(BlueprintType)
@@ -78,6 +85,8 @@ struct FLrStateTreeEvaluator : public FStateTreeEvaluatorCommonBase
 				continue;
 			}
 
+			// 如果被攻击 吸引仇恨
+			// Enemy.GetPatrolRoute()->TargetActor = Player;
 			FVector EnemyLocation = Enemy.GetActorLocation();
 			FVector PlayerLocation = Pawn->GetActorLocation();
 			const float DistSq = FVector::DistSquared(EnemyLocation, PlayerLocation); //距离平方
@@ -86,6 +95,18 @@ struct FLrStateTreeEvaluator : public FStateTreeEvaluatorCommonBase
 			//-----------------------------------
 			if (DistSq > FMath::Square(InstanceData.DetectRadius))
 			{
+				continue;
+			}
+
+			//可能会吓人
+			if (InstanceData.IsJumpScare)
+			{
+				Enemy.GetPatrolRoute()->TargetActor = Player;
+
+				if (ULrTickableWorldSubsystem* Subsystem = World->GetSubsystem<ULrTickableWorldSubsystem>())
+				{
+					Subsystem->PlayJumpScare(Player, &Enemy);
+				}
 				continue;
 			}
 
@@ -127,7 +148,8 @@ struct FLrStateTreeEvaluator : public FStateTreeEvaluatorCommonBase
 				TraceEnd,
 				ECC_Visibility,
 				Params);
-			
+
+			// 调试线
 			DrawDebugLine(
 				World,
 				TraceStart,

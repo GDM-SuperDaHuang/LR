@@ -7,5 +7,5 @@ namespace LrAllModes
 	static const FName Blink = FName("LrBlink");
 	static const FName Knock = FName("LrKnock");
 	static const FName Death = FName("LrDeath");
-
+	static const FName Empty = FName("LrEmpty");
 };
