@@ -32,4 +32,11 @@ private:
 	// mutable FVector LastMoveIntent = FVector::ZeroVector;
 	// // 上一帧的计算速度，用于避免 SyncState 速度为 0 的问题
 	// mutable FVector LastCalculatedVelocity = FVector::ZeroVector;
+
+
+protected:
+	
+	bool SafeMove(USceneComponent* UpdatedComp, const FVector& Delta, const FQuat& Rotation, FHitResult& OutHit) const;
+	FVector ComputeSlideVector(const FVector& Delta, float Time, const FVector& Normal) const;
+	void SlideMove(USceneComponent* UpdatedComp, FVector& RemainingMove, const FQuat& Rotation) const;
 };

@@ -19,7 +19,7 @@ struct FLrEvaluatorInstanceData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, Category="AI")
-	float DetectRadius = 500.f;
+	float DetectRadius = 500.f; //视野
 
 	UPROPERTY(EditAnywhere, Category="AI")
 	float UpdateInterval = 0.2f; //更新频率
@@ -137,8 +137,8 @@ struct FLrStateTreeEvaluator : public FStateTreeEvaluatorCommonBase
 			//-----------------------------------
 			// 3. LineTrace遮挡检测
 			//-----------------------------------
-			FVector TraceStart = EnemyLocation + FVector(0, 0, 50); //抬高50,再发射
-			FVector TraceEnd = PlayerLocation + FVector(0, 0, 50);
+			FVector TraceStart = EnemyLocation + FVector(0, 0, 5); //抬高50,再发射
+			FVector TraceEnd = PlayerLocation + FVector(0, 0, 5);
 			FHitResult Hit;
 			FCollisionQueryParams Params;
 			Params.AddIgnoredActor(&Enemy);

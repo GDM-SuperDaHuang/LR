@@ -3,6 +3,7 @@
 
 #include "Pawn/LrPawnBase.h"
 
+#include "MotionWarpingComponent.h"
 #include "NiagaraComponent.h"
 #include "TimerManager.h"
 #include "ASC/LrASC.h"
@@ -55,6 +56,11 @@ ALrPawnBase::ALrPawnBase()
 	LrSkeletalMeshComponent->SetOnlyOwnerSee(false);
 	LrSkeletalMeshComponent->SetOwnerNoSee(false);
 
+
+	// =========================
+	// 运动扭曲
+	// =========================
+	LrMotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("LrMotionWarpingComponent"));
 
 	// =========================
 	// 选中提示相关
@@ -225,7 +231,7 @@ void ALrPawnBase::BeginPlay()
 	LrMoverComponent->MovementModes.Add(LrAllModes::Death, NewObject<ULrDeathMovementMode>(LrMoverComponent));
 	LrMoverComponent->MovementModes.Add(LrAllModes::Empty, NewObject<ULrEmptyMovementMode>(LrMoverComponent));
 
-	
+
 	// 清空显式的状态转换表（转换逻辑已内置于各移动模式内部）
 	LrMoverComponent->Transitions.Empty();
 
@@ -268,8 +274,8 @@ void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdCon
 	// 俯视角固定相机：使用 PlayerCameraManager 获取相机旋转，而非 ControlRotation
 	// 确保 Mover 系统的移动方向与屏幕显示一致
 	Inputs.ControlRotation = GetWorld() && GetWorld()->GetFirstPlayerController() && GetWorld()->GetFirstPlayerController()->PlayerCameraManager
-		? GetWorld()->GetFirstPlayerController()->PlayerCameraManager->GetCameraRotation()
-		: GetControlRotation();
+		                         ? GetWorld()->GetFirstPlayerController()->PlayerCameraManager->GetCameraRotation()
+		                         : GetControlRotation();
 	if (!EffectiveInput.IsNearlyZero())
 	{
 		// 设置移动意图类型为方向性意图，并传入移动方向

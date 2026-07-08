@@ -6,6 +6,7 @@
 #include "DefaultLevelSequenceInstanceData.h"
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
+#include "MotionWarpingComponent.h"
 #include "MovieSceneSequencePlaybackSettings.h"
 #include "Actor/Lightning/LrLightning.h"
 #include "Animation/AnimInstance.h"
@@ -15,6 +16,8 @@
 #include "Data/LrLeveSequenceDA.h"
 #include "Framework/Docking/TabManager.h"
 #include "Lib/LrCommonLibrary.h"
+#include "Mover/LrAllModes.h"
+#include "Mover/LrMoverComponent.h"
 #include "Pawn/LrEnemyPawn.h"
 #include "Pawn/LrHeroPawn.h"
 #include "Pawn/LrPawnBase.h"
@@ -78,7 +81,6 @@ void ULrTickableWorldSubsystem::Tick(float DeltaTime)
 		{
 			Bar->bIsAnimating = true;
 		}
-
 	}
 }
 
@@ -153,9 +155,41 @@ void ULrTickableWorldSubsystem::PlayJumpScare(ALrHeroPawn* Player, ALrEnemyPawn*
 		&ULrTickableWorldSubsystem::OnJumpScareFinished
 	);
 	PlayerSeq->Play();
-	if (UAnimInstance* AnimInstance = PlayerPawn->LrSkeletalMeshComponent->GetAnimInstance())
+	if (UAnimInstance* TargetAnimInstance = PlayerPawn->LrSkeletalMeshComponent->GetAnimInstance())
 	{
-		AnimInstance->Montage_Play(LrGameModeBase->LrLeveSequenceDA->CollapseMontage);
+		if (UAnimInstance* ApplyAnimInstance = MonsterPawn->LrSkeletalMeshComponent->GetAnimInstance())
+		{
+			MonsterPawn->LrMoverComponent->QueueNextMode(LrAllModes::Empty);
+			PlayerPawn->LrMoverComponent->QueueNextMode(LrAllModes::Empty);
+			FLrLeveSequenceConfig LrLeveSequenceConfig = LrGameModeBase->LrLeveSequenceDA->FindLeveSequenceInfo(MonsterPawn->PawnType, PlayerPawn->PawnType);
+
+			//受害者方
+			TargetAnimInstance->Montage_Play(LrLeveSequenceConfig.TargetCollapseMontage);
+			FOnMontageEnded TargetEndDelegate;
+			TargetEndDelegate.BindLambda(
+				[this](UAnimMontage* Montage, bool bInterrupted)
+				{
+					MonsterPawn->LrMoverComponent->QueueNextMode(LrAllModes::Air);
+				});
+			TargetAnimInstance->Montage_SetEndDelegate(TargetEndDelegate, LrLeveSequenceConfig.TargetCollapseMontage);
+
+			//攻击方
+			ApplyAnimInstance->Montage_Play(LrLeveSequenceConfig.ApplyCollapseMontage);
+			FOnMontageEnded ApplyEndDelegate;
+			ApplyEndDelegate.BindLambda(
+				[this](UAnimMontage* Montage, bool bInterrupted)
+				{
+					MonsterPawn->LrMoverComponent->QueueNextMode(LrAllModes::Air);
+				});
+			ApplyAnimInstance->Montage_SetEndDelegate(ApplyEndDelegate, LrLeveSequenceConfig.ApplyCollapseMontage);
+
+			// 运动扭曲
+			MonsterPawn->LrMotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(
+				FName("FacingTarget"),
+				PlayerPawn->GetActorLocation(),
+				PlayerPawn->GetActorRotation()
+			);
+		}
 	}
 }
 

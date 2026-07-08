@@ -123,55 +123,47 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 	// ==========================================================================================
 	// 技能 相关
 	// ==========================================================================================
+	GameplayTags.GA_NormalMelee = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.NormalMelee")),
+		FString("GA NormalMelee"));
+
 	GameplayTags.GA_Blink = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GA.Blink")),
 		FString("GA Blink"));
 
-	GameplayTags.GA_Melee_1 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.Melee.1")),
-		FString("GA Melee 1"));
-
-	GameplayTags.GA_Melee_2 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.Melee.2")),
-		FString("GA Melee 2"));
-
-	GameplayTags.GA_Melee_3 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.Melee.3")),
-		FString("GA Melee 3"));
-
-	GameplayTags.GA_6 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.6")),
-		FString("GA 6"));
-
-	GameplayTags.GA_7 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.7")),
-		FString("GA 7"));
-
-	GameplayTags.GA_8 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.8")),
-		FString("GA 8"));
-
+	GameplayTags.GA_Burn = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("GA.Burn")),
+		FString("GA Burn"));
+	
 	GameplayTags.GA_Lightning = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName(TEXT("GA.Lightning")),
 		FString("GA Lightning"));
 
-	GameplayTags.GA_Beholder_Attach1 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.Beholder.Attach1")),
-		FString("GA Beholder Attach1"));
 
-	GameplayTags.GA_Beholder_Attach2 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.Beholder.Attach2")),
-		FString("GA Beholder Attach2"));
+	// ==========================================================================================
 
-	GameplayTags.GA_Beholder_Attach3 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.Beholder.Attach3")),
-		FString("GA Beholder Attach3"));
+	// ==========================================================================================
+	// 技能 冷却 相关
+	// ==========================================================================================
+	GameplayTags.Data_Cooldown = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("Data.Cooldown")),
+		FString("Data Cooldown"));
 
-	GameplayTags.GA_Beholder_Attach4 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("GA.Beholder.Attach4")),
-		FString("GA Beholder Attach4"));
+	GameplayTags.CD_NormalMelee = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("CD.NormalMelee")),
+		FString("CD NormalMelee"));
 
+	GameplayTags.CD_Blink = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("CD.Blink")),
+		FString("CD Blink"));
 
+	GameplayTags.CD_Blink = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("CD.Burn")),
+		FString("CD Burn"));
+
+	GameplayTags.CD_Lightning = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("CD.Lightning")),
+		FString("CD Lightning"));
 	// ==========================================================================================
 
 
@@ -261,14 +253,8 @@ void FLrGameplayTags::InitializeNativeGameplayTags()
 	// ==========================================================================================
 	// 蒙太奇通知 相关
 	// ==========================================================================================
-	GameplayTags.Montage_Event_Attack_GA1 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("Montage.Event.Attack.GA1")),
-		FString("Montage Event Attack"));
-	GameplayTags.Montage_Event_Attack_GA2 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("Montage.Event.Attack.GA2")),
-		FString("Montage Event Attack"));
-	GameplayTags.Montage_Event_Attack_GA3 = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName(TEXT("Montage.Event.Attack.GA3")),
+	GameplayTags.Montage_Event_Attack = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName(TEXT("Montage.Event.Attack")),
 		FString("Montage Event Attack"));
 	// ==========================================================================================
 

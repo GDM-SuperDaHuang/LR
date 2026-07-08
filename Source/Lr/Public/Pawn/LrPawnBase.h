@@ -55,8 +55,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	TObjectPtr<USkeletalMeshComponent> LrSkeletalMeshComponent;
 
-	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
-	// TObjectPtr<UMotionWarpingComponent> LrMotionWarpingComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PawnInfo")
+	TObjectPtr<UMotionWarpingComponent> LrMotionWarpingComponent;
 
 	/** 角色移动组件（Mover系统的核心） */
 	UPROPERTY(Category = Movement, VisibleAnywhere, BlueprintReadOnly, Transient, meta = (AllowPrivateAccess = "true"))

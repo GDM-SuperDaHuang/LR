@@ -56,36 +56,31 @@ public:
 	FGameplayTag InputTag_O;
 	FGameplayTag InputTag_Lightning;
 
-	
+
 	/**************************************** 输入 相关 ************************/
 
 
 	/**************************************** 技能自身 相关 ************************/
+	FGameplayTag GA_NormalMelee;
 	FGameplayTag GA_Blink;
-	FGameplayTag GA_Melee_1;
-	FGameplayTag GA_Melee_2;
-	FGameplayTag GA_Melee_3;
-	FGameplayTag GA_6;
-	FGameplayTag GA_7;
-	FGameplayTag GA_8;
+	FGameplayTag GA_Burn;
 	FGameplayTag GA_Lightning;
 
-	
 
 	// 眼魔
-	FGameplayTag GA_Beholder_Attach1;
-	FGameplayTag GA_Beholder_Attach2;
-	FGameplayTag GA_Beholder_Attach3;
-	FGameplayTag GA_Beholder_Attach4;
 
-	
 	// 飞行触手怪
-	// FGameplayTag GA_Beholder_Attach1;
-	// FGameplayTag GA_Beholder_Attach2;
-	// FGameplayTag GA_Beholder_Attach3;
-	// FGameplayTag GA_Beholder_Attach4;
 
 	/**************************************** 技能自身 相关 ************************/
+
+	/**************************************** 技能冷却 相关 ************************/
+	FGameplayTag Data_Cooldown;
+	FGameplayTag CD_NormalMelee;
+	FGameplayTag CD_Blink;
+	FGameplayTag CD_Burn;
+	FGameplayTag CD_Lightning;
+
+	/**************************************** 技能冷却 相关 ************************/
 
 
 	//
@@ -144,10 +139,8 @@ public:
 	// FGameplayTag Play_Block_CursorTrace;
 
 	/**************************************** 蒙太奇通知 相关 ************************/
-	FGameplayTag Montage_Event_Attack_GA1;
-	FGameplayTag Montage_Event_Attack_GA2;
-	FGameplayTag Montage_Event_Attack_GA3;
-
+	FGameplayTag Montage_Event_Attack;
+	
 	/**************************************** 蒙太奇通知 相关 ************************/
 
 	/**************************************** 状态 阻塞移动 相关 ************************/

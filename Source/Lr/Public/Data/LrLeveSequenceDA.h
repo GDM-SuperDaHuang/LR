@@ -8,6 +8,30 @@
 
 class UAnimMontage;
 class ULevelSequence;
+
+USTRUCT()
+struct FLrLeveSequenceConfig
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	UAnimMontage* ApplyCollapseMontage = nullptr;
+
+	UPROPERTY()
+	UAnimMontage* TargetCollapseMontage = nullptr;
+};
+
+USTRUCT(BlueprintType)
+struct FLrCollapseMontageConfig
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* CollapseMontage = nullptr;
+	
+	UPROPERTY(EditDefaultsOnly)
+	int32 PawnType = 0; // 生物类型。
+};
 /**
  * 
  */
@@ -19,8 +43,10 @@ class LR_API ULrLeveSequenceDA : public UDataAsset
 public:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<ULevelSequence> SequenceTemplate;
-
-
+	
 	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* CollapseMontage = nullptr;
+	TArray<FLrCollapseMontageConfig> LrCollapseMontageConfigs;
+
+	FLrLeveSequenceConfig FindLeveSequenceInfo(const uint16 ApplyPawnType, const uint16 TargetPawnType) const;
+	
 };

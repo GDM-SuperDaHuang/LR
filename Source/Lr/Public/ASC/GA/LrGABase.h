@@ -22,4 +22,19 @@ public:
 	 */
 	// UPROPERTY(EditDefaultsOnly, Category = "Input")
 	// FGameplayTag InputTag;
+	virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
+
+
+	virtual const FGameplayTagContainer* GetCooldownTags() const override;
+	virtual UGameplayEffect* GetCooldownGameplayEffect() const override;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Cooldown")
+	TSubclassOf<UGameplayEffect> DefaultCooldownGE;
+
+
+	UPROPERTY(EditDefaultsOnly, Category="Cooldown")
+	float CooldownDuration = 1;
+
+	UPROPERTY(EditDefaultsOnly, Category="Cooldown")
+	FGameplayTagContainer CooldownTags;
 };
