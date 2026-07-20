@@ -10,13 +10,20 @@
 #include "Engine/LocalPlayer.h"
 #include "Game/LrGameInstance.h"
 #include "Game/LrTickableWorldSubsystem.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Lr/Lr.h"
+#include "Mover/LrMoverComponent.h"
 #include "Pawn/LrHeroPawn.h"
 #include "Player/Input/LrInputComponent.h"
 #include "Tags/LrGameplayTags.h"
 
+
+ALrPlayerController::ALrPlayerController()
+{
+	PrimaryActorTick.bCanEverTick = true;
+}
 
 void ALrPlayerController::BeginPlay()
 {
@@ -54,6 +61,16 @@ void ALrPlayerController::BeginPlay()
 	// InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock); // 不锁定鼠标到视口
 	// InputModeData.SetHideCursorDuringCapture(false); // 捕获输入时不隐藏光标
 	// SetInputMode(InputModeData); // 应用输入模式
+
+
+	if (ALrHeroPawn* Hero = Cast<ALrHeroPawn>(GetPawn()))
+	{
+		CurrentCameraYaw = Hero->CameraBoom->GetComponentRotation().Yaw;
+
+		TargetCameraYaw = CurrentCameraYaw;
+
+		LastMoveDirection = Hero->GetActorForwardVector();
+	}
 }
 
 void ALrPlayerController::SetupInputComponent()
@@ -102,9 +119,14 @@ void ALrPlayerController::SetupInputComponent()
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ALrPlayerController::MoveCompleted);
 
 
-
 	//跳
 	// AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALrPlayerController::Jump);
+}
+
+void ALrPlayerController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	UpdateCamera(DeltaSeconds);
 }
 
 // 按下
@@ -245,10 +267,17 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 		// Input = InputActionValue.Get<FVector>();
 	}
 
+	if (!Input.IsNearlyZero())
+	{
+		LastMoveDirection = Input;
+	}
+
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
 	{
 		ControlledPawn->UpdateMove(Input);
 	}
+
+
 	// //返回 摄像机或控制器 的 世界旋转
 	// const FRotator Rotator = GetControlRotation();
 	// // 提取 Yaw 旋转，忽略 Pitch/Roll
@@ -373,4 +402,51 @@ ALrPawnBase* ALrPlayerController::GetNearestPawnToCursor(float MaxScreenDistance
 void ALrPlayerController::UpdateHoverTarget()
 {
 	GetNearestPawnToCursor();
+}
+
+void ALrPlayerController::UpdateCamera(float DeltaSeconds)
+{
+	ALrHeroPawn* Hero = Cast<ALrHeroPawn>(GetPawn());
+
+	if (!Hero)
+	{
+		return;
+	}
+
+	if (!Hero->CameraBoom)
+	{
+		return;
+	}
+
+	//------------------------------------
+	// 更新目标Yaw
+	//------------------------------------
+
+	// if (!LastMoveDirection.IsNearlyZero())
+	// {
+	// 	TargetCameraYaw = LastMoveDirection.Rotation().Yaw;
+	// }
+	const float DesiredYaw = LastMoveDirection.Rotation().Yaw;
+	if (FMath::Abs(FMath::FindDeltaAngleDegrees(TargetCameraYaw, DesiredYaw)) > 90.f)
+	{
+		TargetCameraYaw = DesiredYaw;
+	}
+
+	//------------------------------------
+	// 平滑旋转
+	//------------------------------------
+
+	CurrentCameraYaw = FMath::FixedTurn(
+		CurrentCameraYaw,
+		TargetCameraYaw,
+		CameraRotateSpeed * DeltaSeconds);
+
+	//------------------------------------
+	// 设置CameraBoom
+	//------------------------------------
+
+	Hero->CameraBoom->SetWorldRotation(FRotator(
+		CameraPitch,
+		CurrentCameraYaw,
+		0.f));
 }

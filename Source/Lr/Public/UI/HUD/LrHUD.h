@@ -28,7 +28,7 @@ public:
 	void HandleEquipRequest(FLrWeaponConfig WeaponConfig);
 	void HandleUnequipRequest(FLrWeaponConfig WeaponConfig);
 
-	void HandleASCRegistered(ULrASC* LrAsc) const;
+	void HandleASCRegistered(ULrASC* LrAsc);
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 

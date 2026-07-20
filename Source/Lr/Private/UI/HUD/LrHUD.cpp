@@ -15,6 +15,7 @@
 #include "UI/Widget/LrMainWidget.h"
 #include "UI/Widget/Bar/LrHPBarWidget.h"
 #include "UI/Widget/Bar/LrMPBarWidget.h"
+#include "UI/Widget/Skill/LrSkillPanelWidget.h"
 
 
 void ALrHUD::BeginPlay()
@@ -111,7 +112,7 @@ void ALrHUD::HandleUnequipRequest(FLrWeaponConfig WeaponConfig)
 	}
 }
 
-void ALrHUD::HandleASCRegistered(ULrASC* LrAsc) const
+void ALrHUD::HandleASCRegistered(ULrASC* LrAsc)
 {
 	APlayerController* PC = GetOwningPlayerController();
 	ALrPawnBase* LrPawnBase = Cast<ALrPawnBase>(PC->GetPawn());
@@ -135,6 +136,13 @@ void ALrHUD::HandleASCRegistered(ULrASC* LrAsc) const
 				UIController->OnASChanged(Pair.Key, Pair.Value().GetNumericValue(LrAs), Max);
 			});
 	}
+
+	if (UIController && MainWidget && MainWidget->SkillPanelWidget)
+	{
+		UIController->InitSkillSlots(LrPawnBase);
+		MainWidget->SkillPanelWidget->SetSkillSlotViewModels(UIController->SkillSlotVMs);
+	}
+
 	LrPawnBase->InitAS();
 	// LrPawnBase->OnASCRegistered.RemoveDynamic(LrAsc);
 }

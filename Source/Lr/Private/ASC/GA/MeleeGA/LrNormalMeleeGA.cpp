@@ -17,7 +17,7 @@
 
 ULrNormalMeleeGA::ULrNormalMeleeGA()
 {
-	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerExecution;
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
 void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)

@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "LrMainWidget.generated.h"
 
+class ULrSkillPanelWidget;
 class ULrMPBarWidget;
 class ULrHPBarWidget;
 class ULrButtonInfo;
@@ -33,6 +34,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
 	TObjectPtr<ULrMPBarWidget> MPBarWidget;
+
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	TObjectPtr<ULrSkillPanelWidget> SkillPanelWidget;
 	
 	UFUNCTION()
 	void OnAnyWearButtonClicked(ULrButtonInfo* Button);

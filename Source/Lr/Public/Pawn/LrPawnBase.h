@@ -12,6 +12,7 @@
 #include "Interface/LrCombatInterface.h"
 #include "LrPawnBase.generated.h"
 
+class UMaterialParameterCollection;
 class UNiagaraComponent;
 class UMaterialInstanceDynamic;
 class ULrASC;
@@ -37,7 +38,7 @@ public:
 	uint16 PawnType; //生物类型
 	UPROPERTY(EditDefaultsOnly, Category="Team")
 	uint8 TeamID = 1;
-
+	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual ULrCombatComponentBase* GetCombatComponent() const override;
 	virtual uint8 GetTeamID() const override;
@@ -101,6 +102,12 @@ public:
 	TObjectPtr<UNiagaraComponent> StiffnessFX;
 
 protected:
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UMaterialParameterCollection> LrMPC;
+	void SetMPCParameter() const;
+
+	
 	/** mover写入网络时 */
 	UFUNCTION()
 	void HandleMoverFinalized(const FMoverSyncState& SyncState, const FMoverAuxStateContext& AuxState);
@@ -151,11 +158,12 @@ public:
 
 public:
 	bool bIsJumpJustPressed = false; // 本帧刚刚按下
+	FVector CachedMoveInput = FVector::ZeroVector; // Movement input (intent or velocity) the last time we had one that wasn't zero
+
 private:
 	/** 帧更新，最后一次非零移动输入（用于维持朝向） */
 	// FVector2D CachedMoveInput = FVector2D::ZeroVector; // Movement input (intent or velocity) the last time we had one that wasn't zero
 	bool bIsJumpPressed = false; // 当前处于按住状态
-	FVector CachedMoveInput = FVector::ZeroVector; // Movement input (intent or velocity) the last time we had one that wasn't zero
 
 	FVector LastVelocity = FVector::ZeroVector; //当前速度，只有>0.5,或者小于0.5的瞬间才触发委托
 	FCharacterDefaultInputs CharacterDefaultInputsPre;

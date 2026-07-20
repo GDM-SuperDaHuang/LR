@@ -14,6 +14,7 @@
 #include "Data/LrExcelConfig.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
+#include "Kismet/KismetMaterialLibrary.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Mover/FLrMoverInputCmd.h"
@@ -31,6 +32,7 @@ ALrPawnBase::ALrPawnBase()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+	
 	bReplicates = true;
 
 	// 关键：禁用Actor级别的移动复制
@@ -144,6 +146,17 @@ void ALrPawnBase::ToDie(const FLrDieParameters& LrDieConfig)
 FVector ALrPawnBase::GetProjectileLocation() const
 {
 	return GetActorLocation();
+}
+
+void ALrPawnBase::SetMPCParameter() const
+{
+	FVector ActorLocation = GetActorLocation();
+	UKismetMaterialLibrary::SetVectorParameterValue(
+		GetWorld(),
+		LrMPC,
+		TEXT("PlayerPosition"),
+		FLinearColor(GetActorLocation())
+	);
 }
 
 void ALrPawnBase::HandleMoverFinalized(const FMoverSyncState& SyncState, const FMoverAuxStateContext& AuxState)

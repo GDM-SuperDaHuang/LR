@@ -22,9 +22,12 @@ class LR_API ALrPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+public:
+	ALrPlayerController();
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
+	virtual void Tick(float DeltaSeconds) override;
 	// virtual void CreateInputComponent(TSubclassOf<UInputComponent> InputComponentToCreate) override;
 private:
 	UPROPERTY()
@@ -56,4 +59,28 @@ public:
 	ALrPawnBase* CurrentSelectedPawn;
 
 	bool InhibitoryInput = false;
+
+
+	//相机
+private:
+	void UpdateCamera(float DeltaSeconds);
+
+private:
+
+	/** 当前相机Yaw */
+	float CurrentCameraYaw = 0.f;
+
+	/** 目标Yaw */
+	float TargetCameraYaw = 0.f;
+
+	/** 最近一次移动方向（世界空间） */
+	FVector LastMoveDirection = FVector::ZeroVector;
+
+public:
+
+	UPROPERTY(EditAnywhere, Category="Camera")
+	float CameraPitch = -55.f;
+
+	UPROPERTY(EditAnywhere, Category="Camera")
+	float CameraRotateSpeed = 220.f;
 };

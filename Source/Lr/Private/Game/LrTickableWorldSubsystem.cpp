@@ -63,7 +63,7 @@ void ULrTickableWorldSubsystem::Tick(float DeltaTime)
 			//隐藏
 			Bar->SetVisibility(ESlateVisibility::Hidden);
 		}
-		else if (FMath::IsNearlyEqual(Bar->KeepShowTime, 3.f, DeltaTime))
+		else if (FMath::IsNearlyEqual(Bar->KeepShowTime, 3.f, 0.1))
 		{
 			//显示
 			Bar->SetVisibility(ESlateVisibility::Visible);
@@ -148,7 +148,9 @@ void ULrTickableWorldSubsystem::PlayJumpScare(ALrHeroPawn* Player, ALrEnemyPawn*
 	PlayerPawn = Player;
 	MonsterPawn = Monster;
 
-	SetupCamera();
+	// SetupCamera();
+
+	// 创建Sequence
 	BuildRuntimeSequence();
 	PlayerSeq->OnFinished.AddDynamic(
 		this,
@@ -198,8 +200,12 @@ void ULrTickableWorldSubsystem::BuildRuntimeSequence()
 	FMovieSceneSequencePlaybackSettings Settings;
 	Settings.bAutoPlay = false;
 
-	SeqActor = nullptr;
+
+	// 必须开启
+	// Settings.bRestoreState = true;
+	Settings.FinishCompletionStateOverride = EMovieSceneCompletionModeOverride::ForceRestoreState;
 	ALevelSequenceActor* OutActor = nullptr;
+
 
 	PlayerSeq = ULevelSequencePlayer::CreateLevelSequencePlayer(
 		GetWorld(),
@@ -207,51 +213,146 @@ void ULrTickableWorldSubsystem::BuildRuntimeSequence()
 		Settings,
 		OutActor
 	);
+
+
+	if (!PlayerSeq || !OutActor)
+	{
+		return;
+	}
 	SeqActor = OutActor;
 
-	// OutActor->bOverrideInstanceData = true;
-	// if (UDefaultLevelSequenceInstanceData* InstanceData = Cast<UDefaultLevelSequenceInstanceData>(SeqActor->DefaultInstanceData))
-	// {
-	// 	InstanceData->TransformOrigin = FTransform(FRotator::ZeroRotator, PlayerPawn->GetActorLocation(), FVector::OneVector);
-	// }
-	UDefaultLevelSequenceInstanceData* InstanceData = Cast<UDefaultLevelSequenceInstanceData>(SeqActor->DefaultInstanceData);
+	/*
+		设置Sequence空间原点
+
+		你的Camera Track是Relative:
+
+		BlendType=Relative
+
+		所以这里决定Camera基准位置
+	*/
+
+	OutActor->bOverrideInstanceData = true;
+	UDefaultLevelSequenceInstanceData* InstanceData = Cast<UDefaultLevelSequenceInstanceData>(OutActor->DefaultInstanceData);
 	if (!InstanceData)
 	{
 		InstanceData = NewObject<UDefaultLevelSequenceInstanceData>(OutActor);
 		OutActor->DefaultInstanceData = InstanceData;
 	}
 
-	OutActor->bOverrideInstanceData = true;
-	InstanceData->TransformOrigin = FTransform(PlayerPawn->GetActorLocation());
-	//test
-	UMovieScene* MovieScene = SequenceTemplate->GetMovieScene();
-	if (!PlayerSeq || !OutActor)
-		return;
-	for (FMovieSceneBinding Binding : MovieScene->GetBindings())
-	{
-		const FGuid Guid = Binding.GetObjectGuid();
+	/*
+		计算贴脸Camera位置
+	*/
+	FVector FaceLoc = MonsterPawn->LrSkeletalMeshComponent->GetSocketLocation("FaceSocket");
+	FVector CameraLocation = FaceLoc - MonsterPawn->GetActorForwardVector() * FaceOffset;
+	FRotator CameraRotation = (FaceLoc - CameraLocation).Rotation();
+	
+	FVector FaceLoc11 = PlayerPawn->GetActorLocation();
+	FVector CameraLocation11 = FaceLoc11 - MonsterPawn->GetActorForwardVector() * FaceOffset;
+	FRotator CameraRotation11 = (FaceLoc11 - CameraLocation11).Rotation();
 
-		if (const FMovieScenePossessable* Possessable = MovieScene->FindPossessable(Guid))
+
+	// 设置Sequence世界原点
+	InstanceData->TransformOrigin = FTransform(
+		CameraRotation11,
+		CameraLocation11,
+		FVector::OneVector
+	);
+	// InstanceData->TransformOrigin = FTransform(PlayerPawn->GetActorLocation());
+
+
+	/*
+		绑定角色
+	*/
+
+	SeqActor->SetBindingByTag(
+		"Monster",
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Possessable : %s"),
-			       *Possessable->GetName());
+			MonsterPawn
 		}
-		else if (const FMovieSceneSpawnable* Spawnable = MovieScene->FindSpawnable(Guid))
+	);
+
+
+	SeqActor->SetBindingByTag(
+		"Player",
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Spawnable : %s"),
-			       *Spawnable->GetName());
+			PlayerPawn
 		}
-	}
+	);
 
-	// 🎯 绑定 Camera
-	SeqActor->SetBindingByTag("LrCinCameraActor", {RuntimeCamera});
 
-	// 🎯 绑定 Monster
-	SeqActor->SetBindingByTag("Monster", {MonsterPawn});
+	/*
+		注意:
 
-	// 🎯 绑定 Player
-	SeqActor->SetBindingByTag("Player", {PlayerPawn});
+		不要绑定:
+		
+		LrCinCameraActor
+
+		因为它是Spawnable Camera
+		Sequence自己管理
+	*/
 }
+//
+// void ULrTickableWorldSubsystem::BuildRuntimeSequence()
+// {
+// 	FMovieSceneSequencePlaybackSettings Settings;
+// 	Settings.bAutoPlay = false;
+// 	// 必须开启
+// 	// Settings.bRestoreState = true;
+//
+// 	SeqActor = nullptr;
+// 	ALevelSequenceActor* OutActor = nullptr;
+//
+// 	PlayerSeq = ULevelSequencePlayer::CreateLevelSequencePlayer(
+// 		GetWorld(),
+// 		SequenceTemplate,
+// 		Settings,
+// 		OutActor
+// 	);
+// 	SeqActor = OutActor;
+//
+// 	// OutActor->bOverrideInstanceData = true;
+// 	// if (UDefaultLevelSequenceInstanceData* InstanceData = Cast<UDefaultLevelSequenceInstanceData>(SeqActor->DefaultInstanceData))
+// 	// {
+// 	// 	InstanceData->TransformOrigin = FTransform(FRotator::ZeroRotator, PlayerPawn->GetActorLocation(), FVector::OneVector);
+// 	// }
+// 	UDefaultLevelSequenceInstanceData* InstanceData = Cast<UDefaultLevelSequenceInstanceData>(SeqActor->DefaultInstanceData);
+// 	if (!InstanceData)
+// 	{
+// 		InstanceData = NewObject<UDefaultLevelSequenceInstanceData>(OutActor);
+// 		OutActor->DefaultInstanceData = InstanceData;
+// 	}
+//
+// 	OutActor->bOverrideInstanceData = true;
+// 	InstanceData->TransformOrigin = FTransform(PlayerPawn->GetActorLocation());
+// 	//test
+// 	UMovieScene* MovieScene = SequenceTemplate->GetMovieScene();
+// 	if (!PlayerSeq || !OutActor)
+// 		return;
+// 	for (FMovieSceneBinding Binding : MovieScene->GetBindings())
+// 	{
+// 		const FGuid Guid = Binding.GetObjectGuid();
+//
+// 		if (const FMovieScenePossessable* Possessable = MovieScene->FindPossessable(Guid))
+// 		{
+// 			UE_LOG(LogTemp, Warning, TEXT("Possessable : %s"),
+// 			       *Possessable->GetName());
+// 		}
+// 		else if (const FMovieSceneSpawnable* Spawnable = MovieScene->FindSpawnable(Guid))
+// 		{
+// 			UE_LOG(LogTemp, Warning, TEXT("Spawnable : %s"),
+// 			       *Spawnable->GetName());
+// 		}
+// 	}
+//
+// 	// 🎯 绑定 Camera
+// 	SeqActor->SetBindingByTag("LrCinCameraActor", {RuntimeCamera});
+//
+// 	// 🎯 绑定 Monster
+// 	SeqActor->SetBindingByTag("Monster", {MonsterPawn});
+//
+// 	// 🎯 绑定 Player
+// 	SeqActor->SetBindingByTag("Player", {PlayerPawn});
+// }
 
 void ULrTickableWorldSubsystem::SetupCamera()
 {
@@ -271,7 +372,7 @@ void ULrTickableWorldSubsystem::SetupCamera()
 	ALrPlayerController* PC = PlayerPawn->GetController<ALrPlayerController>();
 	if (PC)
 	{
-		PC->SetViewTarget(RuntimeCamera);
+		// PC->SetViewTarget(RuntimeCamera);
 		PC->InhibitoryInput = true;
 	}
 }
@@ -280,19 +381,23 @@ void ULrTickableWorldSubsystem::OnJumpScareFinished()
 {
 	if (ALrPlayerController* PC = PlayerPawn->GetController<ALrPlayerController>())
 	{
-		PC->SetViewTarget(PlayerPawn);
+		// PC->SetViewTarget(RuntimeCamera);
+		PC->SetViewTargetWithBlend(
+			PlayerPawn,
+			0.25f
+		);
 		PC->InhibitoryInput = false;
 	}
 
-	if (RuntimeCamera)
-	{
-		RuntimeCamera->Destroy();
-		RuntimeCamera = nullptr;
-	}
+	// if (RuntimeCamera)
+	// {
+	// 	RuntimeCamera->Destroy();
+	// 	RuntimeCamera = nullptr;
+	// }
 
 	if (SeqActor)
 	{
-		SeqActor->Destroy();
+		// SeqActor->Destroy();
 		SeqActor = nullptr;
 	}
 

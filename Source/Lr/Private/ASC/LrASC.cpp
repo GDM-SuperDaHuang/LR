@@ -10,6 +10,7 @@
 #include "Component/LrPatrolRouteComponent.h"
 #include "Data/LrBuffDA.h"
 #include "Data/LrGAListDA.h"
+#include "Engine/World.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Lr/Lr.h"
 #include "Pawn/LrEnemyPawn.h"
@@ -71,6 +72,48 @@ void ULrASC::AddAllGA(ALrPawnBase* PawnBase)
 		}
 	}
 }
+
+bool ULrASC::GetCooldownRemainingByTag(FGameplayTag CooldownTag, float& OutRemainingTime, float& OutTotalDuration) const
+{
+	OutRemainingTime = 0.f;
+	OutTotalDuration = 0.f;
+
+	if (!CooldownTag.IsValid())
+	{
+		return false;
+	}
+
+	// UI 层直接拿冷却 Tag 来查 ASC 上带该 Tag 的活动 GE。
+	FGameplayTagContainer CooldownTags;
+	CooldownTags.AddTag(CooldownTag);
+
+	const FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyEffectTags(CooldownTags);
+	const TArray<TPair<float, float>> TimePairs = GetActiveEffectsTimeRemainingAndDuration(Query);
+	if (TimePairs.IsEmpty())
+	{
+		return false;
+	}
+
+	for (const TPair<float, float>& TimePair : TimePairs)
+	{
+		// 取剩余时间最长的一条，作为当前这个技能冷却的主显示值。
+		if (TimePair.Key > OutRemainingTime)
+		{
+			OutRemainingTime = TimePair.Key;
+			OutTotalDuration = TimePair.Value;
+		}
+	}
+
+	return OutRemainingTime > 0.f;
+}
+
+bool ULrASC::IsCooldownActiveByTag(FGameplayTag CooldownTag) const
+{
+	float RemainingTime = 0.f;
+	float TotalDuration = 0.f;
+	return GetCooldownRemainingByTag(CooldownTag, RemainingTime, TotalDuration) && RemainingTime > 0.f;
+}
+
 
 // void ULrASC::AbilityInputTagPressed(const FGameplayTag& InputTags)
 // {

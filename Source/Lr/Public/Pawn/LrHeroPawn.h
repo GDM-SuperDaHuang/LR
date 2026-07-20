@@ -25,6 +25,7 @@ class LR_API ALrHeroPawn : public ALrPawnBase, public ILrEquipInterface
 public:
 	ALrHeroPawn();
 
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void BeginPlay() override;
 
 	virtual void PostInitializeComponents() override;
@@ -50,10 +51,11 @@ protected:
 	TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
 
 	
+
+public:
 	/** 相机 弹簧臂*/
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USpringArmComponent> CameraBoom;
-public:
 	/** 相机 弹簧臂*/
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCameraComponent> TopDownCameraComponent;

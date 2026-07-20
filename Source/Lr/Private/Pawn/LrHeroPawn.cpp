@@ -24,7 +24,7 @@
 ALrHeroPawn::ALrHeroPawn()
 {
 	LrCombatComponent = CreateDefaultSubobject<ULrPlayerCombatComponent>(TEXT("LrCombatComponent"));
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	LrCapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
 	RootComponent = LrCapsuleComponent;
 	LrCapsuleComponent->InitCapsuleSize(34.f, 88.f);
@@ -35,6 +35,7 @@ ALrHeroPawn::ALrHeroPawn()
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetRootComponent());
 	CameraBoom->SetUsingAbsoluteRotation(true);
+	
 	CameraBoom->bDoCollisionTest = false;
 	CameraBoom->TargetArmLength = 800.f;
 
@@ -96,6 +97,12 @@ ALrHeroPawn::ALrHeroPawn()
 	// =========================
 	SelectionRing->SetupAttachment(RootComponent);
 	
+}
+
+void ALrHeroPawn::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	SetMPCParameter();
 }
 
 void ALrHeroPawn::BeginPlay()

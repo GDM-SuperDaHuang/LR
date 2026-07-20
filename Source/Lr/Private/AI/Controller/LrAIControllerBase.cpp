@@ -146,18 +146,18 @@ void ALrAIControllerBase::ShutdownAI()
 void ALrAIControllerBase::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
 {
 	Super::OnMoveCompleted(RequestID, Result);
-	if (Result == EPathFollowingResult::Success)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("到达目标"));
-	}
-	else if (Result == EPathFollowingResult::Aborted)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("移动被取消"));
-	}
-	else if (Result == EPathFollowingResult::Blocked)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("被阻挡"));
-	}
+	// if (Result == EPathFollowingResult::Success)
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("到达目标"));
+	// }
+	// else if (Result == EPathFollowingResult::Aborted)
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("移动被取消"));
+	// }
+	// else if (Result == EPathFollowingResult::Blocked)
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("被阻挡"));
+	// }
 	MoveState = EMoveState::Finish;
 }
 

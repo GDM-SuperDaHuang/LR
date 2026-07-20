@@ -6,7 +6,11 @@
 #include "UObject/Object.h"
 #include "LrUIController.generated.h"
 
+class ULrMVVMSkillSlot;
+class ALrPawnBase;
 struct FGameplayTag;
+class APawn;
+class ULrASC;
 class ULrMVVMVBar;
 
 /**
@@ -22,6 +26,8 @@ public:
 
 	void Tick(float DeltaTime);
 
+	void InitSkillSlots(ALrPawnBase* OwnerPawn);
+
 public:
 	void OnASChanged(FGameplayTag ASTag, float Current, float Max);
 
@@ -31,6 +37,9 @@ public:
 
 	UPROPERTY()
 	TObjectPtr<ULrMVVMVBar> MPVM;
+
+	UPROPERTY()
+	TArray<TObjectPtr<ULrMVVMSkillSlot>> SkillSlotVMs;
 
 private:
 	// UPROPERTY()
