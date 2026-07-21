@@ -40,4 +40,21 @@ public:
 
 	//
 	void ApplyDamageToTarget(AActor* SourceActor, AActor* Target, FDamageEffectParams DamageEffectParams) const;
+
+	void ApplyRegenEffects(float MPRegenPerSec = 5.0f, float EnduranceRegenPerSec = 3.0f);
+
+	void OnDamageReceived();
+
+private:
+	UFUNCTION()
+	void ResumeRegenEffects();
+
+	UPROPERTY()
+	float MPRegenPerSec0 = 5.0f;
+
+	UPROPERTY()
+	float EnduranceRegenPerSec0 = 3.0f;
+	
+	FActiveGameplayEffectHandle RegenEffectHandle;
+	FTimerHandle RegenPauseHandle;
 };

@@ -5,12 +5,15 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemGlobals.h"
-#include "ASC/GA/LrGABase.h"
+#include "ASC/AS/LrAS.h"
 #include "ASC/GE/LrGEContext.h"
 #include "Component/LrPatrolRouteComponent.h"
 #include "Data/LrBuffDA.h"
 #include "Data/LrGAListDA.h"
 #include "Engine/World.h"
+#include "GameplayEffect.h"
+#include "TimerManager.h"
+#include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Lr/Lr.h"
 #include "Pawn/LrEnemyPawn.h"
@@ -112,6 +115,67 @@ bool ULrASC::IsCooldownActiveByTag(FGameplayTag CooldownTag) const
 	float RemainingTime = 0.f;
 	float TotalDuration = 0.f;
 	return GetCooldownRemainingByTag(CooldownTag, RemainingTime, TotalDuration) && RemainingTime > 0.f;
+}
+
+void ULrASC::ApplyRegenEffects(float MPRegenPerSec, float EnduranceRegenPerSec)
+{
+	if (RegenEffectHandle.IsValid())
+	{
+		RemoveActiveGameplayEffect(RegenEffectHandle);
+		RegenEffectHandle.Invalidate();
+	}
+
+	UGameplayEffect* RegenGE = NewObject<UGameplayEffect>(this, FName("GE_DynamicRegen"));
+	RegenGE->DurationPolicy = EGameplayEffectDurationType::Infinite;
+	RegenGE->Period = 1.0f;
+	RegenGE->bExecutePeriodicEffectOnApplication = false;
+
+	FGameplayModifierInfo MPModifier;
+	MPModifier.Attribute = ULrAS::GetMPAttribute();
+	MPModifier.ModifierOp = EGameplayModOp::Additive;
+	MPModifier.ModifierMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(MPRegenPerSec));
+	RegenGE->Modifiers.Add(MPModifier);
+
+	FGameplayModifierInfo EnduranceModifier;
+	EnduranceModifier.Attribute = ULrAS::GetEnduranceAttribute();
+	EnduranceModifier.ModifierOp = EGameplayModOp::Additive;
+	EnduranceModifier.ModifierMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(EnduranceRegenPerSec));
+	RegenGE->Modifiers.Add(EnduranceModifier);
+
+	//
+	UTargetTagsGameplayEffectComponent& TargetTagsComponent = RegenGE->FindOrAddComponent<UTargetTagsGameplayEffectComponent>();
+	FInheritedTagContainer TagChanges;
+	TagChanges.Added.AddTag(FLrGameplayTags::Get().Effect_Regen);
+	TargetTagsComponent.SetAndApplyTargetTagChanges(TagChanges);
+
+
+	
+	FGameplayEffectContextHandle Context = MakeEffectContext();
+	Context.AddSourceObject(GetOwner());
+	RegenEffectHandle = ApplyGameplayEffectToSelf(RegenGE, 1.0f, Context);
+}
+
+void ULrASC::OnDamageReceived()
+{
+	AActor* Owner = GetOwnerActor();
+	if (!Owner || !Owner->HasAuthority())
+	{
+		return;
+	}
+
+	if (RegenEffectHandle.IsValid())
+	{
+		RemoveActiveGameplayEffect(RegenEffectHandle);
+		RegenEffectHandle.Invalidate();
+	}
+
+	GetWorld()->GetTimerManager().ClearTimer(RegenPauseHandle);
+	GetWorld()->GetTimerManager().SetTimer(RegenPauseHandle, this, &ULrASC::ResumeRegenEffects, 3.0f, false);
+}
+
+void ULrASC::ResumeRegenEffects()
+{
+	ApplyRegenEffects(MPRegenPerSec0, EnduranceRegenPerSec0);
 }
 
 

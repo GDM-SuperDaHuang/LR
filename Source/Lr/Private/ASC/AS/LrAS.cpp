@@ -5,8 +5,8 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameplayEffectExtension.h"
+#include "ASC/LrASC.h"
 #include "ASC/GE/LrGEContext.h"
-#include "Data/LrBuffDA.h"
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Net/UnrealNetwork.h"
@@ -159,6 +159,11 @@ void ULrAS::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackDat
 		if (!bIsDead)
 		{
 			SetHP(FMath::Clamp(NewHP, 0.f, GetMaxHP()));
+		}
+		
+		if (ULrASC* LrASC = Cast<ULrASC>(&Data.Target))
+		{
+			LrASC->OnDamageReceived();
 		}
 	}
 

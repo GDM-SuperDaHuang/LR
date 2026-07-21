@@ -389,6 +389,11 @@ void ALrPawnBase::InitAS() const
 			LrASC->SetNumericAttributeBase(GameplayAttribute, Row->BaseValue);
 		}
 	}
+
+	if (LrASC)
+	{
+		LrASC->ApplyRegenEffects(5.0f, 3.0f);
+	}
 }
 
 void ALrPawnBase::UpdateDissolveProgress()
