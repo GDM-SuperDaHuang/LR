@@ -54,11 +54,18 @@ void ALrPlayerController::BeginPlay()
 		0.05f,
 		true);
 
-	// 输入模式：既响应游戏（WASD）也响应 UI（点击 Widget）
+	// 输入模式：既响应游戏（WASD/鼠标转视角）也响应 UI（点击 Widget）
 	// FInputModeGameAndUI InputModeData;
 	// InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock); // 不锁定鼠标到视口
 	// InputModeData.SetHideCursorDuringCapture(false); // 捕获输入时不隐藏光标
 	// SetInputMode(InputModeData); // 应用输入模式
+	// 鼠标捕获后不消费第一次MouseDown
+	FInputModeGameOnly InputMode;
+	// 鼠标捕获后不消费第一次MouseDown
+	InputMode.SetConsumeCaptureMouseDown(false);
+
+	SetInputMode(InputMode);
+	bShowMouseCursor = false;
 
 
 	if (ALrHeroPawn* Hero = Cast<ALrHeroPawn>(GetPawn()))
