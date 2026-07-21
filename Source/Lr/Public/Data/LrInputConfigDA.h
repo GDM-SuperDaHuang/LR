@@ -76,4 +76,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FLrDefaultBindInputFKey> LrBindInputFKeyList;
+
+	UPROPERTY(EditDefaultsOnly)
+	const UInputAction* LookAction = nullptr;
+
 };
