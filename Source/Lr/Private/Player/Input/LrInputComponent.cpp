@@ -91,4 +91,15 @@ void ULrInputComponent::ApplyPlayerKeyMappings(const ULrInputConfigDA* InputConf
 			}
 		}
 	}
+
+	// 鼠标视角：MouseX -> X, MouseY -> Y
+	if (LookAction)
+	{
+		MappingContext->MapKey(LookAction, EKeys::MouseX);
+
+		FEnhancedActionKeyMapping& MouseYMapping = MappingContext->MapKey(LookAction, EKeys::MouseY);
+		UInputModifierSwizzleAxis* Swizzle = NewObject<UInputModifierSwizzleAxis>();
+		Swizzle->Order = EInputAxisSwizzle::YXZ;
+		MouseYMapping.Modifiers.Add(Swizzle);
+	}
 }

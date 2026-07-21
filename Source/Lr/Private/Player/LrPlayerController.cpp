@@ -68,8 +68,6 @@ void ALrPlayerController::BeginPlay()
 		CurrentCameraYaw = Hero->CameraBoom->GetComponentRotation().Yaw;
 
 		TargetCameraYaw = CurrentCameraYaw;
-
-		LastMoveDirection = Hero->GetActorForwardVector();
 	}
 }
 
@@ -118,6 +116,8 @@ void ALrPlayerController::SetupInputComponent()
 	// 停止
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ALrPlayerController::MoveCompleted);
 
+	// 鼠标控制摄像机
+	AuraInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ALrPlayerController::Look);
 
 	//跳
 	// AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALrPlayerController::Jump);
@@ -267,11 +267,6 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 		// Input = InputActionValue.Get<FVector>();
 	}
 
-	if (!Input.IsNearlyZero())
-	{
-		LastMoveDirection = Input;
-	}
-
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
 	{
 		ControlledPawn->UpdateMove(Input);
@@ -296,14 +291,17 @@ void ALrPlayerController::MoveCompleted(const FInputActionValue& InputActionValu
 	{
 		ControlledPawn->UpdateMove(Input);
 	}
-	// //返回 摄像机或控制器 的 世界旋转
-	// const FRotator Rotator = GetControlRotation();
-	// // 提取 Yaw 旋转，忽略 Pitch/Roll
-	// const FRotator YawRotator(0.f, Rotator.Yaw, 0.f); //水平面朝向（俯仰角清零），防止 上坡/下坡 时 前后方向错位。
-	//
-	// // 把二维输入映射到世界空间的前/右方向
-	// const FVector ForwardDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::X);
-	// const FVector RightDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::Y);
+}
+
+void ALrPlayerController::Look(const FInputActionValue& InputActionValue)
+{
+	const FVector2D LookAxisVector = InputActionValue.Get<FVector2D>();
+
+	// 鼠标左右移动：水平旋转相机
+	TargetCameraYaw += LookAxisVector.X * CameraYawSpeed;
+
+	// 鼠标上下移动：调整俯仰角
+	CameraPitch = FMath::Clamp(CameraPitch + LookAxisVector.Y * CameraPitchSpeed, MinCameraPitch, MaxCameraPitch);
 }
 
 void ALrPlayerController::Jump() const
@@ -419,31 +417,10 @@ void ALrPlayerController::UpdateCamera(float DeltaSeconds)
 	}
 
 	//------------------------------------
-	// 更新目标Yaw
-	//------------------------------------
-
-	// if (!LastMoveDirection.IsNearlyZero())
-	// {
-	// 	TargetCameraYaw = LastMoveDirection.Rotation().Yaw;
-	// }
-	const float DesiredYaw = LastMoveDirection.Rotation().Yaw;
-	if (FMath::Abs(FMath::FindDeltaAngleDegrees(TargetCameraYaw, DesiredYaw)) > 90.f)
-	{
-		TargetCameraYaw = DesiredYaw;
-	}
-
-	//------------------------------------
-	// 平滑旋转
-	//------------------------------------
-
-	CurrentCameraYaw = FMath::FixedTurn(
-		CurrentCameraYaw,
-		TargetCameraYaw,
-		CameraRotateSpeed * DeltaSeconds);
-
-	//------------------------------------
 	// 设置CameraBoom
 	//------------------------------------
+
+	CurrentCameraYaw = TargetCameraYaw;
 
 	Hero->CameraBoom->SetWorldRotation(FRotator(
 		CameraPitch,

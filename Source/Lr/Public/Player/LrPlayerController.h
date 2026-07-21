@@ -42,12 +42,16 @@ private:
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> MoveAction;
 
+	UPROPERTY(EditAnywhere, Category="Input")
+	TObjectPtr<UInputAction> LookAction;
+
 	void AbilityInputTagPressed0(int32 InputId);
 	void AbilityInputTagReleased0(int32 InputId);
 	void AbilityInputTagHeld0(int32 InputId);
 
 	void Move(const FInputActionValue& InputActionValue);
 	void MoveCompleted(const FInputActionValue& InputActionValue);
+	void Look(const FInputActionValue& InputActionValue);
 	void Jump() const;
 
 public:
@@ -73,9 +77,6 @@ private:
 	/** 目标Yaw */
 	float TargetCameraYaw = 0.f;
 
-	/** 最近一次移动方向（世界空间） */
-	FVector LastMoveDirection = FVector::ZeroVector;
-
 public:
 
 	UPROPERTY(EditAnywhere, Category="Camera")
@@ -83,4 +84,20 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Camera")
 	float CameraRotateSpeed = 220.f;
+
+	/** 鼠标控制摄像机Yaw的灵敏度（度/每单位输入） */
+	UPROPERTY(EditAnywhere, Category="Camera")
+	float CameraYawSpeed = 0.5f;
+
+	/** 鼠标控制摄像机Pitch的灵敏度（度/每单位输入） */
+	UPROPERTY(EditAnywhere, Category="Camera")
+	float CameraPitchSpeed = 0.3f;
+
+	/** 摄像机Pitch最小值（防止贴地） */
+	UPROPERTY(EditAnywhere, Category="Camera")
+	float MinCameraPitch = -75.f;
+
+	/** 摄像机Pitch最大值（防止俯视太平） */
+	UPROPERTY(EditAnywhere, Category="Camera")
+	float MaxCameraPitch = -10.f;
 };
