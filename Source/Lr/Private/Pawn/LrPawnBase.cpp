@@ -25,6 +25,7 @@
 #include "Mover/Blink/LrKnockbackMovementMode.h"
 #include "Mover/Death/LrDeathMovementMode.h"
 #include "Mover/Empty/LrEmptyMovementMode.h"
+#include "Mover/Fly/LrFlyMovementMode.h"
 #include "Mover/Walk/LrWalkMovementMode.h"
 
 // Sets default values
@@ -32,7 +33,7 @@ ALrPawnBase::ALrPawnBase()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-	
+
 	bReplicates = true;
 
 	// 关键：禁用Actor级别的移动复制
@@ -43,7 +44,14 @@ ALrPawnBase::ALrPawnBase()
 	// Mover
 	// =========================
 	LrMoverComponent = CreateDefaultSubobject<ULrMoverComponent>(TEXT("MoverComponent"));
+	//  清空旧模式（防止重复注册）
+	// LrMoverComponent->MovementModes.Empty();
 
+	// 创建新的移动模式对象：行走模式、空中模式
+
+	// 清空显式的状态转换表（转换逻辑已内置于各移动模式内部）
+	// LrMoverComponent->Transitions.Empty();
+	// LrMoverComponent->QueueNextMode(LrAllModes::Air);
 	// =========================
 	// 动画相关
 	// =========================
@@ -233,20 +241,21 @@ void ALrPawnBase::BeginPlay()
 
 
 	//  清空旧模式（防止重复注册）
-	LrMoverComponent->MovementModes.Empty();
-
-	// 创建新的移动模式对象：行走模式、空中模式
-	// 使用 RealisticMovementDefines 中定义的键名（例如 RealisticModes::Walk
-	LrMoverComponent->MovementModes.Add(LrAllModes::Walk, NewObject<ULrWalkMovementMode>(LrMoverComponent));
-	LrMoverComponent->MovementModes.Add(LrAllModes::Air, NewObject<ULrAirMovementMode>(LrMoverComponent));
-	LrMoverComponent->MovementModes.Add(LrAllModes::Blink, NewObject<ULrBlinkMovementMode>(LrMoverComponent));
-	LrMoverComponent->MovementModes.Add(LrAllModes::Knock, NewObject<ULrKnockbackMovementMode>(LrMoverComponent));
-	LrMoverComponent->MovementModes.Add(LrAllModes::Death, NewObject<ULrDeathMovementMode>(LrMoverComponent));
-	LrMoverComponent->MovementModes.Add(LrAllModes::Empty, NewObject<ULrEmptyMovementMode>(LrMoverComponent));
-
-
-	// 清空显式的状态转换表（转换逻辑已内置于各移动模式内部）
-	LrMoverComponent->Transitions.Empty();
+	// LrMoverComponent->MovementModes.Empty();
+	//
+	// // 创建新的移动模式对象：行走模式、空中模式
+	// // 使用 RealisticMovementDefines 中定义的键名（例如 RealisticModes::Walk
+	// LrMoverComponent->MovementModes.Add(LrAllModes::Empty, NewObject<ULrEmptyMovementMode>(LrMoverComponent));
+	// LrMoverComponent->MovementModes.Add(LrAllModes::Walk, NewObject<ULrWalkMovementMode>(LrMoverComponent));
+	// LrMoverComponent->MovementModes.Add(LrAllModes::Air, NewObject<ULrAirMovementMode>(LrMoverComponent));
+	// LrMoverComponent->MovementModes.Add(LrAllModes::Blink, NewObject<ULrBlinkMovementMode>(LrMoverComponent));
+	// LrMoverComponent->MovementModes.Add(LrAllModes::Knock, NewObject<ULrKnockbackMovementMode>(LrMoverComponent));
+	// LrMoverComponent->MovementModes.Add(LrAllModes::Death, NewObject<ULrDeathMovementMode>(LrMoverComponent));
+	// LrMoverComponent->MovementModes.Add(LrAllModes::Fly, NewObject<ULrFlyMovementMode>(LrMoverComponent));
+	//
+	//
+	// // 清空显式的状态转换表（转换逻辑已内置于各移动模式内部）
+	// LrMoverComponent->Transitions.Empty();
 
 	// 设置起始模式为空中模式（防止角色一开始就卡在地面下）
 	// 通常空中模式会在落地时自动切换到行走模式

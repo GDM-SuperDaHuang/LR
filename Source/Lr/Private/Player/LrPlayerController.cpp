@@ -12,6 +12,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Lr/Lr.h"
+#include "Mover/LrAllModes.h"
 #include "Mover/LrMoverComponent.h"
 #include "Pawn/LrHeroPawn.h"
 #include "Player/Input/LrInputComponent.h"
@@ -190,6 +191,7 @@ void ALrPlayerController::AbilityInputTagPressed0(int32 InputId)
 			HUD->Crosshair->SetCrosshairVisible(true); //显示准心
 		}
 	}
+
 	if (LrASC == nullptr)
 	{
 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
@@ -213,6 +215,14 @@ void ALrPlayerController::AbilityInputTagReleased0(int32 InputId)
 	if (InputId == static_cast<int32>(EGAInputID::Jump))
 	{
 		Jump();
+	}
+	else if (InputId == static_cast<int32>(EGAInputID::Fly))
+	{
+		Fly();
+	}
+	else if (InputId == static_cast<int32>(EGAInputID::Climb))
+	{
+		Climb();
 	}
 	else
 	{
@@ -241,7 +251,7 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 	{
 		return;
 	}
-	// ULrCommonLibrary::PrintLog(GetWorld(), this);
+
 	if (LrASC == nullptr)
 	{
 		TObjectPtr<APawn> tPawn = GetPawn();
@@ -259,42 +269,32 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 	else
 	{
 		// 增强输入默认返回 FVector2D
-		// FVector2D InputVector = InputActionValue.Get<FVector2D>();
-		// const FRotator Rotation = GetControlRotation();
-		// const FRotator YawRotation(0, Rotation.Yaw, 0);
-		// const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		// const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		// Input = (ForwardDirection * InputVector.X) + (RightDirection * InputVector.Y);
-		// Input.Normalize();
-
-		// 增强输入默认返回 FVector2D
-		FVector2D InputVector = InputActionValue.Get<FVector2D>();
+		FVector InputVector = InputActionValue.Get<FVector>();
 		// 俯视角固定相机：移动方向始终基于相机的世界朝向，而非 ControlRotation
 		// 这样无论 PlayerStart 的 Yaw 是多少，WASD 始终与屏幕上下左右一致
 		const FRotator CameraRotation = PlayerCameraManager ? PlayerCameraManager->GetCameraRotation() : GetControlRotation();
 		const FRotator YawRotation(0, CameraRotation.Yaw, 0);
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		Input = (ForwardDirection * InputVector.X) + (RightDirection * InputVector.Y);
-		Input.Normalize();
-		//之前
-		// Input = InputActionValue.Get<FVector>();
+		//------------------------------------
+		// XY 平面移动
+		//------------------------------------
+		Input += ForwardDirection * InputVector.Y;
+		Input += RightDirection * InputVector.X;
+		//------------------------------------
+		// Z 保留给飞行
+		//------------------------------------
+		Input.Z = InputVector.Z;
+		if (!Input.IsNearlyZero())
+		{
+			Input.Normalize();
+		}
 	}
 
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
 	{
 		ControlledPawn->UpdateMove(Input);
 	}
-
-
-	// //返回 摄像机或控制器 的 世界旋转
-	// const FRotator Rotator = GetControlRotation();
-	// // 提取 Yaw 旋转，忽略 Pitch/Roll
-	// const FRotator YawRotator(0.f, Rotator.Yaw, 0.f); //水平面朝向（俯仰角清零），防止 上坡/下坡 时 前后方向错位。
-	//
-	// // 把二维输入映射到世界空间的前/右方向
-	// const FVector ForwardDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::X);
-	// const FVector RightDirection = FRotationMatrix(YawRotator).GetUnitAxis(EAxis::Y);
 }
 
 void ALrPlayerController::MoveCompleted(const FInputActionValue& InputActionValue)
@@ -323,6 +323,22 @@ void ALrPlayerController::Jump() const
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
 	{
 		ControlledPawn->UpdatePressedJump(true);
+	}
+}
+
+void ALrPlayerController::Fly() const
+{
+	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
+	{
+		ControlledPawn->LrMoverComponent->QueueNextMode(LrAllModes::Fly);
+	}
+}
+
+void ALrPlayerController::Climb() const
+{
+	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
+	{
+		ControlledPawn->LrMoverComponent->QueueNextMode(LrAllModes::Climb);
 	}
 }
 

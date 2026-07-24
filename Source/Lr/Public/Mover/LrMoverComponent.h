@@ -38,4 +38,6 @@ public:
 	void Launch(FVector Impulse, float Duration);
 
 	FPendingLaunchData PendingLaunchData;
+
+	bool TryEnterClimb() const;
 };

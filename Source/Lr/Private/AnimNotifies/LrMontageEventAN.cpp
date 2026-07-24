@@ -7,6 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Abilities/GameplayAbilityTypes.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Pawn/LrEnemyPawn.h"
 
 void ULrMontageEventAN::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)

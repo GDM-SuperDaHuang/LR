@@ -16,7 +16,10 @@ public class Lr : ModuleRules
 			"NavigationSystem", "StateTreeModule", "GameplayStateTreeModule", "LevelSequence", "MovieScene"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "Engine", "Core", "NetCore", "Networking", "PacketHandler", "Niagara", "AlembicLib", "LevelSequence", "LevelSequence", "MovieScene" });
+		PrivateDependencyModuleNames.AddRange(new string[]
+		{
+			"Engine", "Core", "NetCore", "Networking", "PacketHandler", "Niagara", "AlembicLib", "LevelSequence", "LevelSequence", "MovieScene",
+		});
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

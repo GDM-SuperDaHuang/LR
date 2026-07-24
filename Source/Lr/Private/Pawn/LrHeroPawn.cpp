@@ -77,7 +77,7 @@ ALrHeroPawn::ALrHeroPawn()
 	// =========================
 	LrMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
 	// CharacterMotionComponent->SetIsReplicated(true);
-
+	int32 INT32 = LrMoverComponent->MovementModes.Num();
 
 	// =========================
 	// Nav → Mover 桥接

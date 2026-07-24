@@ -50,44 +50,105 @@ void ULrInputComponent::ApplyPlayerKeyMappings(const ULrInputConfigDA* InputConf
 	}
 
 	//移动操作wasd
+	// for (const FLrAxisBindInputFKey& Axis : InputConfig->LrAxisBindInputFKeyList)
+	// {
+	// 	if (!Axis.InputAction)
+	// 	{
+	// 		continue;
+	// 	}
+	// 	for (const FLrAxisKey& Key : Axis.LrAxisKeyList)
+	// 	{
+	// 		FEnhancedActionKeyMapping& Mapping = MappingContext->MapKey(Axis.InputAction, Key.BoundKey);
+	// 		// ✔ 关键点：Scalar 直接表达方向
+	// 		UInputModifierScalar* Scalar = NewObject<UInputModifierScalar>();
+	//
+	// 		// ✔ 关键：不同 Axis 控制不同维度
+	// 		if (Key.IsFU)
+	// 		{
+	// 			UInputModifierSwizzleAxis* Swizzle = NewObject<UInputModifierSwizzleAxis>();
+	// 			Swizzle->Order = EInputAxisSwizzle::YXZ;
+	// 			Mapping.Modifiers.Add(Swizzle);
+	// 		}
+	//
+	// 		// --------------------------------
+	// 		// 方向
+	// 		// --------------------------------
+	// 		if (Key.Scale < 0.f)
+	// 		{
+	// 			UInputModifierNegate* Negate = NewObject<UInputModifierNegate>();
+	// 			// 前后移动反转 Y
+	// 			if (Key.IsFU)
+	// 			{
+	// 				Negate->bY = true;
+	// 				Negate->bX = false;
+	// 			}
+	// 			else
+	// 			{
+	// 				Negate->bX = true;
+	// 				Negate->bY = false;
+	// 			}
+	// 			Mapping.Modifiers.Add(Negate);
+	// 		}
+	// 	}
+	// }
+
+
 	for (const FLrAxisBindInputFKey& Axis : InputConfig->LrAxisBindInputFKeyList)
 	{
 		if (!Axis.InputAction)
 		{
 			continue;
 		}
+
 		for (const FLrAxisKey& Key : Axis.LrAxisKeyList)
 		{
 			FEnhancedActionKeyMapping& Mapping = MappingContext->MapKey(Axis.InputAction, Key.BoundKey);
-			// ✔ 关键点：Scalar 直接表达方向
-			UInputModifierScalar* Scalar = NewObject<UInputModifierScalar>();
-
-			// ✔ 关键：不同 Axis 控制不同维度
-			if (Key.IsFU)
+			switch (Key.AxisType)
 			{
-				UInputModifierSwizzleAxis* Swizzle = NewObject<UInputModifierSwizzleAxis>();
-				Swizzle->Order = EInputAxisSwizzle::YXZ;
-				Mapping.Modifiers.Add(Swizzle);
-			}
+			case ELrAxisType::Forward:
+				{
+					// Y轴
+					if (Key.Scale < 0)
+					{
+						UInputModifierNegate* Negate =NewObject<UInputModifierNegate>();
+						Negate->bX = true;
+						Mapping.Modifiers.Add(Negate);
+					}
+					
+					UInputModifierSwizzleAxis* Swizzle =NewObject<UInputModifierSwizzleAxis>();
+					Swizzle->Order =EInputAxisSwizzle::YXZ;
+					Mapping.Modifiers.Add(Swizzle);
+					break;
+				}
 
-			// --------------------------------
-			// 方向
-			// --------------------------------
-			if (Key.Scale < 0.f)
-			{
-				UInputModifierNegate* Negate = NewObject<UInputModifierNegate>();
-				// 前后移动反转 Y
-				if (Key.IsFU)
+			case ELrAxisType::Right:
 				{
-					Negate->bY = true;
-					Negate->bX = false;
+					if (Key.Scale < 0)
+					{
+						UInputModifierNegate* Negate = NewObject<UInputModifierNegate>();
+						Negate->bX = true;
+						Mapping.Modifiers.Add(Negate);
+					}
+					break;
 				}
-				else
+
+			case ELrAxisType::Vertical:
 				{
-					Negate->bX = true;
-					Negate->bY = false;
+					// 负方向
+					if (Key.Scale < 0)
+					{
+						UInputModifierNegate* Negate = NewObject<UInputModifierNegate>();
+						// 默认输入在X
+						Negate->bX = true;
+						Mapping.Modifiers.Add(Negate);
+					}
+					// X -> Z
+					UInputModifierSwizzleAxis* Swizzle = NewObject<UInputModifierSwizzleAxis>();
+					Swizzle->Order = EInputAxisSwizzle::YZX;
+					Mapping.Modifiers.Add(Swizzle);
+
+					break;
 				}
-				Mapping.Modifiers.Add(Negate);
 			}
 		}
 	}

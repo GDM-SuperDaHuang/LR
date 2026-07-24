@@ -53,7 +53,8 @@ private:
 	void MoveCompleted(const FInputActionValue& InputActionValue);
 	void Look(const FInputActionValue& InputActionValue);
 	void Jump() const;
-
+	void Fly() const;
+	void Climb() const;
 public:
 	UFUNCTION()
 	ALrPawnBase* GetNearestPawnToCursor(float MaxScreenDistance = 120.f);

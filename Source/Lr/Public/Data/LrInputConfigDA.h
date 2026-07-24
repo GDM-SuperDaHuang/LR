@@ -34,6 +34,14 @@ struct FLrDefaultBindInputFKey
 	TArray<FKey> BoundKeys;
 };
 
+UENUM(BlueprintType)
+enum class ELrAxisType : uint8
+{
+	Forward, //上下
+	Right, //左右
+	Vertical //下降，上升
+};
+
 USTRUCT(BlueprintType)
 struct FLrAxisKey
 {
@@ -45,8 +53,11 @@ struct FLrAxisKey
 	UPROPERTY(EditDefaultsOnly)
 	float Scale = 1.f; // +1 or -1
 
+	// UPROPERTY(EditDefaultsOnly)
+	// bool IsFU = true; // true:上下， fasle:左右
+
 	UPROPERTY(EditDefaultsOnly)
-	bool IsFU = true; // true:上下， fasle:左右
+	ELrAxisType AxisType;
 };
 
 // 移动按键
@@ -61,6 +72,7 @@ struct FLrAxisBindInputFKey
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FLrAxisKey> LrAxisKeyList;
 };
+
 
 /**
  * 
@@ -81,5 +93,4 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	const UInputAction* LookAction = nullptr;
-
 };

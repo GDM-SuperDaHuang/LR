@@ -8,7 +8,10 @@ USTRUCT(BlueprintType)
 struct FLrMoverInputCmd : public FCharacterDefaultInputs
 {
 	GENERATED_BODY()
-
+	
+	UPROPERTY(BlueprintReadWrite, Category = Mover)
+	float FlyVertical;
+	
 	UPROPERTY(BlueprintReadWrite, Category = Mover)
 	bool bIsCrouchPressed = false;//蹲伏
 
