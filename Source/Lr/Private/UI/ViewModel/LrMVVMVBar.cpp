@@ -7,7 +7,7 @@ void ULrMVVMVBar::SetValue(float InCurrent, float InMax)
 {
 	CurrentValue = InCurrent;
 	MaxValue = InMax;
-	UE_LOG(LogTemp, Warning, TEXT("MVVM: %p"), this);
+	// UE_LOG(LogTemp, Warning, TEXT("MVVM: %p"), this);
 	
 	const float NewPercent = MaxValue <= 0.f ? 0.f : CurrentValue / MaxValue;
 

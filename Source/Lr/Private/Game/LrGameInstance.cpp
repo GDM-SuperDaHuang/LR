@@ -51,7 +51,7 @@ void ULrGameInstance::RebindKey(int32 InputId, FKey NewKey)
 		InputSaveGame->KeyMappings.FindByPredicate(
 			[&](const FLrPlayerKeyMapping& Data)
 			{
-				return Data.InputId == InputId;
+				return Data.InputId == static_cast<EGAInputID>(InputId);
 			});
 
 	if (Mapping)
@@ -62,8 +62,8 @@ void ULrGameInstance::RebindKey(int32 InputId, FKey NewKey)
 	else
 	{
 		FLrPlayerKeyMapping NewMapping;
-
-		NewMapping.InputId = InputId;
+		
+		NewMapping.InputId = static_cast<EGAInputID>(InputId);
 		NewMapping.CustomKeys.Add(NewKey);
 
 		InputSaveGame->KeyMappings.Add(NewMapping);

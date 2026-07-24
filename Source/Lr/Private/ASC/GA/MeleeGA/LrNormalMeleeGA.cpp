@@ -23,6 +23,8 @@ ULrNormalMeleeGA::ULrNormalMeleeGA()
 void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	TestNum++;
+	UE_LOG(LogTemp, Warning, TEXT("ULrNormalMeleeGA::ActivateAbility =%d "), TestNum);
 
 
 	// ========== 0. 合法性校验 ==========
@@ -116,6 +118,7 @@ void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	PlayTask->OnCompleted.AddDynamic(this, &ULrNormalMeleeGA::OnMontageFinished);
 	PlayTask->OnInterrupted.AddDynamic(this, &ULrNormalMeleeGA::OnMontageFinished);
 	PlayTask->OnCancelled.AddDynamic(this, &ULrNormalMeleeGA::OnMontageFinished);
+	PlayTask->OnBlendOut.AddDynamic(this, &ThisClass::OnMontageFinished);
 	PlayTask->ReadyForActivation();
 
 
@@ -132,10 +135,13 @@ void ULrNormalMeleeGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 void ULrNormalMeleeGA::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	TestNum--;
+	UE_LOG(LogTemp, Warning, TEXT("ULrNormalMeleeGA::EndAbility =%d "), TestNum);
 }
 
 void ULrNormalMeleeGA::OnMontageFinished()
 {
+	UE_LOG(LogTemp, Warning, TEXT("ULrNormalMeleeGA::OnMontageFinished =%d "), TestNum);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 	ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
 	if (!OwnerPawn) return;

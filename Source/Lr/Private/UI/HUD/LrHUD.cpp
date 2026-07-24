@@ -15,6 +15,7 @@
 #include "UI/Widget/LrMainWidget.h"
 #include "UI/Widget/Bar/LrHPBarWidget.h"
 #include "UI/Widget/Bar/LrMPBarWidget.h"
+#include "UI/Widget/Crosshair/LrCrosshairWidget.h"
 #include "UI/Widget/Skill/LrSkillPanelWidget.h"
 
 
@@ -71,6 +72,11 @@ void ALrHUD::BeginPlay()
 		HandleASCRegistered(LrPawnBase->GetASC());
 	}
 	LrPawnBase->OnASCRegistered.AddUObject(this, &ALrHUD::HandleASCRegistered);
+
+	//准心UI
+	Crosshair = CreateWidget<ULrCrosshairWidget>(PC, CrosshairClass);
+	Crosshair->AddToViewport();
+	Crosshair->SetCrosshairVisible(false); //不显示
 }
 
 void ALrHUD::Tick(float DeltaSeconds)

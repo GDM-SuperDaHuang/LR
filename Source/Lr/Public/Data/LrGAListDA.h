@@ -5,9 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
+#include "Lr/Lr.h"
 #include "LrGAListDA.generated.h"
 
 
+enum class EGAInputID : uint8;
 class ALrLightning;
 class USoundBase;
 class UAnimMontage;
@@ -32,7 +34,7 @@ struct FLrGAConfig
 	// FGameplayTag InputTag = FGameplayTag(); // 输入触发标签。
 
 	UPROPERTY(EditDefaultsOnly)
-	int32 InputId = 0; // 输入触发标签。
+	EGAInputID InputId = EGAInputID::None ; // 输入触发标签。
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)

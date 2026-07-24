@@ -390,9 +390,10 @@ void ALrPawnBase::InitAS() const
 		}
 	}
 
+	//todo
 	if (LrASC)
 	{
-		LrASC->ApplyRegenEffects(5.0f, 3.0f);
+		LrASC->ApplyRegenEffects(15.0f, 3.0f);
 	}
 }
 

@@ -9,6 +9,16 @@
 #include "GameplayEffect.h"
 #include "Tags/LrGameplayTags.h"
 
+bool ULrGABase::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags,
+                                   FGameplayTagContainer* OptionalRelevantTags) const
+{
+	if (IsActive())
+	{
+		return false;
+	}
+	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
+}
+
 bool ULrGABase::CheckCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
 {
 	if (!Super::CheckCooldown(Handle, ActorInfo, OptionalRelevantTags))

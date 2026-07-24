@@ -64,8 +64,10 @@ void ULrASC::AddAllGA(ALrPawnBase* PawnBase)
 							FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(LrDAConfig.GAClass, 1);
 							// 输入绑定
 							// AbilitySpec.GetDynamicSpecSourceTags().AddTag(LrDAConfig.InputTag); //InputTag
-							AbilitySpec.InputID = LrDAConfig.InputId;
-							GiveAbility(FGameplayAbilitySpec(LrDAConfig.GAClass, 1, LrDAConfig.InputId)); // 真正交给 ASC 管理
+							// AbilitySpec.InputID = LrDAConfig.InputId;
+							int32 InputId = static_cast<int32>(LrDAConfig.InputId);
+							AbilitySpec.InputID = InputId;
+							GiveAbility(FGameplayAbilitySpec(LrDAConfig.GAClass, 1, InputId)); // 真正交给 ASC 管理
 							// GiveAbility(AbilitySpec); // 真正交给 ASC 管理
 						}
 						return;
@@ -149,7 +151,6 @@ void ULrASC::ApplyRegenEffects(float MPRegenPerSec, float EnduranceRegenPerSec)
 	TargetTagsComponent.SetAndApplyTargetTagChanges(TagChanges);
 
 
-	
 	FGameplayEffectContextHandle Context = MakeEffectContext();
 	Context.AddSourceObject(GetOwner());
 	RegenEffectHandle = ApplyGameplayEffectToSelf(RegenGE, 1.0f, Context);
@@ -255,13 +256,15 @@ void ULrASC::AbilityInputTagPressed0(const int32 InputId)
 	//防止你在遍历 Ability 列表时，它被同时修改（比如添加/移除 Ability）
 	FScopedAbilityListLock ActiveScopeLoc(*this);
 	TArray<FGameplayAbilitySpec> GameplayAbilitySpecs = GetActivatableAbilities();
+	UE_LOG(LogTemp, Warning, TEXT("AbilityInputTagPressed0 GameplayAbilitySpecs.Num() =%d "), GameplayAbilitySpecs.Num());
 	for (FGameplayAbilitySpec AbilitySpec : GameplayAbilitySpecs)
 	{
 		if (AbilitySpec.InputID == InputId)
 		{
 			if (InputId < LrInputID::Hold) //短按技能
 			{
-				TryActivateAbility(AbilitySpec.Handle);
+				bool bTryActivateAbility = TryActivateAbility(AbilitySpec.Handle);
+				UE_LOG(LogTemp, Warning, TEXT("AbilityInputTagPressed0 bTryActivateAbility =%d "), bTryActivateAbility);
 			}
 			else //长按技能
 			{
@@ -416,5 +419,4 @@ void ULrASC::ApplyDamageToTarget(AActor* SourceActor, AActor* Target, FDamageEff
 	{
 		TargetPawn->GetPatrolRoute()->TargetActor = SourceActor;
 	}
-	
 }

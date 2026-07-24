@@ -36,7 +36,7 @@ ALrProjectile::ALrProjectile()
 
 	Movement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Movement"));
 	Movement->InitialSpeed = Speed; // 初始速度
-	Movement->MaxSpeed = 1500.0f; // 最大速度（想做成"加速箭"可再把 Max 提高）
+	Movement->MaxSpeed = 5000.0f; // 最大速度（想做成"加速箭"可再把 Max 提高）
 	Movement->ProjectileGravityScale = 0; // 0 = 纯直线，火球冰箭常用；弓箭可把这里调 0.5~1
 	Movement->bRotationFollowsVelocity = true;
 	Movement->bIsHomingProjectile = true;
@@ -84,14 +84,6 @@ void ALrProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 
 	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(ProjectileOwner)))
 	{
-		// ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(OtherActor);
-		// if (ULrCombatComponentBase* Combat = OwnerPawn->FindComponentByClass<ULrCombatComponentBase>())
-		// {
-		// 	// todo
-		// 	DamageEffectParams.AddFlag(EDamageFlags::Burn);
-		// 	LrASC->ApplyDamageToTarget(OtherActor, DamageEffectParams);
-		// }
-
 		DamageEffectParams.AddFlag(EDamageFlags::Burn);
 		LrASC->ApplyDamageToTarget(ProjectileOwner, OtherActor, DamageEffectParams);
 	}

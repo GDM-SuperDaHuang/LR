@@ -60,25 +60,26 @@ void ULrInputComponent::BindAbilityActions(const ULrInputConfigDA* InputConfig,
 		// 		MappingContext->MapKey(BindInfo.InputAction, Key);
 		// 	}
 		// }
-		
+
+		int32 InputId =static_cast<int32>(BindInfo.InputId);
 		// 按键绑定触发函数
 		if (PressedFunc)
 		{
 			// BindAction(BindInfo.InputAction, ETriggerEvent::Started, Object, PressedFunc, BindInfo.InputTag);
-			BindAction(BindInfo.InputAction, ETriggerEvent::Started, Object, PressedFunc, BindInfo.InputId);
+			BindAction(BindInfo.InputAction, ETriggerEvent::Started, Object, PressedFunc, InputId);
 
 		}
 		if (ReleasedFunc)
 		{
 			// BindAction(BindInfo.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, BindInfo.InputTag);
-			BindAction(BindInfo.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, BindInfo.InputId);
+			BindAction(BindInfo.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, InputId);
 
 		}
 
 		if (HeldFunc)
 		{
 			// BindAction(BindInfo.InputAction, ETriggerEvent::Triggered, Object, HeldFunc, BindInfo.InputTag);
-			BindAction(BindInfo.InputAction, ETriggerEvent::Triggered, Object, HeldFunc, BindInfo.InputId);
+			BindAction(BindInfo.InputAction, ETriggerEvent::Triggered, Object, HeldFunc, InputId);
 		}
 	}
 }

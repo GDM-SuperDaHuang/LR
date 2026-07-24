@@ -44,4 +44,8 @@ public:
 	UPROPERTY()
 	TWeakObjectPtr<AActor> TargetAActor; //目标可能死亡
 
+
+	UPROPERTY(EditDefaultsOnly)
+	int32 TestNum = 0;
+
 };

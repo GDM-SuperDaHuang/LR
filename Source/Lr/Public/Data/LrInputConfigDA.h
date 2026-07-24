@@ -8,6 +8,8 @@
 #include "LrInputConfigDA.generated.h"
 
 
+enum class EGAInputID : uint8;
+
 class UInputMappingContext;
 
 // 默认 技能按键 绑定，没有wasd移动
@@ -25,7 +27,7 @@ struct FLrDefaultBindInputFKey
 
 	// 操作标识（例如 "Action.Jump"）
 	UPROPERTY(EditDefaultsOnly)
-	int32 InputId;
+	EGAInputID InputId;
 
 	// 新增：该动作绑定的具体按键（可多个）
 	UPROPERTY(EditDefaultsOnly)

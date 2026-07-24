@@ -7,6 +7,7 @@
 #include "GameFramework/HUD.h"
 #include "LrHUD.generated.h"
 
+class ULrCrosshairWidget;
 class ULrWorldUIRoot;
 class ULrMPBarWidget;
 class ULrHPBarWidget;
@@ -39,7 +40,11 @@ public:
 
 	UPROPERTY()
 	ULrMVVMVBar* HPViewModel;
-
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<ULrCrosshairWidget> CrosshairClass;
+	UPROPERTY()
+	TObjectPtr<ULrCrosshairWidget> Crosshair;
 protected:
 
 private:
@@ -53,6 +58,7 @@ private:
 	TSubclassOf<ULrMainWidget> MainWidgetClass;
 	UPROPERTY()
 	TObjectPtr<ULrMainWidget> MainWidget;
+
 
 private:
 	UPROPERTY()

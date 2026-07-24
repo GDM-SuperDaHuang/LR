@@ -71,6 +71,9 @@ class LR_API ULrGABase : public UGameplayAbility
 	GENERATED_BODY()
 
 public:
+	//禁止重复激活
+	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr,
+	                                FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	/** 自定义冷却检测：共享 GE 时按 EffectTag 查询当前技能是否仍在冷却。 */
 	virtual bool CheckCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	/** 使用共享冷却 GE，并在运行时注入当前技能自己的冷却时长和冷却 Tag。 */

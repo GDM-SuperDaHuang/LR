@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Mover/FLrMoverInputCmd.h"
 #define ECC_Projectile ECollisionChannel::ECC_GameTraceChannel1
 
 // AI 
@@ -30,10 +31,20 @@ namespace LrGEKeys
 };
 
 
+UENUM(BlueprintType)
+enum class EGAInputID : uint8
+{
+	None = 0 UMETA(Hidden), // 通常隐藏"空"选项
+	Jump = 1,
+	NormalMelee = 2,
+	Burt = 3,
+	Blink = 4,
+
+	Switch = 99, //切换武器操作
+	Lightning = 100,
+};
+
 namespace LrInputID
 {
-	constexpr int32 Jump = 1;
-
-	constexpr int32 Hold = 100;
-	
+	constexpr int32 Hold = static_cast<int32>(EGAInputID::Lightning) - 1;
 }

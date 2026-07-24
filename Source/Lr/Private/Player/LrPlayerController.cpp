@@ -16,6 +16,8 @@
 #include "Pawn/LrHeroPawn.h"
 #include "Player/Input/LrInputComponent.h"
 #include "Tags/LrGameplayTags.h"
+#include "UI/HUD/LrHUD.h"
+#include "UI/Widget/Crosshair/LrCrosshairWidget.h"
 
 
 ALrPlayerController::ALrPlayerController()
@@ -181,6 +183,13 @@ void ALrPlayerController::AbilityInputTagPressed0(int32 InputId)
 	{
 		return;
 	}
+	if (EGAInputID::Switch == static_cast<EGAInputID>(InputId))
+	{
+		if (ALrHUD* HUD = Cast<ALrHUD>(GetHUD()))
+		{
+			HUD->Crosshair->SetCrosshairVisible(true); //显示准心
+		}
+	}
 	if (LrASC == nullptr)
 	{
 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
@@ -201,7 +210,7 @@ void ALrPlayerController::AbilityInputTagReleased0(int32 InputId)
 		if (LrASC == nullptr) return;
 	}
 	//可能不触发ASC
-	if (InputId == LrInputID::Jump)
+	if (InputId == static_cast<int32>(EGAInputID::Jump))
 	{
 		Jump();
 	}

@@ -18,6 +18,7 @@ class LR_API ULrBurnGA : public ULrGABase
 	GENERATED_BODY()
 
 public:
+	ULrBurnGA();
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
@@ -54,4 +55,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, meta=(ExposeOnSpawn = true))
 	FLrCombatQueryParams ConeParams;
 
+	UPROPERTY(EditDefaultsOnly)
+	int32 TestNum = 0;
 };

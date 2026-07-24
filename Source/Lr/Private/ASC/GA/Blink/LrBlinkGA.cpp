@@ -20,7 +20,7 @@ void ULrBlinkGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 
 	bool bCanActivate = CanActivateAbility(Handle, ActorInfo);
 
-	UE_LOG(LogTemp, Warning, TEXT("CanActivate=%d"), bCanActivate);
+	// UE_LOG(LogTemp, Warning, TEXT("CanActivate=%d"), bCanActivate);
 	// ========== 0. 合法性校验 ==========
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{

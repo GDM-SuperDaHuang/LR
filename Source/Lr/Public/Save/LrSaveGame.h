@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "GameFramework/SaveGame.h"
 #include "LrSaveGame.generated.h"
+enum class EGAInputID : uint8;
 
 USTRUCT(BlueprintType)
 struct FLrPlayerKeyMapping
@@ -16,7 +17,7 @@ struct FLrPlayerKeyMapping
 	// FGameplayTag InputTag;
 
 	UPROPERTY(EditAnywhere)
-	int32 InputId;
+	EGAInputID InputId;
 
 	UPROPERTY(EditAnywhere)
 	TArray<FKey> CustomKeys;

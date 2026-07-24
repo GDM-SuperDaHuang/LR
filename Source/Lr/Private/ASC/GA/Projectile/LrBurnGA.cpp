@@ -4,8 +4,10 @@
 #include "ASC/GA/Projectile/LrBurnGA.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "Abilities/GameplayAbilityTargetActor_SingleLineTrace.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Abilities/Tasks/AbilityTask_WaitTargetData.h"
 #include "Actor/Projectile/LrProjectile.h"
 #include "Component/Combat/LrAICombatComponent.h"
 #include "Component/Combat/LrPlayerCombatComponent.h"
@@ -17,17 +19,23 @@
 #include "Pawn/LrPawnBase.h"
 
 
+ULrBurnGA::ULrBurnGA()
+{
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+}
+
 void ULrBurnGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	
+	TestNum++;
+	UE_LOG(LogTemp, Warning, TEXT("ULrBurnGA::ActivateAbility =%d "), TestNum);
 	// ========== 0. 合法性校验 ==========
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
 	}
-	
+
 	ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(ActorInfo->AvatarActor.Get());
 	if (!OwnerPawn)
 	{
@@ -66,6 +74,7 @@ void ULrBurnGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 	// Montage 被打断
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::OnMontageFinished);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::OnMontageFinished);
+	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::OnMontageFinished);
 	MontageTask->ReadyForActivation();
 
 	// ========== 4. 等待攻击真正生效通知 ==========
@@ -81,6 +90,8 @@ void ULrBurnGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 void ULrBurnGA::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	TestNum--;
+	UE_LOG(LogTemp, Warning, TEXT("ULrBurnGA::EndAbility =%d "), TestNum);
 }
 
 /**
@@ -139,7 +150,7 @@ void ULrBurnGA::SpawnProjectiles(const FVector& ProjectileTargetLocation, bool b
 			Cast<APawn>(GetOwningActorFromActorInfo()), // Instigator（负责计入伤害统计）
 			ESpawnActorCollisionHandlingMethod::AlwaysSpawn); // 碰撞策略：强行生成，不管是否卡墙
 
-		// todo
+		// todo 伤害配置
 		DamageEffectParams.DamageValue = 11;
 		DamageEffectParams.Duration = 10.f;
 		Projectile->DamageEffectParams = DamageEffectParams;
@@ -148,7 +159,10 @@ void ULrBurnGA::SpawnProjectiles(const FVector& ProjectileTargetLocation, bool b
 		if (HomingTarget)
 		{
 			Projectile->Movement->HomingTargetComponent = HomingTarget->GetRootComponent();
-			Projectile->Movement->HomingAccelerationMagnitude = 50.f; // 追踪加速度，值越大转向越迅猛
+			Projectile->Movement->InitialSpeed = 3000.f;
+			Projectile->Movement->HomingAccelerationMagnitude = 10000.f; // 追踪加速度，值越大转向越迅猛
+			// 是否启用追踪
+			Projectile->Movement->bIsHomingProjectile = bLaunchHomingProjectiles;
 
 			FVector TargetLocation = HomingTarget->GetActorLocation();
 			FVector OwnerLocation = OwnerActor->GetActorLocation();
@@ -167,15 +181,19 @@ void ULrBurnGA::SpawnProjectiles(const FVector& ProjectileTargetLocation, bool b
 			//注意指针！！！
 			//这里的Projectile->ProjectileMovement->HomingTargetComponent是弱引用，如果目标的被销毁，那么该位置消失,Projectile->ProjectileMovement->HomingTargetComponent指向null
 			// Projectile->ProjectileMovement->HomingTargetComponent = NewObject<USceneComponent>(USceneComponent::StaticClass());
-
 			//创建一个锚点，先缓存起来
 			Projectile->HomingTargetSceneComponent = NewObject<USceneComponent>(Projectile);
+			// Projectile->HomingTargetSceneComponent->RegisterComponent();
+
 			Projectile->HomingTargetSceneComponent->SetWorldLocation(ProjectileTargetLocation);
+
 			//设置目标地点
 			Projectile->Movement->HomingTargetComponent = Projectile->HomingTargetSceneComponent;
+
+			// Projectile->Movement->bIsHomingProjectile = true;
+			// Projectile->Movement->HomingAccelerationMagnitude = 1000.f; // 根据需求调整
 		}
-		// 是否启用追踪
-		Projectile->Movement->bIsHomingProjectile = bLaunchHomingProjectiles;
+
 
 		// 让导弹真正“启动” ，SpawnActorDeferred需要FinishSpawning， 完成投射物生成（应用之前的设置，触发AAuraProjectile的BeginPlay）
 		/**
@@ -190,6 +208,7 @@ void ULrBurnGA::SpawnProjectiles(const FVector& ProjectileTargetLocation, bool b
 
 void ULrBurnGA::OnMontageFinished()
 {
+	UE_LOG(LogTemp, Warning, TEXT("ULrBurnGA::OnMontageFinished =%d "), TestNum);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 	ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
 	if (!OwnerPawn) return;
@@ -199,7 +218,6 @@ void ULrBurnGA::OnMontageFinished()
 
 void ULrBurnGA::OnAttackEvent(FGameplayEventData Payload)
 {
-	AController* InstigatorController = GetAvatarActorFromActorInfo()->GetInstigatorController();
 	TWeakObjectPtr<AActor> TargetAActor;
 	if (ULrAICombatComponent* AICombat = GetAvatarActorFromActorInfo()->FindComponentByClass<ULrAICombatComponent>())
 	{
@@ -211,6 +229,7 @@ void ULrBurnGA::OnAttackEvent(FGameplayEventData Payload)
 		if (TargetAActor.Get())
 		{
 			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
+			SpawnProjectiles(TargetAActor.Get()->GetActorLocation(), false, 60, TargetAActor.Get());
 		}
 	}
 	else if (ULrPlayerCombatComponent* PlayerCombat = GetAvatarActorFromActorInfo()->FindComponentByClass<ULrPlayerCombatComponent>())
@@ -226,10 +245,14 @@ void ULrBurnGA::OnAttackEvent(FGameplayEventData Payload)
 		{
 			LrPawnBase->SetSelected(true);
 			OwnerPawn->LrMoverComponent->bIsInAttackWarp = true;
+			SpawnProjectiles(TargetAActor.Get()->GetActorLocation(), false, 60, TargetAActor.Get());
 		}
-	}
-	if (TargetAActor.IsValid())
-	{
-		SpawnProjectiles(TargetAActor.Get()->GetActorLocation(), false, 60, TargetAActor.Get());
+		else
+		{
+			FLrAimData ProjectileTargetLocation;
+			PlayerCombat->GetAimPoint(ProjectileTargetLocation);
+
+			SpawnProjectiles(ProjectileTargetLocation.AimPoint, false, 60, nullptr);
+		}
 	}
 }
