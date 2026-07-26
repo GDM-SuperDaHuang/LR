@@ -102,8 +102,8 @@ protected:
 	FVector HomeLocation;
 
 	/** 碰撞体，作为 AI 导航代理和 Mover 系统的根依赖 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PawnInfo")
-	TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
+	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PawnInfo")
+	// TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
 
 	/** 世界空间血条 UI 组件，悬浮在敌人头顶,飘字等 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

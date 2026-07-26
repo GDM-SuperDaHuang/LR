@@ -10,14 +10,12 @@
 #include "ASC/LrASC.h"
 #include "Camera/CameraComponent.h"
 #include "Component/Combat/LrPlayerCombatComponent.h"
-#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Data/LrGAListDA.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Lib/LrCommonLibrary.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/Air/LrAirMovementMode.h"
-#include "Mover/Nav/LrNavMovementComponent.h"
 #include "Perception/AISense_Sight.h"
 #include "Player/PS/LrPS.h"
 
@@ -25,15 +23,15 @@ ALrHeroPawn::ALrHeroPawn()
 {
 	LrCombatComponent = CreateDefaultSubobject<ULrPlayerCombatComponent>(TEXT("LrCombatComponent"));
 	PrimaryActorTick.bCanEverTick = true;
-	LrCapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
-	RootComponent = LrCapsuleComponent;
-	LrCapsuleComponent->InitCapsuleSize(34.f, 88.f);
-	LrCapsuleComponent->SetCollisionProfileName(TEXT("LrHeroPawnCapsuleComponent"));
+	// LrCapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
+	// RootComponent = LrCapsuleComponent;
+	// LrCapsuleComponent->InitCapsuleSize(34.f, 88.f);
+	// LrCapsuleComponent->SetCollisionProfileName(TEXT("LrHeroPawnCapsuleComponent"));
 
 
 	// 相机 弹簧臂
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(GetRootComponent());
+	// CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->SetUsingAbsoluteRotation(true);
 	
 	CameraBoom->bDoCollisionTest = false;
@@ -54,16 +52,15 @@ ALrHeroPawn::ALrHeroPawn()
 	// 骨骼 →碰撞体
 	// =========================
 	// LrSkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrMesh"));
-	LrSkeletalMeshComponent->SetupAttachment(LrCapsuleComponent);
-	// LrSkeletalMeshComponent->SetRelativeLocation(FVector(0, 0, -88));
-	// LrSkeletalMeshComponent->SetOnlyOwnerSee(false);
-	// LrSkeletalMeshComponent->SetOwnerNoSee(false);
+	// LrSkeletalMeshComponent->SetupAttachment(LrCapsuleComponent);
+
+
 
 	// =========================
 	// 武器 →骨架
 	// =========================
-	EquippedWeaponComponent = CreateDefaultSubobject<UChildActorComponent>(TEXT("EquippedWeapon"));
-	EquippedWeaponComponent->SetupAttachment(LrSkeletalMeshComponent); // 或 RootComponent，根据需求
+	// EquippedWeaponComponent = CreateDefaultSubobject<UChildActorComponent>(TEXT("EquippedWeapon"));
+	// EquippedWeaponComponent->SetupAttachment(LrSkeletalMeshComponent); // 或 RootComponent，根据需求
 	// EquippedWeaponComponent->SetChildActorClass(ALrWeaponBase::StaticClass()); // 默认类，可后期覆盖
 
 
@@ -75,27 +72,27 @@ ALrHeroPawn::ALrHeroPawn()
 	// =========================
 	// Mover
 	// =========================
-	LrMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
+	// LrMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
+	
 	// CharacterMotionComponent->SetIsReplicated(true);
-	int32 INT32 = LrMoverComponent->MovementModes.Num();
 
 	// =========================
 	// Nav → Mover 桥接
 	// =========================
-	LrNavMoverComponent = CreateDefaultSubobject<ULrNavMovementComponent>(TEXT("NavMoverComponent"));
-	LrNavMoverComponent->UpdatedComponent = LrCapsuleComponent;
+	// LrNavMoverComponent = CreateDefaultSubobject<ULrNavMovementComponent>(TEXT("NavMoverComponent"));
+	// LrNavMoverComponent->UpdatedComponent = LrCapsuleComponent;
 
 	/**
 	 * true：这个组件，是否会被 NavigationSystem 考虑为：
 	 * 1，动态障碍
 	 * 2，NavMesh 生成 / 更新的参与者
 	 */
-	LrCapsuleComponent->SetCanEverAffectNavigation(false);
+	// LrCapsuleComponent->SetCanEverAffectNavigation(false);
 
 	// =========================
 	// 选中提示相关
 	// =========================
-	SelectionRing->SetupAttachment(RootComponent);
+	// SelectionRing->SetupAttachment(RootComponent);
 	
 }
 

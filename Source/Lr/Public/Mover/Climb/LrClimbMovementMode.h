@@ -7,8 +7,18 @@
 #include "LrClimbMovementMode.generated.h"
 
 class ULrMoverComponent;
+
 /**
- * 
+ * 昆虫攀爬移动模式
+ * 局部坐标约定（贴合墙面时）：Z 轴 = WallNormal，指向墙外，也就是昆虫腹部朝向。
+ * X 轴 = WallRight（Tangent），昆虫左右方向，A/D 沿此轴移动。
+ * Y 轴 = WallUp（Bitangent），昆虫前后/上下方向，W/S 沿此轴移动。
+ * 1. 贴近墙面：向前 80 cm 射线找墙，命中后沿法线吸附到墙，Activate 里实现。
+ * 2. 在墙上：中心射线保持腹部贴墙。上/下/左/右4个位置，向墙内发射4根探空射线检测是否越过当前墙面边缘，
+ *    探空未命中时，从射线末端朝角色中心方向（垂直于原法线）发折返射线，寻找新墙面。
+ * 3. 离开墙后会切换到 Air 模式。
+ * 4. 按角色局部坐标移动：A/D -> WallRight，W/S -> WallUp。
+ * 5. 调试：向前 80 cm 射线 + 中心射线 + 4 探空射线 + 4 折返射线 + 新墙面目标球体。
  */
 UCLASS()
 class LR_API ULrClimbMovementMode : public UBaseMovementMode
@@ -18,44 +28,39 @@ class LR_API ULrClimbMovementMode : public UBaseMovementMode
 public:
 	ULrClimbMovementMode();
 
-	// 进入飞行模式时的初始化回调（可用于缓存 Mover 组件等）
 	virtual void Activate(const FMoverEventContext& Context, FName PrevModeName, const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, FMoverSyncState* OutSyncState, FMoverAuxStateContext* OutAuxState) override;
-
-	// 生成提议移动：根据输入计算本帧期望的飞行速度
 	virtual void GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const override;
-	// 模拟移动：根据提议速度实际移动组件，并输出同步状态
 	virtual void SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState) override;
 
-	// 缓存所属的自定义 Mover 组件，避免每帧重复查找
+private:
+	void UpdateWallBasis(const FVector& InNormal);
+
 	UPROPERTY()
 	TObjectPtr<ULrMoverComponent> CacheMoverComponent;
 
-private:
-	// 当前墙面法线
-	UPROPERTY()
-	FVector WallNormal;
+	// 墙面局部坐标系（世界空间）
+	FVector WallNormal = FVector::ZeroVector;
+	FVector WallRight = FVector::ZeroVector;
+	FVector WallUp = FVector::ZeroVector;
 
+	UPROPERTY(EditAnywhere, Category = "Climb")
+	float WallSearchDistance = 80.f;
 
-	// 墙面向上方向
-	UPROPERTY()
-	FVector WallUp;
+	UPROPERTY(EditAnywhere, Category = "Climb")
+	float StickDistance = 15.f;
 
+	UPROPERTY(EditAnywhere, Category = "Climb")
+	float ClimbSpeed = 400.f;
 
-	// 墙面右方向
-	UPROPERTY()
-	FVector WallRight;
+	UPROPERTY(EditAnywhere, Category = "Climb")
+	float ProbeOffset = 50.f;
 
+	UPROPERTY(EditAnywhere, Category = "Climb")
+	float ProbeLength = 50.f;
 
-	// 保存墙面距离
-	float WallOffset = 45.f;
+	UPROPERTY(EditAnywhere, Category = "Climb")
+	float BackRayLength = 120.f;
 
-
-	// 重新检测墙
-	bool FindClimbSurface(const FVector& Location, FHitResult& OutHit) const;
-	
-	// 是否允许攀爬
-	bool CanClimbSurface(const FVector& Normal) const;
-	
-	// 更新墙坐标
-	void UpdateWallBasis(const FVector& Normal);
+	UPROPERTY(EditAnywhere, Category = "Climb|Debug")
+	bool bDrawDebug = true;
 };

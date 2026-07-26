@@ -41,20 +41,20 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// =========================
 	// 骨骼 →碰撞体
 	// =========================
-	LrCapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("EnemyCapsule"));
-	RootComponent = LrCapsuleComponent;
-	LrCapsuleComponent->InitCapsuleSize(34.f, 88.f);
-	LrCapsuleComponent->SetCollisionProfileName(TEXT("LrEnemyPawnCapsuleComponent"));
-	LrCapsuleComponent->SetCanEverAffectNavigation(false);
-	LrCapsuleComponent->SetCollisionObjectType(ECC_Pawn);
+	// LrCapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("EnemyCapsule"));
+	// RootComponent = LrCapsuleComponent;
+	// LrCapsuleComponent->InitCapsuleSize(34.f, 88.f);
+	// LrCapsuleComponent->SetCollisionProfileName(TEXT("LrEnemyPawnCapsuleComponent"));
+	// LrCapsuleComponent->SetCanEverAffectNavigation(false);
+	// LrCapsuleComponent->SetCollisionObjectType(ECC_Pawn);
 
 	// LrSkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrEnemyMesh"));
-	LrSkeletalMeshComponent->SetupAttachment(LrCapsuleComponent);
+	// LrSkeletalMeshComponent->SetupAttachment(LrCapsuleComponent);
 	// LrSkeletalMeshComponent->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
 	// LrSkeletalMeshComponent->SetOnlyOwnerSee(false);
 	// LrSkeletalMeshComponent->SetOwnerNoSee(false);
-	LrSkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	LrSkeletalMeshComponent->SetCanEverAffectNavigation(false);
+	// LrSkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// LrSkeletalMeshComponent->SetCanEverAffectNavigation(false);
 
 	// =========================
 	// 武器 →骨架
@@ -65,13 +65,13 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// =========================
 	// Mover
 	// =========================
-	LrMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
+	// LrMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
 
 	// =========================
 	// Nav → Mover 桥接
 	// =========================
 	LrNavMoverComponent = CreateDefaultSubobject<ULrNavMovementComponent>(TEXT("EnemyNavMoverComponent"));
-	LrNavMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
+	// LrNavMoverComponent->SetUpdatedComponent(LrCapsuleComponent);
 
 	LrASC = CreateDefaultSubobject<ULrASC>(TEXT("EnemyASC"));
 	LrASC->SetIsReplicated(true);
@@ -85,7 +85,7 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// 敌人UI
 	// =========================
 	LrWidgetComponent = CreateDefaultSubobject<ULrWorldWidgetComponent>(TEXT("HealthBarComponent"));
-	LrWidgetComponent->SetupAttachment(RootComponent);
+	// LrWidgetComponent->SetupAttachment(RootComponent);
 	LrWidgetComponent->SetRelativeLocation(FVector(0, 0, 120.f));
 
 	// =========================
@@ -96,7 +96,7 @@ ALrEnemyPawn::ALrEnemyPawn()
 	// =========================
 	// 选中提示相关
 	// =========================
-	SelectionRing->SetupAttachment(RootComponent);
+	// SelectionRing->SetupAttachment(RootComponent);
 }
 
 void ALrEnemyPawn::BeginPlay()
@@ -196,7 +196,8 @@ void ALrEnemyPawn::SpawnCorpse(const FLrDieParameters& DieParam, FLrCorpseConfig
 		LrMoverComponent->SetComponentTickEnabled(false);
 		LrMoverComponent->Deactivate();
 	}
-	LrCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// todo
+	// LrCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	LrSkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	// 隐身
