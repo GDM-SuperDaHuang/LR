@@ -11,5 +11,6 @@ namespace LrAllModes
 	static const FName Death = FName("LrDeath");
 	static const FName Fly = FName("LrFly");
 	static const FName Climb = FName("LrClimb");
+	static const FName ClimbInsect = FName("LrClimbInsect");
 
 };

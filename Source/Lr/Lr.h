@@ -41,6 +41,8 @@ enum class EGAInputID : uint8
 	Blink = 4,
 	Fly = 5,
 	Climb = 6,
+	ClimbInsect = 7,
+ 
 	Switch = 99, //切换武器操作
 	Lightning = 100,
 };

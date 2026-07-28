@@ -55,6 +55,8 @@ private:
 	void Jump() const;
 	void Fly() const;
 	void Climb() const;
+	void ClimbInsect() const;
+
 public:
 	UFUNCTION()
 	ALrPawnBase* GetNearestPawnToCursor(float MaxScreenDistance = 120.f);

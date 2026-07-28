@@ -10,6 +10,7 @@
 #include "Mover/Blink/LrBlinkMovementMode.h"
 #include "Mover/Blink/LrKnockbackMovementMode.h"
 #include "Mover/Climb/LrClimbMovementMode.h"
+#include "Mover/Climb/LrInsectClimbMovementMode.h"
 #include "Mover/Death/LrDeathMovementMode.h"
 #include "Mover/Empty/LrEmptyMovementMode.h"
 #include "Mover/Fly/LrFlyMovementMode.h"
@@ -26,6 +27,7 @@ ULrMoverComponent::ULrMoverComponent()
 	MovementModes.Add(LrAllModes::Death, CreateDefaultSubobject<ULrDeathMovementMode>(TEXT("LrDeathMovementMode")));
 	MovementModes.Add(LrAllModes::Fly, CreateDefaultSubobject<ULrFlyMovementMode>(TEXT("LrFlyMovementMode")));
 	MovementModes.Add(LrAllModes::Climb, CreateDefaultSubobject<ULrClimbMovementMode>(TEXT("LrClimbMovementMode")));
+	MovementModes.Add(LrAllModes::ClimbInsect, CreateDefaultSubobject<ULrInsectClimbMovementMode>(TEXT("LrInsectClimbMovementMode")));
 
 
 	// 开始模式
@@ -61,7 +63,7 @@ bool ULrMoverComponent::TryEnterClimb() const
 		ECC_WorldStatic,
 		Params
 	);
-	
+
 	if (!bHit)
 	{
 		return false;
@@ -76,6 +78,6 @@ bool ULrMoverComponent::TryEnterClimb() const
 	}
 	// 保存墙信息
 	// ClimbWallNormal = OutHit.Normal;
-	
+
 	return true;
 }

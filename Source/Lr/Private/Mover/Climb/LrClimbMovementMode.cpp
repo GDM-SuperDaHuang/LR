@@ -235,7 +235,25 @@ void ULrClimbMovementMode::SimulationTick_Implementation(const FSimulationTickPa
 	CurPos = UpdatedComp->GetComponentLocation();
 	int32 MissCount = 0;
 	FVector NewWallNormal = FVector::ZeroVector;
+	FVector NewWallImpactPoint = FVector::ZeroVector;
+	FVector NewWallImpactDir = FVector::ZeroVector;
 	bool bNewWallFound = false;
+
+	// 计算玩家移动意图方向（墙面平面内），用于判断是否要切换墙面
+	FVector WallMoveDir = FVector::ZeroVector;
+	{
+		const FLrMoverInputCmd* SimInputs = Params.StartState.InputCmd.InputCollection.FindDataByType<FLrMoverInputCmd>();
+		if (SimInputs)
+		{
+			const FVector SimMoveInput = SimInputs->GetMoveInput();
+			const FRotator SimCamRot = SimInputs->ControlRotation;
+			const FVector SimCamFwd = FRotationMatrix(SimCamRot).GetScaledAxis(EAxis::X);
+			const FVector SimCamRight = FRotationMatrix(SimCamRot).GetScaledAxis(EAxis::Y);
+			const float FwdAmt = FVector::DotProduct(SimMoveInput, SimCamFwd);
+			const float RightAmt = FVector::DotProduct(SimMoveInput, SimCamRight);
+			WallMoveDir = (WallUp * FwdAmt - WallRight * RightAmt).GetSafeNormal();
+		}
+	}
 
 	const FVector ProbeDirs[4] = { WallUp, -WallUp, -WallRight, WallRight };
 
@@ -280,6 +298,8 @@ void ULrClimbMovementMode::SimulationTick_Implementation(const FSimulationTickPa
 				if (BackNormalDot < 0.7f)
 				{
 					NewWallNormal = BackHit.Normal;
+					NewWallImpactPoint = BackHit.Location;
+					NewWallImpactDir = (BackHit.ImpactPoint - CurPos).GetSafeNormal();
 					bNewWallFound = true;
 
 					// 调试：新墙面目标球体
@@ -303,33 +323,24 @@ void ULrClimbMovementMode::SimulationTick_Implementation(const FSimulationTickPa
 		return;
 	}
 
-	// 折返射线找到新墙面 → 绕角，更新坐标系并重新吸附
-	// 仅当新法线与当前法线差异足够大时才切换，防止抖动
+	// 折返射线找到新墙面 → 仅当玩家移动意图指向新墙面时才绕角切换
 	if (bNewWallFound)
 	{
 		const float NormalDot = FMath::Abs(FVector::DotProduct(WallNormal, NewWallNormal));
-		if (NormalDot < 0.866f) // 约30°阈值
+		const float IntentDot = FVector::DotProduct(WallMoveDir, NewWallImpactDir);
+
+		if (NormalDot < 0.866f && IntentDot > 0.3f) // 法线差异>30°且玩家意图指向新墙面
 		{
 			UpdateWallBasis(NewWallNormal);
 
-			// 先更新旋转，再做 re-snap（避免用旧旋转移动导致方向错误）
+			// 先更新旋转，再直接吸附到折返射线命中点
 			const FRotator NewRot = FRotationMatrix::MakeFromXY(WallUp, -WallRight).Rotator();
 			CurrentRotation = NewRot.Quaternion();
 			UpdatedComp->SetWorldRotation(CurrentRotation);
 
-			CurPos = UpdatedComp->GetComponentLocation();
-			FHitResult ReCenterHit;
-			if (GetWorld()->LineTraceSingleByChannel(
-				ReCenterHit, CurPos, CurPos - WallNormal * ProbeLength, ECC_WorldStatic, QueryParams))
-			{
-				const FVector DesiredPos = ReCenterHit.Location + WallNormal * StickDistance;
-				const FVector SnapDelta = DesiredPos - CurPos;
-				if (!SnapDelta.IsNearlyZero())
-				{
-					FHitResult SnapHit;
-					UpdatedComp->MoveComponent(SnapDelta, CurrentRotation, true, &SnapHit);
-				}
-			}
+			// 直接传送到新墙面命中点，腹部中心对齐攀爬点
+			const FVector DesiredPos = NewWallImpactPoint + NewWallNormal * StickDistance;
+			UpdatedComp->SetWorldLocation(DesiredPos);
 		}
 	}
 

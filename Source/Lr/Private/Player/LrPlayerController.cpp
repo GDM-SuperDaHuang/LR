@@ -224,6 +224,10 @@ void ALrPlayerController::AbilityInputTagReleased0(int32 InputId)
 	{
 		Climb();
 	}
+	else if (InputId == static_cast<int32>(EGAInputID::ClimbInsect))
+	{
+		ClimbInsect();
+	}
 	else
 	{
 		LrASC->AbilityInputTagReleased0(InputId);
@@ -342,6 +346,13 @@ void ALrPlayerController::Climb() const
 	}
 }
 
+void ALrPlayerController::ClimbInsect() const
+{
+	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
+	{
+		ControlledPawn->LrMoverComponent->QueueNextMode(LrAllModes::ClimbInsect);
+	}
+}
 ALrPawnBase* ALrPlayerController::GetNearestPawnToCursor(float MaxScreenDistance)
 {
 	UWorld* World = GetWorld();
