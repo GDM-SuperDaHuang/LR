@@ -10,6 +10,8 @@
 #include "Mover/LrMoverComponent.h"
 #include "Mover/LrAllModes.h"
 #include "Mover/LrMovementSettings.h"
+#include "Pawn/LrHeroPawn.h"
+#include "Player/LrPlayerController.h"
 
 ULrWalkMovementMode::ULrWalkMovementMode()
 {
@@ -24,6 +26,13 @@ void ULrWalkMovementMode::Activate(const FMoverEventContext& Context, FName Prev
 		if (ULrMoverComponent* Mover = Cast<ULrMoverComponent>(GetMoverComponent()))
 		{
 			CacheMoverComponent = Mover;
+		}
+	}
+	if (IsPlayer && !PC)
+	{
+		if (ALrHeroPawn* LrHeroPawn = Cast<ALrHeroPawn>(CacheMoverComponent->GetOuter()))
+		{
+			PC = Cast<ALrPlayerController>(LrHeroPawn->GetController());
 		}
 	}
 }
@@ -43,12 +52,11 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverSimContext& Si
 	const float DeltaSeconds = TimeStep.StepMs * 0.001f;
 	FVector Velocity = SyncState->GetVelocity_WorldSpace();
 
-	// 保存垂直速度，水平速度将在下方重新计算
 	const float SavedZ = Velocity.Z;
 	Velocity.Z = 0.f;
 
 	//----------------------------------------------------
-	// Input 处理
+	// Input 处理（含相机相对方向转换）
 	//----------------------------------------------------
 	FVector MoveIntent = FVector::ZeroVector;
 	float SpeedScale = 0.f;
@@ -61,7 +69,15 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverSimContext& Si
 
 		if (Magnitude > DeadZone)
 		{
-			MoveIntent = RawInput.GetSafeNormal();
+			// 将原始输入从相机空间转换到世界空间
+			const FRotator CamRot = Inputs->ControlRotation;
+			const FRotator YawRot(0, CamRot.Yaw, 0);
+			const FVector ForwardDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
+			const FVector RightDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
+
+			const FVector WorldInput = ForwardDir * RawInput.Y + RightDir * RawInput.X + FVector(0, 0, RawInput.Z);
+
+			MoveIntent = WorldInput.GetSafeNormal();
 			SpeedScale = FMath::Clamp((Magnitude - DeadZone) / (1.f - DeadZone), 0.f, 1.f);
 		}
 	}
@@ -109,155 +125,157 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverSimContext& Si
 	OutProposedMove.LinearVelocity = Velocity;
 	OutProposedMove.DirectionIntent = MoveIntent;
 }
+
 void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState)
 {
-    FMoverDefaultSyncState& OutputSyncState = OutputState.SyncState.SyncStateCollection.FindOrAddMutableDataByType<FMoverDefaultSyncState>();
-    const FMoverDefaultSyncState* StartingSyncState = Params.StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
+	FMoverDefaultSyncState& OutputSyncState = OutputState.SyncState.SyncStateCollection.FindOrAddMutableDataByType<FMoverDefaultSyncState>();
+	const FMoverDefaultSyncState* StartingSyncState = Params.StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
 
-    if (!StartingSyncState)
-    {
-       return;
-    }
+	if (!StartingSyncState)
+	{
+		return;
+	}
 
-    TWeakObjectPtr<USceneComponent> UpdatedComp = Params.MovingComps.UpdatedComponent;
-    if (!UpdatedComp.Get())
-    {
-       return;
-    }
+	TWeakObjectPtr<USceneComponent> UpdatedComp = Params.MovingComps.UpdatedComponent;
+	if (!UpdatedComp.Get())
+	{
+		return;
+	}
 
-    const float DeltaTime = Params.TimeStep.StepMs * 0.001f;
-    FVector ProposedVelocity = Params.ProposedMove.LinearVelocity;
-    const FVector MoveIntent = Params.ProposedMove.DirectionIntent;
-    const FVector StartingLocation = UpdatedComp->GetComponentLocation();
+	const float DeltaTime = Params.TimeStep.StepMs * 0.001f;
+	FVector ProposedVelocity = Params.ProposedMove.LinearVelocity;
+	const FVector MoveIntent = Params.ProposedMove.DirectionIntent;
+	const FVector StartingLocation = UpdatedComp->GetComponentLocation();
 
-    //--------------------------------------------------
-    // Rotation 计算 (保持你的原有逻辑)
-    //--------------------------------------------------
-    const FQuat CurrentRotation = StartingSyncState->GetOrientation_WorldSpace().Quaternion();
-    FQuat FinalRotation = CurrentRotation;
-    const ULrMoverComponent* Mover = Cast<ULrMoverComponent>(GetMoverComponent());
+	//--------------------------------------------------
+	// Rotation 计算 (保持你的原有逻辑)
+	//--------------------------------------------------
+	const FQuat CurrentRotation = StartingSyncState->GetOrientation_WorldSpace().Quaternion();
+	FQuat FinalRotation = CurrentRotation;
+	const ULrMoverComponent* Mover = Cast<ULrMoverComponent>(GetMoverComponent());
 
-    bool bHasExternalLock = false;
-    FRotator ExternalRot = FRotator::ZeroRotator;
+	bool bHasExternalLock = false;
+	FRotator ExternalRot = FRotator::ZeroRotator;
 
-    if (Mover)
-    {
-       bHasExternalLock = Mover->bIsInAttackWarp;
-       if (bHasExternalLock)
-       {
-          ExternalRot = Mover->AttackWarpRotation;
-       }
-    }
+	if (Mover)
+	{
+		bHasExternalLock = Mover->bIsInAttackWarp;
+		if (bHasExternalLock)
+		{
+			ExternalRot = Mover->AttackWarpRotation;
+		}
+	}
 
-    if (bHasExternalLock)
-    {
-       FinalRotation = ExternalRot.Quaternion();
-    }
-    else if (!MoveIntent.IsNearlyZero())
-    {
-       FRotator Desired = MoveIntent.Rotation();
-       Desired.Pitch = 0.f;
-       Desired.Roll = 0.f;
+	if (bHasExternalLock)
+	{
+		FinalRotation = ExternalRot.Quaternion();
+	}
+	else if (!MoveIntent.IsNearlyZero())
+	{
+		FRotator Desired = MoveIntent.Rotation();
+		Desired.Pitch = 0.f;
+		Desired.Roll = 0.f;
 
-       constexpr float TurnSpeed = 12.f;
-       FRotator Smoothed = FMath::RInterpTo(CurrentRotation.Rotator(), Desired, DeltaTime, TurnSpeed);
-       FinalRotation = Smoothed.Quaternion();
-    }
+		constexpr float TurnSpeed = 12.f;
+		FRotator Smoothed = FMath::RInterpTo(CurrentRotation.Rotator(), Desired, DeltaTime, TurnSpeed);
+		FinalRotation = Smoothed.Quaternion();
+	}
 
-    //--------------------------------------------------
-    // 优化：迭代式移动与滑动 (修复卡墙、穿模的核心)
-    //--------------------------------------------------
-    FVector RemainingMove = ProposedVelocity * DeltaTime;
-    int32 MaxSimulations = 4; // 最大滑动迭代次数，防止死循环
-    
-    for (int32 i = 0; i < MaxSimulations && !RemainingMove.IsNearlyZero(); ++i)
-    {
-        FHitResult Hit;
-        UpdatedComp->MoveComponent(RemainingMove, FinalRotation, true, &Hit);
+	//--------------------------------------------------
+	// 优化：迭代式移动与滑动 (修复卡墙、穿模的核心)
+	//--------------------------------------------------
+	FVector RemainingMove = ProposedVelocity * DeltaTime;
+	int32 MaxSimulations = 4; // 最大滑动迭代次数，防止死循环
 
-        // 1. 处理初始穿模 (防卡死第一定律)
-        if (Hit.bStartPenetrating)
-        {
-            // 将角色向外推，解除穿模。增加 0.1f 的缓冲余量。
-            FVector DepenetrationVector = Hit.Normal * (Hit.PenetrationDepth + 0.1f);
-            UpdatedComp->MoveComponent(DepenetrationVector, FinalRotation, true, nullptr);
-            
-            // 注意：解穿模不消耗这一帧的移动力，直接进入下一次循环尝试重新移动
-            continue; 
-        }
+	for (int32 i = 0; i < MaxSimulations && !RemainingMove.IsNearlyZero(); ++i)
+	{
+		FHitResult Hit;
+		UpdatedComp->MoveComponent(RemainingMove, FinalRotation, true, &Hit);
 
-        if (Hit.IsValidBlockingHit())
-        {
-            // 计算由于碰撞损失的移动量，并更新剩余未完成的移动量
-            RemainingMove = RemainingMove * (1.f - Hit.Time);
+		// 1. 处理初始穿模 (防卡死第一定律)
+		if (Hit.bStartPenetrating)
+		{
+			// 将角色向外推，解除穿模。增加 0.1f 的缓冲余量。
+			FVector DepenetrationVector = Hit.Normal * (Hit.PenetrationDepth + 0.1f);
+			UpdatedComp->MoveComponent(DepenetrationVector, FinalRotation, true, nullptr);
 
-            // 2. 计算沿着墙壁的滑动向量
-            FVector SlideMove = FVector::VectorPlaneProject(RemainingMove, Hit.Normal);
+			// 注意：解穿模不消耗这一帧的移动力，直接进入下一次循环尝试重新移动
+			continue;
+		}
 
-            // 3. 避免角色顺着陡峭的墙面爬上去 (可选：如果你不需要爬墙，屏蔽向上的 Z 轴滑动)
-            if (SlideMove.Z > 0.f && Hit.Normal.Z < 0.1f) 
-            {
-                SlideMove.Z = 0.f;
-            }
+		if (Hit.IsValidBlockingHit())
+		{
+			// 计算由于碰撞损失的移动量，并更新剩余未完成的移动量
+			RemainingMove = RemainingMove * (1.f - Hit.Time);
 
-            RemainingMove = SlideMove;
-        }
-        else
-        {
-            // 没有碰撞，移动全部完成
-            RemainingMove = FVector::ZeroVector; 
-            break;
-        }
-    }
+			// 2. 计算沿着墙壁的滑动向量
+			FVector SlideMove = FVector::VectorPlaneProject(RemainingMove, Hit.Normal);
 
-    //--------------------------------------------------
-    // Floor Check (保持你的原有逻辑)
-    //--------------------------------------------------
-    double IsJump = ProposedVelocity.Z;
-    FFloorCheckResult Floor;
-    UFloorQueryUtils::FindFloor(
-       Params.MovingComps,
-       50.f, // Line trace/sweep distance
-       0.f,
-       true,
-       UpdatedComp->GetComponentLocation(),
-       Floor);
+			// 3. 避免角色顺着陡峭的墙面爬上去 (可选：如果你不需要爬墙，屏蔽向上的 Z 轴滑动)
+			if (SlideMove.Z > 0.f && Hit.Normal.Z < 0.1f)
+			{
+				SlideMove.Z = 0.f;
+			}
 
-    //--------------------------------------------------
-    // Snap To Floor
-    //--------------------------------------------------
-    if (Floor.bWalkableFloor && IsJump <= 5.f)
-    {
-       if (Floor.FloorDist > 0.1f && Floor.FloorDist < 10.f)
-       {
-          FVector DownwardSnap = FVector::DownVector * Floor.FloorDist;
-          FHitResult SnapHit;
-          // 优化：记录吸附是否发生碰撞，虽然向下吸附大概率是地面，但也可能卡住边缘
-          UpdatedComp->MoveComponent(DownwardSnap, FinalRotation, true, &SnapHit);
-       }
-    }
-    else
-    {
-       OutputState.MovementEndState.NextModeName = LrAllModes::Air;
-    }
+			RemainingMove = SlideMove;
+		}
+		else
+		{
+			// 没有碰撞，移动全部完成
+			RemainingMove = FVector::ZeroVector;
+			break;
+		}
+	}
 
-    //--------------------------------------------------
-    // Recalculate Actual Velocity
-    //--------------------------------------------------
-    const FVector FinalLocation = UpdatedComp->GetComponentLocation();
-    FVector ActualVelocity = (FinalLocation - StartingLocation) / DeltaTime;
+	//--------------------------------------------------
+	// Floor Check (保持你的原有逻辑)
+	//--------------------------------------------------
+	double IsJump = ProposedVelocity.Z;
+	FFloorCheckResult Floor;
+	UFloorQueryUtils::FindFloor(
+		Params.MovingComps,
+		50.f, // Line trace/sweep distance
+		0.f,
+		true,
+		UpdatedComp->GetComponentLocation(),
+		Floor);
 
-    if (Floor.bWalkableFloor && IsJump <= 5.f)
-    {
-       ActualVelocity.Z = 0.f;
-    }
+	//--------------------------------------------------
+	// Snap To Floor
+	//--------------------------------------------------
+	if (Floor.bWalkableFloor && IsJump <= 5.f)
+	{
+		if (Floor.FloorDist > 0.1f && Floor.FloorDist < 10.f)
+		{
+			FVector DownwardSnap = FVector::DownVector * Floor.FloorDist;
+			FHitResult SnapHit;
+			// 优化：记录吸附是否发生碰撞，虽然向下吸附大概率是地面，但也可能卡住边缘
+			UpdatedComp->MoveComponent(DownwardSnap, FinalRotation, true, &SnapHit);
+		}
+	}
+	else
+	{
+		OutputState.MovementEndState.NextModeName = LrAllModes::Air;
+	}
 
-    OutputSyncState.SetTransforms_WorldSpace(
-       FinalLocation,
-       FinalRotation.Rotator(),
-       ActualVelocity,
-       FVector::ZeroVector);
+	//--------------------------------------------------
+	// Recalculate Actual Velocity
+	//--------------------------------------------------
+	const FVector FinalLocation = UpdatedComp->GetComponentLocation();
+	FVector ActualVelocity = (FinalLocation - StartingLocation) / DeltaTime;
+
+	if (Floor.bWalkableFloor && IsJump <= 5.f)
+	{
+		ActualVelocity.Z = 0.f;
+	}
+
+	OutputSyncState.SetTransforms_WorldSpace(
+		FinalLocation,
+		FinalRotation.Rotator(),
+		ActualVelocity,
+		FVector::ZeroVector);
 }
+
 // void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState)
 // {
 // 	FMoverDefaultSyncState& OutputSyncState = OutputState.SyncState.SyncStateCollection.FindOrAddMutableDataByType<FMoverDefaultSyncState>();

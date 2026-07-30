@@ -6,6 +6,7 @@
 #include "MovementMode.h"
 #include "LrWalkMovementMode.generated.h"
 
+class ALrPlayerController;
 struct FFloorCheckResult;
 class ULrMoverComponent;
 /**
@@ -25,4 +26,10 @@ public:
 private:
 	UPROPERTY()
 	TObjectPtr<ULrMoverComponent> CacheMoverComponent;
+
+	//相机影响
+	UPROPERTY(EditAnywhere)
+	bool IsPlayer = false; //是否是玩家，只有玩家有Camera。
+	UPROPERTY()
+	TObjectPtr<ALrPlayerController> PC;
 };

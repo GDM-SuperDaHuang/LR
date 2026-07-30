@@ -36,7 +36,13 @@ void ULrBlinkMovementMode::Activate(const FMoverEventContext& Context, FName Pre
 		MoveInput.Z = 0.f;
 		if (!MoveInput.IsNearlyZero())
 		{
-			BlinkDirection = MoveInput.GetSafeNormal();
+			// 原始输入 → 相机相对世界方向
+			const FRotator CamRot = Inputs->ControlRotation;
+			const FRotator YawRot(0, CamRot.Yaw, 0);
+			const FVector ForwardDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
+			const FVector RightDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
+
+			BlinkDirection = (ForwardDir * MoveInput.Y + RightDir * MoveInput.X).GetSafeNormal();
 		}
 	}
 	BlinkDirection.Z = 0.f;

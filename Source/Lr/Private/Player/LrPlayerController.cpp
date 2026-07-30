@@ -258,41 +258,15 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 
 	if (LrASC == nullptr)
 	{
-		TObjectPtr<APawn> tPawn = GetPawn();
 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
 		if (LrASC == nullptr) return;
 	}
-	FVector Input;
-	// 停止移动
-	bool bIsBlockMove = LrASC->HasMatchingGameplayTag(FLrGameplayTags::Get().State_Block_Move);
-	if (bIsBlockMove)
+
+	// 只传递原始输入，相机→世界朝向的转换由 ULrWalkMovementMode 完成
+	FVector Input = InputActionValue.Get<FVector>();
+	if (LrASC->HasMatchingGameplayTag(FLrGameplayTags::Get().State_Block_Move))
 	{
 		Input = FVector::ZeroVector;
-		Input.Normalize();
-	}
-	else
-	{
-		// 增强输入默认返回 FVector2D
-		FVector InputVector = InputActionValue.Get<FVector>();
-		// 俯视角固定相机：移动方向始终基于相机的世界朝向，而非 ControlRotation
-		// 这样无论 PlayerStart 的 Yaw 是多少，WASD 始终与屏幕上下左右一致
-		const FRotator CameraRotation = PlayerCameraManager ? PlayerCameraManager->GetCameraRotation() : GetControlRotation();
-		const FRotator YawRotation(0, CameraRotation.Yaw, 0);
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		//------------------------------------
-		// XY 平面移动
-		//------------------------------------
-		Input += ForwardDirection * InputVector.Y;
-		Input += RightDirection * InputVector.X;
-		//------------------------------------
-		// Z 保留给飞行
-		//------------------------------------
-		Input.Z = InputVector.Z;
-		if (!Input.IsNearlyZero())
-		{
-			Input.Normalize();
-		}
 	}
 
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
@@ -353,6 +327,7 @@ void ALrPlayerController::ClimbInsect() const
 		ControlledPawn->LrMoverComponent->QueueNextMode(LrAllModes::ClimbInsect);
 	}
 }
+
 ALrPawnBase* ALrPlayerController::GetNearestPawnToCursor(float MaxScreenDistance)
 {
 	UWorld* World = GetWorld();
