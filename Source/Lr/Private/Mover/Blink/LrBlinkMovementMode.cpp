@@ -4,7 +4,6 @@
 #include "Mover/Blink/LrBlinkMovementMode.h"
 
 #include "MoveLibrary/FloorQueryUtils.h"
-#include "Mover/FLrMoverInputCmd.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/LrAllModes.h"
 
@@ -22,29 +21,10 @@ void ULrBlinkMovementMode::Activate(const FMoverEventContext& Context, FName Pre
 
 	if (!DefaultSync) return;
 
-	// 默认朝向
+	// 沿角色当前朝向闪烁（角色在 Walk 模式下已自动旋转指向移动方向）
 	BlinkDirection = DefaultSync->GetOrientation_WorldSpace()
 								.Vector()
 								.GetSafeNormal2D();
-	// 尝试读取输入方向
-	const FMoverInputCmdContext& InputCmd = Mover->GetLastInputCmd();
-	const FLrMoverInputCmd* Inputs = InputCmd.InputCollection.FindDataByType<FLrMoverInputCmd>();
-
-	if (Inputs)
-	{
-		FVector MoveInput = Inputs->GetMoveInput();
-		MoveInput.Z = 0.f;
-		if (!MoveInput.IsNearlyZero())
-		{
-			// 原始输入 → 相机相对世界方向
-			const FRotator CamRot = Inputs->ControlRotation;
-			const FRotator YawRot(0, CamRot.Yaw, 0);
-			const FVector ForwardDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
-			const FVector RightDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
-
-			BlinkDirection = (ForwardDir * MoveInput.Y + RightDir * MoveInput.X).GetSafeNormal();
-		}
-	}
 	BlinkDirection.Z = 0.f;
 	BlinkDirection.Normalize();
 }

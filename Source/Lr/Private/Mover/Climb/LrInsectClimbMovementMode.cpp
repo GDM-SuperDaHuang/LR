@@ -79,7 +79,6 @@ void ULrInsectClimbMovementMode::Activate(const FMoverEventContext& Context, FNa
 	UpdatedComp->SetWorldRotation(DesiredRotation);
 
 	UpdateWallRotationBasis(Hit.Normal, UpdatedComp->GetComponentQuat(), Forward);
-
 }
 
 //==============================================================================
@@ -108,10 +107,10 @@ void ULrInsectClimbMovementMode::GenerateMove_Implementation(const FMoverSimCont
 	const float RightAmount = FVector::DotProduct(MoveInput, CamRight);
 
 	// 映射到墙面局部坐标：W/S→WallForward(前后/上下轴)，A/D→WallRight(左右轴)
-	const FVector Velocity = (WallForward * ForwardAmount + WallRight * RightAmount) * ClimbSpeed;
-
-	OutProposedMove.LinearVelocity = Velocity;
-	// OutProposedMove.LinearVelocity = WallFinalMove;
+	// const FVector Velocity = (WallForward * ForwardAmount + WallRight * RightAmount) * ClimbSpeed;
+	//
+	// OutProposedMove.LinearVelocity = Velocity;
+	OutProposedMove.LinearVelocity = WallFinalMove * ClimbSpeed;
 
 	OutProposedMove.DirectionIntent = MoveInput;
 }
@@ -377,14 +376,14 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 			UpdateWallBasis(NewWallNormal, RawMoveInput);
 			const FVector DesiredPos = NewWallImpactPoint + WallNormal * StickDistance;
 			UpdatedComp->SetWorldLocation(DesiredPos);
-			
+
 			// const FRotator NewRot = FRotationMatrix::MakeFromXY(WallRight, WallForward).Rotator();
 			// CurrentRotation = NewRot.Quaternion();
 			// UpdatedComp->SetWorldRotation(CurrentRotation);
-			
+
 			UpdateWallRotationBasis(NewWallNormal, CurrentRotation, RawMoveInput);
 			CurrentRotation = UpdatedComp->GetComponentQuat();
-			
+
 			bOnWall = true;
 		}
 		else if (MissCount == 4 && !bNewWallFound)
@@ -420,7 +419,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 
 			UpdateWallRotationBasis(NewWallNormal, CurrentRotation, RawMoveInput);
 			CurrentRotation = UpdatedComp->GetComponentQuat();
-			
+
 			const FVector DesiredPos = NewWallImpactPoint + NewWallNormal * StickDistance;
 			UpdatedComp->SetWorldLocation(DesiredPos);
 		}
