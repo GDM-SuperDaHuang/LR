@@ -448,7 +448,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 void ULrInsectClimbMovementMode::UpdateWallBasis(const FVector& InWallNormal, const FVector& MoveInput)
 {
 	WallNormal = InWallNormal.GetSafeNormal();
-	// 1. 始终计算 WallRight 和 WallForward（依赖法线）
+	// 1. 始终计算 WallRight 和 WallForward（依赖法线，作为头部朝向兜底）
 	if (InWallNormal == FVector(0, 0, -1) || InWallNormal == FVector(0, 0, 1))
 	{
 		WallRight = FVector(1, 0, 0);
@@ -460,11 +460,22 @@ void ULrInsectClimbMovementMode::UpdateWallBasis(const FVector& InWallNormal, co
 		WallForward = FVector::CrossProduct(InWallNormal, WallRight).GetSafeNormal();
 	}
 
-	// 2. 计算最终移动向量（保留输入方向，但输入为零时置零）
+	// 2. 计算头部朝向（相机屏幕朝上投影到墙面），作为 W/S 的移动方向
+	HeadDir = WallForward;
+	if (!CachedCameraRotation.IsZero())
+	{
+		const FVector CamUp = FRotationMatrix(CachedCameraRotation).GetScaledAxis(EAxis::Z);
+		HeadDir = (CamUp - CamUp.ProjectOnToNormal(WallNormal)).GetSafeNormal();
+		if (HeadDir.IsNearlyZero())
+			HeadDir = WallForward;
+	}
+
+	// 3. 计算最终移动向量（保留输入方向，但输入为零时置零）
 	if (MoveInput != FVector::ZeroVector)
 	{
-		// 角色 local right = -WallRight（MakeFromXY(WallForward, -WallRight)），故 A/D 映射到 -WallRight
-		WallFinalMove = (-MoveInput.X * WallRight) + (MoveInput.Y * WallForward) + (MoveInput.Z * InWallNormal);
+		// 角色 forward = HeadDir（W/S 跟随头部朝向），right = WallNormal × HeadDir（A/D 随之改变）
+		const FVector WallRightDir = FVector::CrossProduct(WallNormal, HeadDir).GetSafeNormal();
+		WallFinalMove = (MoveInput.X * WallRightDir) + (MoveInput.Y * HeadDir) + (MoveInput.Z * InWallNormal);
 	}
 	else
 	{
@@ -492,18 +503,14 @@ void ULrInsectClimbMovementMode::UpdateWallRotationBasis(const FVector& InWallNo
 	{
 		// 墙面/天花板：头部朝向跟随相机
 		// 相机屏幕朝上向量投影到墙面平面，旋转相机时头部跟随，且始终指向上方（不会头尾翻转）
-		FVector HeadDir = WallForward;
-		if (!CachedCameraRotation.IsZero())
-		{
-			const FVector CamUp = FRotationMatrix(CachedCameraRotation).GetScaledAxis(EAxis::Z);
-			HeadDir = (CamUp - CamUp.ProjectOnToNormal(WallNormal)).GetSafeNormal();
-			if (HeadDir.IsNearlyZero())
-				HeadDir = WallForward;
-		}
+		// 头部朝向已在 UpdateWallBasis 中按同一公式计算并缓存
+		FVector UseHeadDir = HeadDir;
+		if (UseHeadDir.IsNearlyZero())
+			UseHeadDir = WallForward;
 
 		// X = HeadDir（头部朝向），Y = WallNormal × HeadDir（左右），Z = WallNormal（腹部朝外）
 		DesiredRotation = FRotationMatrix::MakeFromXY(
-			HeadDir, FVector::CrossProduct(WallNormal, HeadDir)).Rotator();
+			UseHeadDir, FVector::CrossProduct(WallNormal, UseHeadDir)).Rotator();
 	}
 
 	// 如果需要根据 MoveInput 调整朝向（例如让角色面朝移动方向），可在此扩展。
