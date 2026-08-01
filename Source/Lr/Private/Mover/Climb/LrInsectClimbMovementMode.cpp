@@ -464,8 +464,12 @@ void ULrInsectClimbMovementMode::UpdateWallBasis(const FVector& InWallNormal, co
 	HeadDir = WallForward;
 	if (!CachedCameraRotation.IsZero())
 	{
-		const FVector CamUp = FRotationMatrix(CachedCameraRotation).GetScaledAxis(EAxis::Z);
+		const FRotationMatrix CamRot(CachedCameraRotation);
+		const FVector CamUp = CamRot.GetScaledAxis(EAxis::Z);
 		HeadDir = (CamUp - CamUp.ProjectOnToNormal(WallNormal)).GetSafeNormal();
+		// 天花板（法线朝下）：头尾对调，头部朝向翻转 180°
+		if (FVector::DotProduct(WallNormal, FVector::UpVector) < -0.7f)
+			HeadDir = -HeadDir;
 		if (HeadDir.IsNearlyZero())
 			HeadDir = WallForward;
 	}
