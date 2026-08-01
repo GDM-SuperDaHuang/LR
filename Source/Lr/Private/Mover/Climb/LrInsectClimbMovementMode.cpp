@@ -126,6 +126,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	const FVector StartingLocation = UpdatedComp->GetComponentLocation();
 	FQuat CurrentRotation = StartingSyncState->GetOrientation_WorldSpace().Quaternion();
 
+	//排除自身
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(GetMoverComponent()->GetOwner());
 
@@ -136,8 +137,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	if (SimInputs)
 	{
 		RawMoveInput = SimInputs->GetMoveInput();
-		if (!RawMoveInput.IsNearlyZero())
-			RawMoveInput = RawMoveInput.GetSafeNormal();
+		if (!RawMoveInput.IsNearlyZero()) RawMoveInput = RawMoveInput.GetSafeNormal();
 	}
 
 	//--------------------------------------------------
@@ -147,19 +147,15 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	{
 		TransitionAlpha = FMath::Min(1.f, TransitionAlpha + DeltaTime / WallTransitionTime);
 		const float SmoothA = FMath::SmoothStep(0.f, 1.f, TransitionAlpha);
-
 		const FVector LerpedPos = FMath::Lerp(TransitionStartPos, TransitionTargetPos, SmoothA);
 		const FQuat LerpedRot = FQuat::Slerp(TransitionStartRot, TransitionTargetRot, SmoothA);
-
 		UpdatedComp->SetWorldLocationAndRotation(LerpedPos, LerpedRot);
-
 		if (TransitionAlpha >= 1.f)
 		{
 			// 过渡完成：采用新墙面基向量
 			bWallTransition = false;
 			UpdateWallBasis(TransitionTargetNormal, RawMoveInput);
 		}
-
 		const FVector TransFinal = UpdatedComp->GetComponentLocation();
 		const FVector TransVel = (TransFinal - StartingLocation) / DeltaTime;
 		OutputSyncState.SetTransforms_WorldSpace(TransFinal, UpdatedComp->GetComponentQuat().Rotator(), TransVel, FVector::ZeroVector);
@@ -167,7 +163,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	}
 
 	//--------------------------------------------------
-	// 0. 救援：WallNormal 为零 → Activate 未找到墙，尝试向前补射
+	// 0. 未找到墙直接下落
 	//--------------------------------------------------
 	if (WallNormal.IsNearlyZero())
 	{
@@ -181,9 +177,16 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	FVector MoveDelta = Params.ProposedMove.LinearVelocity * DeltaTime;
 	FHitResult MoveHit;
 	UpdatedComp->MoveComponent(MoveDelta, CurrentRotation, true, &MoveHit);
-
 	FVector CurPos = UpdatedComp->GetComponentLocation();
 
+	//是否发现新墙
+	TArray<FLrWallInfo> FLrNewWallInfos;
+
+	// FVector NewWallNormal = FVector::ZeroVector;
+	// FVector NewWallImpactPoint = FVector::ZeroVector;
+	FVector NewWallImpactDir = FVector::ZeroVector; //用于检查玩家移动意图是否朝向新墙面
+	bool bNewWallFound = false; //是否发现新墙
+	FVector CurWallNormal = WallNormal; //当前墙
 	//==================================================================
 	// 2a. 中心射线（向墙内 CenterRayLength=50cm）
 	//     起点沿 WallNormal 偏移 5cm 避免起点嵌在墙内
@@ -201,7 +204,6 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 		{
 			bOnWall = true; // 标记仍在墙上
 			UpdateWallBasis(CenterHit.Normal, RawMoveInput); // 更新墙面基向量
-
 			// 沿最新法线吸附到 StickDistance 距离
 			const FVector DesiredPos = CenterHit.Location + WallNormal * StickDistance;
 			const FVector SnapDelta = DesiredPos - CurPos;
@@ -219,9 +221,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	//     检测角色背部的墙面，用于将来实现踩墙跳（TODO：暂不实现）
 	//==================================================================
 	FHitResult BackHit;
-	const bool bBackHit = GetWorld()->LineTraceSingleByChannel(
-		BackHit, CurPos, CurPos + WallNormal * BackRayLength,
-		ECC_WorldStatic, QueryParams);
+	const bool bBackHit = GetWorld()->LineTraceSingleByChannel(BackHit, CurPos, CurPos + WallNormal * BackRayLength, ECC_WorldStatic, QueryParams);
 
 	//==================================================================
 	// 3. 4方向射线（沿墙面向上/下/左/右 DirectionRayLength=40cm）
@@ -229,15 +229,9 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	//     方向：WallForward(上), -WallForward(下), -WallRight(左), WallRight(右)
 	//==================================================================
 	const FVector DirDirs[4] = {WallForward, -WallForward, -WallRight, WallRight};
-	FVector DirWallNormal = FVector::ZeroVector;
-	FVector DirWallImpact = FVector::ZeroVector;
-	bool bFoundWallViaDir = false;
-
-
-	FVector NewWallNormal = FVector::ZeroVector;
-	FVector NewWallImpactPoint = FVector::ZeroVector;
-	FVector NewWallImpactDir = FVector::ZeroVector; //用于检查玩家移动意图是否朝向新墙面
-	bool bNewWallFound = false;
+	// FVector DirWallNormal = FVector::ZeroVector;
+	// FVector DirWallImpact = FVector::ZeroVector;
+	// bool bFoundWallViaDir = false;
 
 	//可能遇到凸出来的墙
 	for (int32 i = 0; i < 4; ++i)
@@ -246,26 +240,30 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 		const FVector DirEnd = DirStart + DirDirs[i] * DirectionRayLength;
 
 		FHitResult DirHit;
-		const bool bDirHit = GetWorld()->LineTraceSingleByChannel(
-			DirHit, DirStart, DirEnd, ECC_WorldStatic, QueryParams);
+		const bool bDirHit = GetWorld()->LineTraceSingleByChannel(DirHit, DirStart, DirEnd, ECC_WorldStatic, QueryParams);
 
 		const float DirNUpDot = bDirHit ? FVector::DotProduct(DirHit.Normal, FVector::UpVector) : 1.f;
 		// 墙面任意方向都接受；法线朝上的面（墙顶/平台）仅上方向接受，用于到达顶部后切 Walk
 		if (bDirHit && (DirNUpDot <= 0.75f || (i == 0 && DirNUpDot > 0.75f)))
 		{
 			// 找到有效墙面 → 记录法线和命中点
-			DirWallNormal = DirHit.Normal;
-			DirWallImpact = DirHit.Location;
-			bFoundWallViaDir = true;
+			// DirWallNormal = DirHit.Normal;
+			// DirWallImpact = DirHit.Location;
+			// bFoundWallViaDir = true;
+
+			FLrWallInfo FLrWallInfo;
+			FLrWallInfo.WallNormal = DirHit.Normal;
+			FLrWallInfo.WallImpactPoint = DirHit.Location;
+			FLrNewWallInfos.Add(FLrWallInfo);
 
 			// 中心未命中但方向射线找到墙 → 吸附到该墙面
-			NewWallNormal = DirWallNormal;
-			NewWallImpactPoint = DirWallImpact;
+			// NewWallNormal = DirWallNormal;
+			// NewWallImpactPoint = DirWallImpact;
 			NewWallImpactDir = (DirHit.ImpactPoint - CurPos).GetSafeNormal();
 			bNewWallFound = true;
 
-			if (bDrawDebug)
-				DrawDebugSphere(GetWorld(), DirHit.ImpactPoint, 8.f, 8, FColor::Cyan, false, -1.f, 0, 2.f);
+			if (bDrawDebug) DrawDebugSphere(GetWorld(), DirHit.ImpactPoint, 8.f, 8, FColor::Cyan, false, -1.f, 0, 2.f);
+
 			break;
 		}
 	}
@@ -283,11 +281,8 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	//     - 未命中(橙)：没有新墙面
 	//==================================================================
 	int32 MissCount = 0;
-
-
 	{
 		const FVector ProbeDirs[4] = {WallForward, -WallForward, -WallRight, WallRight};
-
 		for (int32 i = 0; i < 4; ++i)
 		{
 			// 探空射线：沿 ProbeDir 偏移 40cm → 向墙内射 ProbeLength
@@ -295,14 +290,11 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 			const FVector ProbeEnd = ProbeStart - WallNormal * ProbeLength;
 
 			FHitResult ProbeHit;
-			const bool bProbeHit = GetWorld()->LineTraceSingleByChannel(
-				ProbeHit, ProbeStart, ProbeEnd, ECC_WorldStatic, QueryParams);
+			const bool bProbeHit = GetWorld()->LineTraceSingleByChannel(ProbeHit, ProbeStart, ProbeEnd, ECC_WorldStatic, QueryParams);
 
 			if (bDrawDebug) // 调试：探空射线
 			{
-				DrawDebugLine(GetWorld(), ProbeStart, ProbeEnd,
-				              bProbeHit ? FColor::Green : FColor::Red,
-				              false, -1.f, 0, 1.f);
+				DrawDebugLine(GetWorld(), ProbeStart, ProbeEnd, bProbeHit ? FColor::Green : FColor::Red, false, -1.f, 0, 1.f);
 			}
 
 			if (!bProbeHit) // 探空未命中,刚刚越过边缘,进入折返射线
@@ -327,37 +319,30 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 
 				if (bDrawDebug) // 调试：折返射线
 				{
-					DrawDebugLine(GetWorld(), ProbeEnd, ReturnEnd,
-					              bReturnHit ? FColor::Cyan : FColor::Orange,
-					              false, -1.f, 0, 1.f);
+					DrawDebugLine(GetWorld(), ProbeEnd, ReturnEnd, bReturnHit ? FColor::Cyan : FColor::Orange, false, -1.f, 0, 1.f);
 				}
 
 				if (bReturnHit)
 				{
-					// 确认是新墙面（法线与当前墙面差异 > 45°，cos45°≈0.7）
+					// 是否是新墙 值为 1.0：两个法线完全平行,值为 0.0：两个法线完全垂直，确认是新墙面（法线与当前墙面差异 > 45°，cos45°≈0.7）
 					const float NormalDot = FMath::Abs(FVector::DotProduct(ReturnHit.Normal, WallNormal));
 					if (NormalDot < 0.7f)
 					{
-						NewWallNormal = ReturnHit.Normal;
-						NewWallImpactPoint = ReturnHit.Location;
+						FLrWallInfo FLrWallInfo;
+						FLrWallInfo.WallNormal = ReturnHit.Normal;
+						FLrWallInfo.WallImpactPoint = ReturnHit.Location;
+						FLrNewWallInfos.Add(FLrWallInfo);
+
+						// NewWallNormal = ReturnHit.Normal;
+						// NewWallImpactPoint = ReturnHit.Location;
 						NewWallImpactDir = (ReturnHit.ImpactPoint - CurPos).GetSafeNormal();
 						bNewWallFound = true;
 
 						if (bDrawDebug)
 						{
-							DrawDebugSphere(GetWorld(), ReturnHit.ImpactPoint, 8.f, 8,
-							                FColor::Magenta, false, -1.f, 0, 2.f);
+							DrawDebugSphere(GetWorld(), ReturnHit.ImpactPoint, 8.f, 8, FColor::Magenta, false, -1.f, 0, 2.f);
 						}
 					}
-				}
-			}
-			else
-			{
-				//是否是新墙 值为 1.0：两个法线完全平行,值为 0.0：两个法线完全垂直
-				const float NormalDot = FMath::Abs(FVector::DotProduct(ProbeHit.Normal, WallNormal));
-				if (NormalDot < 0.7f)
-				{
-					bNewWallFound = true;
 				}
 			}
 		}
@@ -370,8 +355,9 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	//   ③ 折返射线找到新墙 → 传送到新墙面
 	//   ④ 全部未命中且无候选 → 切 Air
 	//==================================================================
-	if (!bOnWall && bFoundWallViaDir)
+	if (!bOnWall && FLrNewWallInfos.Num() > 0)
 	{
+		NewWallImpactDir = (DirHit.ImpactPoint - CurPos).GetSafeNormal();
 		// 中心未命中但方向射线找到墙 → 吸附到该墙面
 		UpdateWallBasis(DirWallNormal, RawMoveInput);
 		const FVector DesiredPos = DirWallImpact + WallNormal * StickDistance;

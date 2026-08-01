@@ -22,6 +22,19 @@ class ULrMoverComponent;
  * 5. 调试：2昆虫的中心射线+4方向射线+ 4 探空射线 + 4 折返射线 + 多个新墙面目标球体。
  * 6.现在已经完整操作映射UpdateWallOpBasis()，补充其他
  */
+
+//墙信息
+USTRUCT()
+struct FLrWallInfo
+{
+	GENERATED_BODY()
+
+public:
+	FVector WallNormal = FVector::ZeroVector; //法线
+	FVector WallImpactPoint = FVector::ZeroVector; //击中点
+};
+
+
 UCLASS()
 class LR_API ULrInsectClimbMovementMode : public UBaseMovementMode
 {
@@ -33,8 +46,6 @@ public:
 	virtual void Activate(const FMoverEventContext& Context, FName PrevModeName, const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, FMoverSyncState* OutSyncState, FMoverAuxStateContext* OutAuxState) override;
 	virtual void GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const override;
 	virtual void SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState) override;
-
-	
 
 private:
 	FVector WallNormal = FVector::ZeroVector;
@@ -98,7 +109,7 @@ private:
 	float DirectionRayLength = 40.f; //四方向射线长度
 
 	UPROPERTY(EditAnywhere, Category = "InsectClimb")
-	float ProbeLength = 30.f;//探空长度（纵深长度）
+	float ProbeLength = 30.f; //探空长度（纵深长度）
 
 	UPROPERTY(EditAnywhere, Category = "InsectClimb")
 	float EdgeReturnLength = 120.f; //折返射线
