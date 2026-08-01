@@ -157,7 +157,6 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 		{
 			// 过渡完成：采用新墙面基向量
 			bWallTransition = false;
-			WallNormal = TransitionTargetNormal;
 			UpdateWallBasis(TransitionTargetNormal, RawMoveInput);
 		}
 
@@ -284,11 +283,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	//     - 未命中(橙)：没有新墙面
 	//==================================================================
 	int32 MissCount = 0;
-	// FVector NewWallNormal = FVector::ZeroVector;
-	// FVector NewWallImpactPoint = FVector::ZeroVector;
-	// FVector NewWallImpactDir = FVector::ZeroVector; //用于检查玩家移动意图是否朝向新墙面
 
-	// bool bNewWallFound = false;
 
 	{
 		const FVector ProbeDirs[4] = {WallForward, -WallForward, -WallRight, WallRight};
@@ -310,7 +305,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 				              false, -1.f, 0, 1.f);
 			}
 
-			if (!bProbeHit) // 探空未命中,刚刚越过边缘
+			if (!bProbeHit) // 探空未命中,刚刚越过边缘,进入折返射线
 			{
 				// 探空未命中 → 已越过边缘
 				MissCount++;
@@ -354,6 +349,15 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 							                FColor::Magenta, false, -1.f, 0, 2.f);
 						}
 					}
+				}
+			}
+			else
+			{
+				//是否是新墙 值为 1.0：两个法线完全平行,值为 0.0：两个法线完全垂直
+				const float NormalDot = FMath::Abs(FVector::DotProduct(ProbeHit.Normal, WallNormal));
+				if (NormalDot < 0.7f)
+				{
+					bNewWallFound = true;
 				}
 			}
 		}
