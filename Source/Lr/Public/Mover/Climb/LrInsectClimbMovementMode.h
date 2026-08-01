@@ -34,6 +34,17 @@ public:
 	virtual void GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const override;
 	virtual void SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState) override;
 
+	
+
+private:
+	FVector WallNormal = FVector::ZeroVector;
+	FVector WallRight = FVector::ZeroVector;
+	FVector WallFinalMove = FVector::ZeroVector;
+	FVector WallForward = FVector::ZeroVector;
+
+	//头部朝向（墙面基向量），W/S 沿此方向移动
+	FVector HeadDir = FVector::ZeroVector;
+
 	//墙面操作转换
 	/**
 	* 固定全局参考Up = (0, 0, 1)
@@ -51,16 +62,6 @@ public:
 	*  最终移动向量 = (input.x × Right) + (input.y × Forward) + (input.z × N)
 	*/
 	void UpdateWallBasis(const FVector& InWallNormal, const FVector& MoveInput);
-
-private:
-	FVector WallNormal = FVector::ZeroVector;
-	FVector WallRight = FVector::ZeroVector;
-	FVector WallFinalMove = FVector::ZeroVector;
-	FVector WallForward = FVector::ZeroVector;
-
-	//头部朝向（墙面基向量），W/S 沿此方向移动
-	FVector HeadDir = FVector::ZeroVector;
-
 	//墙面角色身体旋转转换
 	void UpdateWallRotationBasis(const FVector& InWallNormal, FQuat CurrentRotation, FVector MoveInput);
 
