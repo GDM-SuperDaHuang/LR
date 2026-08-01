@@ -141,6 +141,33 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	}
 
 	//--------------------------------------------------
+	// 0.5 绕角过渡：向新墙平滑滑动（位置+旋转插值，替代瞬移）
+	//--------------------------------------------------
+	if (bWallTransition)
+	{
+		TransitionAlpha = FMath::Min(1.f, TransitionAlpha + DeltaTime / WallTransitionTime);
+		const float SmoothA = FMath::SmoothStep(0.f, 1.f, TransitionAlpha);
+
+		const FVector LerpedPos = FMath::Lerp(TransitionStartPos, TransitionTargetPos, SmoothA);
+		const FQuat LerpedRot = FQuat::Slerp(TransitionStartRot, TransitionTargetRot, SmoothA);
+
+		UpdatedComp->SetWorldLocationAndRotation(LerpedPos, LerpedRot);
+
+		if (TransitionAlpha >= 1.f)
+		{
+			// 过渡完成：采用新墙面基向量
+			bWallTransition = false;
+			WallNormal = TransitionTargetNormal;
+			UpdateWallBasis(TransitionTargetNormal, RawMoveInput);
+		}
+
+		const FVector TransFinal = UpdatedComp->GetComponentLocation();
+		const FVector TransVel = (TransFinal - StartingLocation) / DeltaTime;
+		OutputSyncState.SetTransforms_WorldSpace(TransFinal, UpdatedComp->GetComponentQuat().Rotator(), TransVel, FVector::ZeroVector);
+		return;
+	}
+
+	//--------------------------------------------------
 	// 0. 救援：WallNormal 为零 → Activate 未找到墙，尝试向前补射
 	//--------------------------------------------------
 	if (WallNormal.IsNearlyZero())
@@ -358,13 +385,8 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	{
 		if (bNewWallFound)
 		{
-			// 折返射线找到新墙面 → 直接传送
-			UpdateWallBasis(NewWallNormal, RawMoveInput);
-			const FVector DesiredPos = NewWallImpactPoint + WallNormal * StickDistance;
-			UpdatedComp->SetWorldLocation(DesiredPos);
-			UpdateWallRotationBasis(NewWallNormal, CurrentRotation, RawMoveInput);
-			CurrentRotation = UpdatedComp->GetComponentQuat();
-
+			// 折返射线找到新墙面 → 平滑滑动到新墙（替代直接传送）
+			BeginWallTransition(NewWallNormal, NewWallImpactPoint);
 			bOnWall = true;
 		}
 		else if (MissCount == 4 && !bNewWallFound)
@@ -387,16 +409,20 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 
 		const float NormalDot = FMath::Abs(FVector::DotProduct(WallNormal, NewWallNormal));
 		const float IntentDot = FVector::DotProduct(WallMoveDir, NewWallImpactDir);
-		// 统一位移
+		// 玩家移动指向新墙面 → 开始平滑绕角过渡
 		if (NormalDot < 0.866f && IntentDot > 0.3f)
 		{
-			UpdateWallBasis(NewWallNormal, RawMoveInput);
-			UpdateWallRotationBasis(NewWallNormal, CurrentRotation, RawMoveInput);
-			CurrentRotation = UpdatedComp->GetComponentQuat();
-
-			const FVector DesiredPos = NewWallImpactPoint + NewWallNormal * StickDistance;
-			UpdatedComp->SetWorldLocation(DesiredPos);
+			BeginWallTransition(NewWallNormal, NewWallImpactPoint);
 		}
+	}
+
+	// 已开始绕角过渡：本帧直接输出，由下一帧的过渡逻辑接管
+	if (bWallTransition)
+	{
+		OutputSyncState.SetTransforms_WorldSpace(
+			UpdatedComp->GetComponentLocation(), CurrentRotation.Rotator(),
+			Params.ProposedMove.LinearVelocity, FVector::ZeroVector);
+		return;
 	}
 
 	//--------------------------------------------------
@@ -519,4 +545,37 @@ void ULrInsectClimbMovementMode::UpdateWallRotationBasis(const FVector& InWallNo
 	{
 		UpdatedComp->SetWorldRotation(DesiredRotation);
 	}
+}
+
+void ULrInsectClimbMovementMode::BeginWallTransition(const FVector& NewNormal, const FVector& ImpactPoint)
+{
+	USceneComponent* UpdatedComp = GetMoverComponent()->GetUpdatedComponent();
+	if (!UpdatedComp) return;
+
+	const FVector TargetNormal = NewNormal.GetSafeNormal();
+	const FVector TargetPos = ImpactPoint + TargetNormal * StickDistance;
+
+	// 计算新墙面朝向（X=HeadDir，固定为墙面基向量 WallForward；Z=新墙法线）
+	FVector Right, Forward;
+	if (TargetNormal == FVector(0, 0, -1) || TargetNormal == FVector(0, 0, 1))
+	{
+		Right = FVector(1, 0, 0);
+		Forward = FVector(0, -1, 0);
+	}
+	else
+	{
+		Right = FVector::CrossProduct(FVector::UpVector, TargetNormal).GetSafeNormal();
+		Forward = FVector::CrossProduct(TargetNormal, Right).GetSafeNormal();
+	}
+	const FQuat TargetRot = FRotationMatrix::MakeFromXY(Forward, FVector::CrossProduct(TargetNormal, Forward)).Rotator().Quaternion();
+
+	bWallTransition = true;
+	TransitionTargetNormal = TargetNormal;
+	TransitionTargetPos = TargetPos;
+	TransitionTargetRot = TargetRot;
+	TransitionStartPos = UpdatedComp->GetComponentLocation();
+	TransitionStartRot = UpdatedComp->GetComponentQuat();
+	TransitionAlpha = 0.f;
+
+	UE_LOG(LogTemp, Display, TEXT("=== BeginWallTransition -> (%f,%f,%f)"), TargetNormal.X, TargetNormal.Y, TargetNormal.Z);
 }

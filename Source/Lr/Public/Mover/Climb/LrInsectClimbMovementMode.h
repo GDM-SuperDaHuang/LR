@@ -64,6 +64,18 @@ private:
 	//墙面角色身体旋转转换
 	void UpdateWallRotationBasis(const FVector& InWallNormal, FQuat CurrentRotation, FVector MoveInput);
 
+	//绕角过渡：从旧墙平滑滑到新墙（位置+旋转插值，替代瞬移）
+	void BeginWallTransition(const FVector& NewNormal, const FVector& ImpactPoint);
+
+	//绕角过渡状态
+	bool bWallTransition = false;
+	FVector TransitionTargetNormal = FVector::ZeroVector;
+	FVector TransitionTargetPos = FVector::ZeroVector;
+	FQuat TransitionTargetRot = FQuat::Identity;
+	FVector TransitionStartPos = FVector::ZeroVector;
+	FQuat TransitionStartRot = FQuat::Identity;
+	float TransitionAlpha = 0.f;
+
 
 	UPROPERTY()
 	TObjectPtr<ULrMoverComponent> CacheMoverComponent;
@@ -76,6 +88,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "InsectClimb")
 	float ClimbSpeed = 400.f;
+
+	UPROPERTY(EditAnywhere, Category = "InsectClimb|Transition")
+	float WallTransitionTime = 0.25f;
 
 	UPROPERTY(EditAnywhere, Category = "InsectClimb")
 	float CenterRayLength = 50.f;
