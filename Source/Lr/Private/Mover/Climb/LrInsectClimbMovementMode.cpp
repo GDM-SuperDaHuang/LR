@@ -231,7 +231,9 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 		const bool bDirHit = GetWorld()->LineTraceSingleByChannel(
 			DirHit, DirStart, DirEnd, ECC_WorldStatic, QueryParams);
 
-		if (bDirHit && FVector::DotProduct(DirHit.Normal, FVector::UpVector) <= 0.75f)
+		const float DirNUpDot = bDirHit ? FVector::DotProduct(DirHit.Normal, FVector::UpVector) : 1.f;
+		// 墙面任意方向都接受；法线朝上的面（墙顶/平台）仅上方向接受，用于到达顶部后切 Walk
+		if (bDirHit && (DirNUpDot <= 0.75f || (i == 0 && DirNUpDot > 0.75f)))
 		{
 			// 找到有效墙面 → 记录法线和命中点
 			DirWallNormal = DirHit.Normal;
@@ -411,6 +413,19 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	UpdateWallRotationBasis(WallNormal, CurrentRotation, RawMoveInput);
 	// 同时需要重新获取当前的 CurrentRotation 用于后续的输出
 	CurrentRotation = UpdatedComp->GetComponentQuat();
+
+	//--------------------------------------------------
+	// 6.5 到达法线朝上的面（类似地面的平台/墙顶）→ 切换到 Walk 模式
+	//--------------------------------------------------
+	if (FVector::DotProduct(WallNormal, FVector::UpVector) > 0.75f)
+	{
+		OutputState.MovementEndState.NextModeName = LrAllModes::Walk;
+		OutputSyncState.SetTransforms_WorldSpace(
+			UpdatedComp->GetComponentLocation(), CurrentRotation.Rotator(),
+			Params.ProposedMove.LinearVelocity, FVector::ZeroVector);
+		return;
+	}
+
 	//--------------------------------------------------
 	// 7. 调试绘制
 	//--------------------------------------------------
