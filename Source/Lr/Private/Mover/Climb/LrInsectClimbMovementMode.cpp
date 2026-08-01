@@ -34,13 +34,6 @@ void ULrInsectClimbMovementMode::Activate(const FMoverEventContext& Context, FNa
 	USceneComponent* UpdatedComp = GetMoverComponent()->GetUpdatedComponent();
 	if (!UpdatedComp) return;
 
-	// 缓存相机旋转，用于初始吸附姿势的头部朝向
-	const FLrMoverInputCmd* ActivateInputs = StartState.InputCmd.InputCollection.FindDataByType<FLrMoverInputCmd>();
-	if (ActivateInputs)
-	{
-		CachedCameraRotation = ActivateInputs->ControlRotation;
-	}
-
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(GetMoverComponent()->GetOwner());
 
@@ -145,7 +138,6 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 		RawMoveInput = SimInputs->GetMoveInput();
 		if (!RawMoveInput.IsNearlyZero())
 			RawMoveInput = RawMoveInput.GetSafeNormal();
-		CachedCameraRotation = SimInputs->ControlRotation;
 	}
 
 	//--------------------------------------------------
@@ -475,19 +467,8 @@ void ULrInsectClimbMovementMode::UpdateWallBasis(const FVector& InWallNormal, co
 		WallForward = FVector::CrossProduct(InWallNormal, WallRight).GetSafeNormal();
 	}
 
-	// 2. 计算头部朝向（相机屏幕朝上投影到墙面），作为 W/S 的移动方向
+	// 2. 头部朝向：固定使用墙面基向量 WallForward（不依赖相机）
 	HeadDir = WallForward;
-	if (!CachedCameraRotation.IsZero())
-	{
-		const FRotationMatrix CamRot(CachedCameraRotation);
-		const FVector CamUp = CamRot.GetScaledAxis(EAxis::Z);
-		HeadDir = (CamUp - CamUp.ProjectOnToNormal(WallNormal)).GetSafeNormal();
-		// 天花板（法线朝下）：头尾对调，头部朝向翻转 180°
-		if (FVector::DotProduct(WallNormal, FVector::UpVector) < -0.7f)
-			HeadDir = -HeadDir;
-		if (HeadDir.IsNearlyZero())
-			HeadDir = WallForward;
-	}
 
 	// 3. 计算最终移动向量（保留输入方向，但输入为零时置零）
 	if (MoveInput != FVector::ZeroVector)
@@ -520,9 +501,7 @@ void ULrInsectClimbMovementMode::UpdateWallRotationBasis(const FVector& InWallNo
 	}
 	else
 	{
-		// 墙面/天花板：头部朝向跟随相机
-		// 相机屏幕朝上向量投影到墙面平面，旋转相机时头部跟随，且始终指向上方（不会头尾翻转）
-		// 头部朝向已在 UpdateWallBasis 中按同一公式计算并缓存
+		// 墙面/天花板：头部朝向固定为墙面基向量 HeadDir
 		FVector UseHeadDir = HeadDir;
 		if (UseHeadDir.IsNearlyZero())
 			UseHeadDir = WallForward;

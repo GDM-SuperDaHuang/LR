@@ -11,7 +11,7 @@ class ULrMoverComponent;
 /**
  * 昆虫攀爬移动模式
  * 局部坐标约定（贴合墙面时）：Z 轴 = WallNormal，指向墙外，也就是昆虫腹部朝向。
- * X 轴 = HeadDir，昆虫头部朝向（相机屏幕朝上投影到墙面），W/S 沿此轴移动。
+ * X 轴 = HeadDir，昆虫头部朝向（墙面基向量），W/S 沿此轴移动。
  * 1. 贴近墙面：向前 40cm 射线找墙，命中后沿法线腹部吸附到墙，Activate 里实现。
  * 2. 在墙上：
  *    昆虫的中心，会向墙内发射射线检测墙的法线50cm，向墙的反方向发射射线200cm用与背部的墙用于起跳(向不实现todo)，
@@ -51,27 +51,25 @@ public:
 	*  最终移动向量 = (input.x × Right) + (input.y × Forward) + (input.z × N)
 	*/
 	void UpdateWallBasis(const FVector& InWallNormal, const FVector& MoveInput);
+
 private:
 	FVector WallNormal = FVector::ZeroVector;
 	FVector WallRight = FVector::ZeroVector;
 	FVector WallFinalMove = FVector::ZeroVector;
 	FVector WallForward = FVector::ZeroVector;
 
-	//头部朝向（相机屏幕朝上投影到墙面），W/S 沿此方向移动
+	//头部朝向（墙面基向量），W/S 沿此方向移动
 	FVector HeadDir = FVector::ZeroVector;
-
-	//缓存的相机旋转，用于让昆虫头部朝向跟随相机
-	FRotator CachedCameraRotation = FRotator::ZeroRotator;
 
 	//墙面角色身体旋转转换
 	void UpdateWallRotationBasis(const FVector& InWallNormal, FQuat CurrentRotation, FVector MoveInput);
 
-	
+
 	UPROPERTY()
 	TObjectPtr<ULrMoverComponent> CacheMoverComponent;
-	
+
 	UPROPERTY(EditAnywhere, Category = "InsectClimb")
-	float WallSearchDistance = 40.f;
+	float WallSearchDistance = 40.f; //地面接触墙
 
 	UPROPERTY(EditAnywhere, Category = "InsectClimb")
 	float StickDistance = 15.f;
@@ -86,13 +84,13 @@ private:
 	float BackRayLength = 200.f;
 
 	UPROPERTY(EditAnywhere, Category = "InsectClimb")
-	float DirectionRayLength = 40.f;
+	float DirectionRayLength = 40.f; //四方向射线长度
 
 	UPROPERTY(EditAnywhere, Category = "InsectClimb")
-	float ProbeLength = 50.f;
+	float ProbeLength = 30.f;//探空长度（纵深长度）
 
 	UPROPERTY(EditAnywhere, Category = "InsectClimb")
-	float EdgeReturnLength = 120.f;
+	float EdgeReturnLength = 120.f; //折返射线
 
 	UPROPERTY(EditAnywhere, Category = "InsectClimb|Debug")
 	bool bDrawDebug = true;
