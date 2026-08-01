@@ -18,7 +18,7 @@ ULrInsectClimbMovementMode::ULrInsectClimbMovementMode()
 //   1) 沿角色前方向前发射 WallSearchDistance(40cm) 射线寻找墙面
 //   2) 若直线未命中，改用球体扫描作为容错
 //   3) 拒绝过于平坦的表面（与地面法线夹角 < 25°）
-//   4) 建立墙面局部坐标系：Z=WallNormal(腹部朝外), X=WallRight(左右), Y=WallForward(前后)
+//   4) 建立墙面局部坐标系：Z=WallNormal(腹部朝外), X=WallForward(头部朝上), Y=-WallRight(左右)
 //   5) 沿法线将角色吸附到墙面 + 立即设置旋转
 //==============================================================================
 void ULrInsectClimbMovementMode::Activate(const FMoverEventContext& Context, FName PrevModeName, const FMoverSimContext& SimContext,
@@ -33,6 +33,13 @@ void ULrInsectClimbMovementMode::Activate(const FMoverEventContext& Context, FNa
 
 	USceneComponent* UpdatedComp = GetMoverComponent()->GetUpdatedComponent();
 	if (!UpdatedComp) return;
+
+	// 缓存相机旋转，用于初始吸附姿势的头部朝向
+	const FLrMoverInputCmd* ActivateInputs = StartState.InputCmd.InputCollection.FindDataByType<FLrMoverInputCmd>();
+	if (ActivateInputs)
+	{
+		CachedCameraRotation = ActivateInputs->ControlRotation;
+	}
 
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(GetMoverComponent()->GetOwner());
@@ -73,9 +80,9 @@ void ULrInsectClimbMovementMode::Activate(const FMoverEventContext& Context, FNa
 		UpdatedComp->MoveComponent(SnapDelta, UpdatedComp->GetComponentQuat(), true, &SnapHit);
 	}
 
-	// 旋转：MakeFromXY(X=WallRight, Y=WallForward) → Z=CrossProduct(X,Y)=WallNormal
-	// 昆虫腹部（Z轴）朝墙外，X轴左右，Y轴前后
-	const FRotator DesiredRotation = FRotationMatrix::MakeFromXY(WallRight, -WallForward).Rotator();
+	// 旋转：MakeFromXY(X=WallForward, Y=-WallRight) → Z=CrossProduct(X,Y)=WallNormal
+	// 昆虫头部（X轴）朝上，腹部（Z轴）朝墙外
+	const FRotator DesiredRotation = FRotationMatrix::MakeFromXY(WallForward, -WallRight).Rotator();
 	UpdatedComp->SetWorldRotation(DesiredRotation);
 
 	UpdateWallRotationBasis(Hit.Normal, UpdatedComp->GetComponentQuat(), Forward);
@@ -83,10 +90,9 @@ void ULrInsectClimbMovementMode::Activate(const FMoverEventContext& Context, FNa
 
 //==============================================================================
 // GenerateMove — 将玩家输入（A/D、W/S）映射到墙面局部坐标系
-//   • 用摄像机朝向分解原始输入 → 前后量(ForwardAmount) / 左右量(RightAmount)
-//   • 前后量 → WallForward（墙面上下/前后轴，W/S）
-//   • 左右量 → WallRight（墙面左右轴，A/D）
-//   • 最终速度 = (WallForward * 前后量 + WallRight * 左右量) * ClimbSpeed
+//   • 不依赖相机朝向，直接使用墙面局部坐标（与 UpdateWallBasis 一致）
+//   • A/D → WallRight（墙面左右轴），W/S → WallForward（墙面上下/前后轴）
+//   • 最终速度 = WallFinalMove * ClimbSpeed
 //==============================================================================
 void ULrInsectClimbMovementMode::GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState,
                                                              const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
@@ -97,21 +103,8 @@ void ULrInsectClimbMovementMode::GenerateMove_Implementation(const FMoverSimCont
 	if (!Inputs) return;
 
 	const FVector MoveInput = Inputs->GetMoveInput();
-
-	// 用摄像机朝向分解输入意图（W/S → 前后，A/D → 左右）
-	const FRotator CamRot = Inputs->ControlRotation;
-	const FVector CamForward = FRotationMatrix(CamRot).GetScaledAxis(EAxis::X);
-	const FVector CamRight = FRotationMatrix(CamRot).GetScaledAxis(EAxis::Y);
-
-	const float ForwardAmount = FVector::DotProduct(MoveInput, CamForward);
-	const float RightAmount = FVector::DotProduct(MoveInput, CamRight);
-
-	// 映射到墙面局部坐标：W/S→WallForward(前后/上下轴)，A/D→WallRight(左右轴)
-	// const FVector Velocity = (WallForward * ForwardAmount + WallRight * RightAmount) * ClimbSpeed;
-	//
-	// OutProposedMove.LinearVelocity = Velocity;
+	// 不依赖相机朝向：直接使用墙面局部坐标，A/D→-WallRight，W/S→WallForward
 	OutProposedMove.LinearVelocity = WallFinalMove * ClimbSpeed;
-
 	OutProposedMove.DirectionIntent = MoveInput;
 }
 
@@ -147,13 +140,12 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	// 默认给 (0,1,0) 确保垂直墙面也能正确计算叉乘基向量
 	const FLrMoverInputCmd* SimInputs = Params.StartState.InputCmd.InputCollection.FindDataByType<FLrMoverInputCmd>();
 	FVector RawMoveInput = FVector(0, 1, 0);
-	FRotator CamRot = FRotator::ZeroRotator;
 	if (SimInputs)
 	{
 		RawMoveInput = SimInputs->GetMoveInput();
 		if (!RawMoveInput.IsNearlyZero())
 			RawMoveInput = RawMoveInput.GetSafeNormal();
-		CamRot = SimInputs->ControlRotation;
+		CachedCameraRotation = SimInputs->ControlRotation;
 	}
 
 	//--------------------------------------------------
@@ -376,11 +368,6 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 			UpdateWallBasis(NewWallNormal, RawMoveInput);
 			const FVector DesiredPos = NewWallImpactPoint + WallNormal * StickDistance;
 			UpdatedComp->SetWorldLocation(DesiredPos);
-
-			// const FRotator NewRot = FRotationMatrix::MakeFromXY(WallRight, WallForward).Rotator();
-			// CurrentRotation = NewRot.Quaternion();
-			// UpdatedComp->SetWorldRotation(CurrentRotation);
-
 			UpdateWallRotationBasis(NewWallNormal, CurrentRotation, RawMoveInput);
 			CurrentRotation = UpdatedComp->GetComponentQuat();
 
@@ -401,11 +388,8 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	if (bNewWallFound && bOnWall && SimInputs)
 	{
 		const FVector SimMoveInput = SimInputs->GetMoveInput();
-		const FVector SimCamFwd = FRotationMatrix(CamRot).GetScaledAxis(EAxis::X);
-		const FVector SimCamRight = FRotationMatrix(CamRot).GetScaledAxis(EAxis::Y);
-		const float FwdAmt = FVector::DotProduct(SimMoveInput, SimCamFwd);
-		const float RightAmt = FVector::DotProduct(SimMoveInput, SimCamRight);
-		const FVector WallMoveDir = (WallForward * FwdAmt + WallRight * RightAmt).GetSafeNormal();
+		// 不依赖相机朝向：与 UpdateWallBasis 保持一致，A/D→-WallRight，W/S→WallForward
+		const FVector WallMoveDir = (-SimMoveInput.X * WallRight + SimMoveInput.Y * WallForward).GetSafeNormal();
 
 		const float NormalDot = FMath::Abs(FVector::DotProduct(WallNormal, NewWallNormal));
 		const float IntentDot = FVector::DotProduct(WallMoveDir, NewWallImpactDir);
@@ -413,10 +397,6 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 		if (NormalDot < 0.866f && IntentDot > 0.3f)
 		{
 			UpdateWallBasis(NewWallNormal, RawMoveInput);
-			// const FRotator NewRot = FRotationMatrix::MakeFromXY(WallRight, WallForward).Rotator();
-			// CurrentRotation = NewRot.Quaternion();
-			// UpdatedComp->SetWorldRotation(CurrentRotation);
-
 			UpdateWallRotationBasis(NewWallNormal, CurrentRotation, RawMoveInput);
 			CurrentRotation = UpdatedComp->GetComponentQuat();
 
@@ -428,9 +408,6 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	//--------------------------------------------------
 	// 6. 旋转：昆虫腹部朝向墙外（Z=WallNormal）
 	//--------------------------------------------------
-	// CurrentRotation = FRotationMatrix::MakeFromXY(WallRight, WallForward).ToQuat();
-	// UpdatedComp->SetWorldRotation(CurrentRotation);
-	// 改为：
 	UpdateWallRotationBasis(WallNormal, CurrentRotation, RawMoveInput);
 	// 同时需要重新获取当前的 CurrentRotation 用于后续的输出
 	CurrentRotation = UpdatedComp->GetComponentQuat();
@@ -486,7 +463,8 @@ void ULrInsectClimbMovementMode::UpdateWallBasis(const FVector& InWallNormal, co
 	// 2. 计算最终移动向量（保留输入方向，但输入为零时置零）
 	if (MoveInput != FVector::ZeroVector)
 	{
-		WallFinalMove = (MoveInput.X * WallRight) + (MoveInput.Y * WallForward) + (MoveInput.Z * InWallNormal);
+		// 角色 local right = -WallRight（MakeFromXY(WallForward, -WallRight)），故 A/D 映射到 -WallRight
+		WallFinalMove = (-MoveInput.X * WallRight) + (MoveInput.Y * WallForward) + (MoveInput.Z * InWallNormal);
 	}
 	else
 	{
@@ -501,11 +479,32 @@ void ULrInsectClimbMovementMode::UpdateWallBasis(const FVector& InWallNormal, co
 void ULrInsectClimbMovementMode::UpdateWallRotationBasis(const FVector& InWallNormal, FQuat CurrentRotation, FVector MoveInput)
 {
 	// 确保基向量已更新（一般调用前已通过 UpdateWallBasis 计算过）
-	// 直接基于 WallRight, WallForward 构建旋转，使角色：
-	// X = WallRight（左右）
-	// Y = WallForward（前后/上下）
-	// Z = WallNormal（腹部朝外）
-	FRotator DesiredRotation = FRotationMatrix::MakeFromXY(WallRight, WallForward).Rotator();
+	FRotator DesiredRotation;
+	if (FVector::DotProduct(WallNormal, FVector::UpVector) > 0.75f)
+	{
+		// 水平朝上的面（地板/立方体顶部）：脚贴地站立姿势
+		// 保持当前 Yaw 朝向，Pitch/Roll 归零使 Z=世界Up（背部朝上）
+		DesiredRotation = CurrentRotation.Rotator();
+		DesiredRotation.Pitch = 0.f;
+		DesiredRotation.Roll = 0.f;
+	}
+	else
+	{
+		// 墙面/天花板：头部朝向跟随相机
+		// 相机屏幕朝上向量投影到墙面平面，旋转相机时头部跟随，且始终指向上方（不会头尾翻转）
+		FVector HeadDir = WallForward;
+		if (!CachedCameraRotation.IsZero())
+		{
+			const FVector CamUp = FRotationMatrix(CachedCameraRotation).GetScaledAxis(EAxis::Z);
+			HeadDir = (CamUp - CamUp.ProjectOnToNormal(WallNormal)).GetSafeNormal();
+			if (HeadDir.IsNearlyZero())
+				HeadDir = WallForward;
+		}
+
+		// X = HeadDir（头部朝向），Y = WallNormal × HeadDir（左右），Z = WallNormal（腹部朝外）
+		DesiredRotation = FRotationMatrix::MakeFromXY(
+			HeadDir, FVector::CrossProduct(WallNormal, HeadDir)).Rotator();
+	}
 
 	// 如果需要根据 MoveInput 调整朝向（例如让角色面朝移动方向），可在此扩展。
 	// 当前设计保持墙面固定坐标系，不随输入旋转。

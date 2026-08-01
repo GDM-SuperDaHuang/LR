@@ -11,8 +11,8 @@ class ULrMoverComponent;
 /**
  * 昆虫攀爬移动模式
  * 局部坐标约定（贴合墙面时）：Z 轴 = WallNormal，指向墙外，也就是昆虫腹部朝向。
- * X 轴 昆虫左右方向，A/D 沿此轴移动。
- * Y 轴 昆虫前后/上下方向，W/S 沿此轴移动。
+ * X 轴 = WallForward，昆虫头部朝上/下，W/S 沿此轴移动。
+ * Y 轴 = -WallRight，昆虫左右方向，A/D 沿此轴移动。
  * 1. 贴近墙面：向前 40cm 射线找墙，命中后沿法线腹部吸附到墙，Activate 里实现。
  * 2. 在墙上：
  *    昆虫的中心，会向墙内发射射线检测墙的法线50cm，向墙的反方向发射射线200cm用与背部的墙用于起跳(向不实现todo)，
@@ -57,6 +57,9 @@ private:
 	FVector WallRight = FVector::ZeroVector;
 	FVector WallFinalMove = FVector::ZeroVector;
 	FVector WallForward = FVector::ZeroVector;
+
+	//缓存的相机旋转，用于让昆虫头部朝向跟随相机
+	FRotator CachedCameraRotation = FRotator::ZeroRotator;
 
 	//墙面角色身体旋转转换
 	void UpdateWallRotationBasis(const FVector& InWallNormal, FQuat CurrentRotation, FVector MoveInput);
