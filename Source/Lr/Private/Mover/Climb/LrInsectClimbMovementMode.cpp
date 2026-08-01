@@ -185,7 +185,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	// FVector NewWallNormal = FVector::ZeroVector;
 	// FVector NewWallImpactPoint = FVector::ZeroVector;
 	FVector NewWallImpactDir = FVector::ZeroVector; //用于检查玩家移动意图是否朝向新墙面
-	bool bNewWallFound = false; //是否发现新墙
+	// bool bNewWallFound = false; //是否发现新墙
 	FVector CurWallNormal = WallNormal; //当前墙
 	//==================================================================
 	// 2a. 中心射线（向墙内 CenterRayLength=50cm）
@@ -260,11 +260,8 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 			// NewWallNormal = DirWallNormal;
 			// NewWallImpactPoint = DirWallImpact;
 			NewWallImpactDir = (DirHit.ImpactPoint - CurPos).GetSafeNormal();
-			bNewWallFound = true;
 
 			if (bDrawDebug) DrawDebugSphere(GetWorld(), DirHit.ImpactPoint, 8.f, 8, FColor::Cyan, false, -1.f, 0, 2.f);
-
-			break;
 		}
 	}
 
@@ -336,13 +333,25 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 						// NewWallNormal = ReturnHit.Normal;
 						// NewWallImpactPoint = ReturnHit.Location;
 						NewWallImpactDir = (ReturnHit.ImpactPoint - CurPos).GetSafeNormal();
-						bNewWallFound = true;
+						// bNewWallFound = true;
 
 						if (bDrawDebug)
 						{
 							DrawDebugSphere(GetWorld(), ReturnHit.ImpactPoint, 8.f, 8, FColor::Magenta, false, -1.f, 0, 2.f);
 						}
 					}
+				}
+			}
+			else
+			{
+				// 是否是新墙 值为 1.0：两个法线完全平行,值为 0.0：两个法线完全垂直，确认是新墙面（法线与当前墙面差异 > 45°，cos45°≈0.7）
+				const float NormalDot = FMath::Abs(FVector::DotProduct(ProbeHit.Normal, WallNormal));
+				if (NormalDot < 0.85f)
+				{
+					FLrWallInfo FLrWallInfo;
+					FLrWallInfo.WallNormal = ProbeHit.Normal;
+					FLrWallInfo.WallImpactPoint = ProbeHit.Location;
+					FLrNewWallInfos.Add(FLrWallInfo);
 				}
 			}
 		}
@@ -355,12 +364,23 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	//   ③ 折返射线找到新墙 → 传送到新墙面
 	//   ④ 全部未命中且无候选 → 切 Air
 	//==================================================================
-	if (!bOnWall && FLrNewWallInfos.Num() > 0)
+	int32 NewWallNum = FLrNewWallInfos.Num();
+	FLrWallInfo* BestScoreWall = nullptr;
+	// 中心未命中但方向射线找到墙 → 吸附到该墙面
+	if (RawMoveInput != FVector::ZeroVector && NewWallNum > 0)
 	{
-		NewWallImpactDir = (DirHit.ImpactPoint - CurPos).GetSafeNormal();
+		int32 Index = FindBestScoreWall(FLrNewWallInfos, RawMoveInput, CurPos);
+		if (Index >= 0)
+		{
+			BestScoreWall = &FLrNewWallInfos[Index];
+		}
+	}
+
+	if (BestScoreWall)
+	{
 		// 中心未命中但方向射线找到墙 → 吸附到该墙面
-		UpdateWallBasis(DirWallNormal, RawMoveInput);
-		const FVector DesiredPos = DirWallImpact + WallNormal * StickDistance;
+		UpdateWallBasis(BestScoreWall->WallNormal, RawMoveInput);
+		const FVector DesiredPos = BestScoreWall->WallImpactPoint + WallNormal * StickDistance;
 		const FVector SnapDelta = DesiredPos - CurPos;
 		if (!SnapDelta.IsNearlyZero())
 		{
@@ -368,43 +388,66 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 			UpdatedComp->MoveComponent(SnapDelta, CurrentRotation, true, &SnapHit);
 			CurPos = UpdatedComp->GetComponentLocation();
 		}
+		BeginWallTransition(BestScoreWall->WallNormal, BestScoreWall->WallImpactPoint);
 		bOnWall = true;
 	}
 
 	if (!bOnWall)
 	{
-		if (bNewWallFound)
-		{
-			// 折返射线找到新墙面 → 平滑滑动到新墙（替代直接传送）
-			BeginWallTransition(NewWallNormal, NewWallImpactPoint);
-			bOnWall = true;
-		}
-		else if (MissCount == 4 && !bNewWallFound)
-		{
-			// 四面探空全未命中 + 折返未找到新墙 → 完全离开墙面 → Air
-			OutputState.MovementEndState.NextModeName = LrAllModes::Air;
-			OutputSyncState.SetTransforms_WorldSpace(
-				UpdatedComp->GetComponentLocation(), CurrentRotation.Rotator(),
-				Params.ProposedMove.LinearVelocity, FVector::ZeroVector);
-			return;
-		}
+		OutputState.MovementEndState.NextModeName = LrAllModes::Air;
+		return;
 	}
+	// if (!bOnWall && NewWallNum > 0)
+	// {
+	// 	if (BestScoreWall)
+	// 	{
+	// 		// 中心未命中但方向射线找到墙 → 吸附到该墙面
+	// 		UpdateWallBasis(BestScoreWall->WallNormal, RawMoveInput);
+	// 		const FVector DesiredPos = BestScoreWall->WallImpactPoint + WallNormal * StickDistance;
+	// 		const FVector SnapDelta = DesiredPos - CurPos;
+	// 		if (!SnapDelta.IsNearlyZero())
+	// 		{
+	// 			FHitResult SnapHit;
+	// 			UpdatedComp->MoveComponent(SnapDelta, CurrentRotation, true, &SnapHit);
+	// 			CurPos = UpdatedComp->GetComponentLocation();
+	// 		}
+	// 		bOnWall = true;
+	// 	}
+	// }
+	//
+	// if (!bOnWall)
+	// {
+	// 	if (NewWallNum > 0)
+	// 	{
+	// 		// 折返射线找到新墙面 → 平滑滑动到新墙（替代直接传送）
+	// 		BeginWallTransition(BestScoreWall->WallNormal, BestScoreWall->WallImpactPoint);
+	// 		bOnWall = true;
+	// 	}
+	// 	else if (BestScoreWall == nullptr)
+	// 	{
+	// 		// 四面探空全未命中 + 折返未找到新墙 → 完全离开墙面 → Air
+	// 		OutputState.MovementEndState.NextModeName = LrAllModes::Air;
+	// 		OutputSyncState.SetTransforms_WorldSpace(
+	// 			UpdatedComp->GetComponentLocation(), CurrentRotation.Rotator(),
+	// 			Params.ProposedMove.LinearVelocity, FVector::ZeroVector);
+	// 		return;
+	// 	}
+	// }
 
 	// 折返射线找到新墙面 → 当玩家移动指向新墙面时绕角切换
-	if (bNewWallFound && bOnWall && SimInputs)
-	{
-		const FVector SimMoveInput = SimInputs->GetMoveInput();
-		// 不依赖相机朝向：与 UpdateWallBasis 保持一致，A/D→-WallRight，W/S→WallForward
-		const FVector WallMoveDir = (-SimMoveInput.X * WallRight + SimMoveInput.Y * WallForward).GetSafeNormal();
-
-		const float NormalDot = FMath::Abs(FVector::DotProduct(WallNormal, NewWallNormal));
-		const float IntentDot = FVector::DotProduct(WallMoveDir, NewWallImpactDir);
-		// 玩家移动指向新墙面 → 开始平滑绕角过渡
-		if (NormalDot < 0.866f && IntentDot > 0.3f)
-		{
-			BeginWallTransition(NewWallNormal, NewWallImpactPoint);
-		}
-	}
+	// if (NewWallNum > 0 && bOnWall && SimInputs)
+	// {
+	// 	const FVector SimMoveInput = SimInputs->GetMoveInput();
+	// 	// 不依赖相机朝向：与 UpdateWallBasis 保持一致，A/D→-WallRight，W/S→WallForward
+	// 	const FVector WallMoveDir = (-SimMoveInput.X * WallRight + SimMoveInput.Y * WallForward).GetSafeNormal();
+	// 	const float NormalDot = FMath::Abs(FVector::DotProduct(WallNormal, BestScoreWall->WallNormal));
+	// 	const float IntentDot = FVector::DotProduct(WallMoveDir, NewWallImpactDir);
+	// 	// 玩家移动指向新墙面 → 开始平滑绕角过渡
+	// 	if (NormalDot < 0.866f && IntentDot > 0.3f)
+	// 	{
+	// 		BeginWallTransition(BestScoreWall->WallNormal, BestScoreWall->WallImpactPoint);
+	// 	}
+	// }
 
 	// 已开始绕角过渡：本帧直接输出，由下一帧的过渡逻辑接管
 	if (bWallTransition)
@@ -429,8 +472,10 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	{
 		OutputState.MovementEndState.NextModeName = LrAllModes::Walk;
 		OutputSyncState.SetTransforms_WorldSpace(
-			UpdatedComp->GetComponentLocation(), CurrentRotation.Rotator(),
-			Params.ProposedMove.LinearVelocity, FVector::ZeroVector);
+			UpdatedComp->GetComponentLocation(),
+			CurrentRotation.Rotator(),
+			Params.ProposedMove.LinearVelocity,
+			FVector::ZeroVector);
 		return;
 	}
 
@@ -440,13 +485,8 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	if (bDrawDebug)
 	{
 		const FVector DebugPos = UpdatedComp->GetComponentLocation();
-
-		DrawDebugLine(GetWorld(), DebugPos, DebugPos - WallNormal * CenterRayLength,
-		              bOnWall ? FColor::Blue : FColor::Red, false, -1.f, 0, 2.f);
-
-		DrawDebugLine(GetWorld(), DebugPos, DebugPos + WallNormal * BackRayLength,
-		              bBackHit ? FColor::Yellow : FColor::Silver, false, -1.f, 0, 1.f);
-
+		DrawDebugLine(GetWorld(), DebugPos, DebugPos - WallNormal * CenterRayLength, bOnWall ? FColor::Blue : FColor::Red, false, -1.f, 0, 2.f);
+		DrawDebugLine(GetWorld(), DebugPos, DebugPos + WallNormal * BackRayLength, bBackHit ? FColor::Yellow : FColor::Silver, false, -1.f, 0, 1.f);
 		for (int32 i = 0; i < 4; ++i)
 		{
 			const FVector DStart = DebugPos + DirDirs[i] * 5.f;
@@ -568,4 +608,44 @@ void ULrInsectClimbMovementMode::BeginWallTransition(const FVector& NewNormal, c
 	TransitionAlpha = 0.f;
 
 	UE_LOG(LogTemp, Display, TEXT("=== BeginWallTransition -> (%f,%f,%f)"), TargetNormal.X, TargetNormal.Y, TargetNormal.Z);
+}
+
+int32 ULrInsectClimbMovementMode::FindBestScoreWall(TArray<FLrWallInfo>& LrNewWallInfos, const FVector MoveInput, const FVector CurPos)
+{
+	int32 Index = -1;
+	int32 Num = LrNewWallInfos.Num();
+
+	if (Num > 0)
+	{
+		// 玩家输入 → 当前墙面坐标系 → 世界空间意图方向（A/D→-WallRight，W/S→WallForward）
+		const FVector WallMoveDir = (-MoveInput.X * WallRight + MoveInput.Y * WallForward).GetSafeNormal();
+		float BestScore = -FLT_MAX;\
+		float Score = -1;
+		for (int32 i = 0; i < Num; i++)
+		{
+			FLrWallInfo Info = LrNewWallInfos[i];
+			const FVector ToWall = Info.WallImpactPoint - CurPos;
+			const float Dist = ToWall.Size();
+			if (Dist < KINDA_SMALL_NUMBER) continue;
+
+			// ① 主分：意图方向与"指向该墙"方向的一致性（-1~1）
+			const float IntentDot = FVector::DotProduct(WallMoveDir, ToWall / Dist);
+			// ② 次分：法线与当前墙差异越大越"新"（0~1）
+			const float NormalDiff = 1.f - FMath::Abs(FVector::DotProduct(Info.WallNormal, WallNormal));
+			// ③ 微权：距离近的优先，稳定对称场景下的选择
+			const float DistScore = 1.f / (1.f + Dist * 0.01f);
+
+			Score = IntentDot + IntentDot * NormalDiff * 0.2f + IntentDot * DistScore * 0.05f;
+			if (Score > BestScore)
+			{
+				BestScore = Score;
+				Index = i;
+			}
+		}
+		if (Score > 0)
+		{
+			return Index;
+		}
+	}
+	return -1;
 }

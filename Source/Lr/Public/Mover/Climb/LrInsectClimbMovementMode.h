@@ -74,6 +74,9 @@ private:
 	//绕角过渡：从旧墙平滑滑到新墙（位置+旋转插值，替代瞬移）
 	void BeginWallTransition(const FVector& NewNormal, const FVector& ImpactPoint);
 
+	//寻找分数最高的墙
+	int32 FindBestScoreWall(TArray<FLrWallInfo>& LrNewWallInfos, const FVector MoveInput, const FVector CurPos);
+
 	//绕角过渡状态
 	bool bWallTransition = false;
 	FVector TransitionTargetNormal = FVector::ZeroVector;
