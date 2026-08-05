@@ -8,10 +8,6 @@
 #include "Mover/LrAllModes.h"
 #include "Mover/LrMoverComponent.h"
 
-ULrInsectClimbMovementMode::ULrInsectClimbMovementMode()
-{
-}
-
 
 //==============================================================================
 // Activate — 进入攀爬模式时的初始吸附
@@ -397,58 +393,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 		OutputState.MovementEndState.NextModeName = LrAllModes::Air;
 		return;
 	}
-	// if (!bOnWall && NewWallNum > 0)
-	// {
-	// 	if (BestScoreWall)
-	// 	{
-	// 		// 中心未命中但方向射线找到墙 → 吸附到该墙面
-	// 		UpdateWallBasis(BestScoreWall->WallNormal, RawMoveInput);
-	// 		const FVector DesiredPos = BestScoreWall->WallImpactPoint + WallNormal * StickDistance;
-	// 		const FVector SnapDelta = DesiredPos - CurPos;
-	// 		if (!SnapDelta.IsNearlyZero())
-	// 		{
-	// 			FHitResult SnapHit;
-	// 			UpdatedComp->MoveComponent(SnapDelta, CurrentRotation, true, &SnapHit);
-	// 			CurPos = UpdatedComp->GetComponentLocation();
-	// 		}
-	// 		bOnWall = true;
-	// 	}
-	// }
-	//
-	// if (!bOnWall)
-	// {
-	// 	if (NewWallNum > 0)
-	// 	{
-	// 		// 折返射线找到新墙面 → 平滑滑动到新墙（替代直接传送）
-	// 		BeginWallTransition(BestScoreWall->WallNormal, BestScoreWall->WallImpactPoint);
-	// 		bOnWall = true;
-	// 	}
-	// 	else if (BestScoreWall == nullptr)
-	// 	{
-	// 		// 四面探空全未命中 + 折返未找到新墙 → 完全离开墙面 → Air
-	// 		OutputState.MovementEndState.NextModeName = LrAllModes::Air;
-	// 		OutputSyncState.SetTransforms_WorldSpace(
-	// 			UpdatedComp->GetComponentLocation(), CurrentRotation.Rotator(),
-	// 			Params.ProposedMove.LinearVelocity, FVector::ZeroVector);
-	// 		return;
-	// 	}
-	// }
-
-	// 折返射线找到新墙面 → 当玩家移动指向新墙面时绕角切换
-	// if (NewWallNum > 0 && bOnWall && SimInputs)
-	// {
-	// 	const FVector SimMoveInput = SimInputs->GetMoveInput();
-	// 	// 不依赖相机朝向：与 UpdateWallBasis 保持一致，A/D→-WallRight，W/S→WallForward
-	// 	const FVector WallMoveDir = (-SimMoveInput.X * WallRight + SimMoveInput.Y * WallForward).GetSafeNormal();
-	// 	const float NormalDot = FMath::Abs(FVector::DotProduct(WallNormal, BestScoreWall->WallNormal));
-	// 	const float IntentDot = FVector::DotProduct(WallMoveDir, NewWallImpactDir);
-	// 	// 玩家移动指向新墙面 → 开始平滑绕角过渡
-	// 	if (NormalDot < 0.866f && IntentDot > 0.3f)
-	// 	{
-	// 		BeginWallTransition(BestScoreWall->WallNormal, BestScoreWall->WallImpactPoint);
-	// 	}
-	// }
-
+	
 	// 已开始绕角过渡：本帧直接输出，由下一帧的过渡逻辑接管
 	if (bWallTransition)
 	{
