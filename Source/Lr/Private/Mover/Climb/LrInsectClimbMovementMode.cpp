@@ -468,16 +468,16 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	//--------------------------------------------------
 	// 6.5 到达法线朝上的面（类似地面的平台/墙顶）→ 切换到 Walk 模式
 	//--------------------------------------------------
-	if (FVector::DotProduct(WallNormal, FVector::UpVector) > 0.75f)
-	{
-		OutputState.MovementEndState.NextModeName = LrAllModes::Walk;
-		OutputSyncState.SetTransforms_WorldSpace(
-			UpdatedComp->GetComponentLocation(),
-			CurrentRotation.Rotator(),
-			Params.ProposedMove.LinearVelocity,
-			FVector::ZeroVector);
-		return;
-	}
+	// if (FVector::DotProduct(WallNormal, FVector::UpVector) > 0.75f)
+	// {
+	// 	OutputState.MovementEndState.NextModeName = LrAllModes::Walk;
+	// 	OutputSyncState.SetTransforms_WorldSpace(
+	// 		UpdatedComp->GetComponentLocation(),
+	// 		CurrentRotation.Rotator(),
+	// 		Params.ProposedMove.LinearVelocity,
+	// 		FVector::ZeroVector);
+	// 	return;
+	// }
 
 	//--------------------------------------------------
 	// 7. 调试绘制
