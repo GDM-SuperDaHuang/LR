@@ -181,12 +181,6 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 
 	//是否发现新墙
 	TArray<FLrWallInfo> FLrNewWallInfos;
-
-	// FVector NewWallNormal = FVector::ZeroVector;
-	// FVector NewWallImpactPoint = FVector::ZeroVector;
-	FVector NewWallImpactDir = FVector::ZeroVector; //用于检查玩家移动意图是否朝向新墙面
-	// bool bNewWallFound = false; //是否发现新墙
-	FVector CurWallNormal = WallNormal; //当前墙
 	//==================================================================
 	// 2a. 中心射线（向墙内 CenterRayLength=50cm）
 	//     起点沿 WallNormal 偏移 5cm 避免起点嵌在墙内
@@ -229,10 +223,6 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	//     方向：WallForward(上), -WallForward(下), -WallRight(左), WallRight(右)
 	//==================================================================
 	const FVector DirDirs[4] = {WallForward, -WallForward, -WallRight, WallRight};
-	// FVector DirWallNormal = FVector::ZeroVector;
-	// FVector DirWallImpact = FVector::ZeroVector;
-	// bool bFoundWallViaDir = false;
-
 	//可能遇到凸出来的墙
 	for (int32 i = 0; i < 4; ++i)
 	{
@@ -246,21 +236,10 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 		// 墙面任意方向都接受；法线朝上的面（墙顶/平台）仅上方向接受，用于到达顶部后切 Walk
 		if (bDirHit && (DirNUpDot <= 0.75f || (i == 0 && DirNUpDot > 0.75f)))
 		{
-			// 找到有效墙面 → 记录法线和命中点
-			// DirWallNormal = DirHit.Normal;
-			// DirWallImpact = DirHit.Location;
-			// bFoundWallViaDir = true;
-
 			FLrWallInfo FLrWallInfo;
 			FLrWallInfo.WallNormal = DirHit.Normal;
 			FLrWallInfo.WallImpactPoint = DirHit.Location;
 			FLrNewWallInfos.Add(FLrWallInfo);
-
-			// 中心未命中但方向射线找到墙 → 吸附到该墙面
-			// NewWallNormal = DirWallNormal;
-			// NewWallImpactPoint = DirWallImpact;
-			NewWallImpactDir = (DirHit.ImpactPoint - CurPos).GetSafeNormal();
-
 			if (bDrawDebug) DrawDebugSphere(GetWorld(), DirHit.ImpactPoint, 8.f, 8, FColor::Cyan, false, -1.f, 0, 2.f);
 		}
 	}
@@ -329,12 +308,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 						FLrWallInfo.WallNormal = ReturnHit.Normal;
 						FLrWallInfo.WallImpactPoint = ReturnHit.Location;
 						FLrNewWallInfos.Add(FLrWallInfo);
-
-						// NewWallNormal = ReturnHit.Normal;
-						// NewWallImpactPoint = ReturnHit.Location;
-						NewWallImpactDir = (ReturnHit.ImpactPoint - CurPos).GetSafeNormal();
-						// bNewWallFound = true;
-
+						
 						if (bDrawDebug)
 						{
 							DrawDebugSphere(GetWorld(), ReturnHit.ImpactPoint, 8.f, 8, FColor::Magenta, false, -1.f, 0, 2.f);
