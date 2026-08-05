@@ -111,10 +111,14 @@ void ULrInsectClimbMovementMode::GenerateMove_Implementation(const FMoverSimCont
 //==============================================================================
 void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState)
 {
+	if (CacheMoverComponent->bIsInAttackWarp == true)
+	{
+		return;
+	}
 	FMoverDefaultSyncState& OutputSyncState = OutputState.SyncState.SyncStateCollection.FindOrAddMutableDataByType<FMoverDefaultSyncState>();
 	const FMoverDefaultSyncState* StartingSyncState = Params.StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
 	if (!StartingSyncState) return;
-
+	
 	TWeakObjectPtr<USceneComponent> UpdatedComp = Params.MovingComps.UpdatedComponent;
 	if (!UpdatedComp.Get()) return;
 

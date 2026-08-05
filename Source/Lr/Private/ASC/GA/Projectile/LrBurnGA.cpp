@@ -27,8 +27,7 @@ ULrBurnGA::ULrBurnGA()
 void ULrBurnGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	TestNum++;
-	UE_LOG(LogTemp, Warning, TEXT("ULrBurnGA::ActivateAbility =%d "), TestNum);
+
 	// ========== 0. 合法性校验 ==========
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
@@ -90,8 +89,6 @@ void ULrBurnGA::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 void ULrBurnGA::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-	TestNum--;
-	UE_LOG(LogTemp, Warning, TEXT("ULrBurnGA::EndAbility =%d "), TestNum);
 }
 
 /**
@@ -208,7 +205,6 @@ void ULrBurnGA::SpawnProjectiles(const FVector& ProjectileTargetLocation, bool b
 
 void ULrBurnGA::OnMontageFinished()
 {
-	UE_LOG(LogTemp, Warning, TEXT("ULrBurnGA::OnMontageFinished =%d "), TestNum);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 	ALrPawnBase* OwnerPawn = Cast<ALrPawnBase>(GetAvatarActorFromActorInfo());
 	if (!OwnerPawn) return;

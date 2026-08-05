@@ -54,7 +54,5 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, meta=(ExposeOnSpawn = true))
 	FLrCombatQueryParams ConeParams;
-
-	UPROPERTY(EditDefaultsOnly)
-	int32 TestNum = 0;
+	
 };
