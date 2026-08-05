@@ -66,7 +66,7 @@ private:
 	*/
 	void UpdateWallBasis(const FVector& InWallNormal, const FVector& MoveInput);
 	//墙面角色身体旋转转换
-	void UpdateWallRotationBasis(const FVector& InWallNormal, FQuat CurrentRotation, FVector MoveInput);
+	void UpdateWallRotationBasis(FQuat CurrentRotation, FVector MoveInput);
 
 	//绕角过渡：从旧墙平滑滑到新墙（位置+旋转插值，替代瞬移）
 	void BeginWallTransition(const FVector& NewNormal, const FVector& ImpactPoint);

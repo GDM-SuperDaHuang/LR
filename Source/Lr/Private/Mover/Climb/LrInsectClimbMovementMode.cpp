@@ -74,7 +74,7 @@ void ULrInsectClimbMovementMode::Activate(const FMoverEventContext& Context, FNa
 	const FRotator DesiredRotation = FRotationMatrix::MakeFromXY(WallForward, -WallRight).Rotator();
 	UpdatedComp->SetWorldRotation(DesiredRotation);
 
-	UpdateWallRotationBasis(Hit.Normal, UpdatedComp->GetComponentQuat(), Forward);
+	UpdateWallRotationBasis(UpdatedComp->GetComponentQuat(), Forward);
 }
 
 //==============================================================================
@@ -308,7 +308,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 						FLrWallInfo.WallNormal = ReturnHit.Normal;
 						FLrWallInfo.WallImpactPoint = ReturnHit.Location;
 						FLrNewWallInfos.Add(FLrWallInfo);
-						
+
 						if (bDrawDebug)
 						{
 							DrawDebugSphere(GetWorld(), ReturnHit.ImpactPoint, 8.f, 8, FColor::Magenta, false, -1.f, 0, 2.f);
@@ -345,7 +345,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	{
 		int32 Index = FindBestScoreWall(FLrNewWallInfos, CurPos);
 		if (Index >= 0)
-		{ 
+		{
 			BestScoreWall = &FLrNewWallInfos[Index];
 		}
 	}
@@ -384,7 +384,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	//--------------------------------------------------
 	// 6. 旋转：昆虫腹部朝向墙外（Z=WallNormal）
 	//--------------------------------------------------
-	UpdateWallRotationBasis(WallNormal, CurrentRotation, RawMoveInput);
+	UpdateWallRotationBasis(CurrentRotation, RawMoveInput);
 	// 同时需要重新获取当前的 CurrentRotation 用于后续的输出
 	CurrentRotation = UpdatedComp->GetComponentQuat();
 
@@ -476,7 +476,7 @@ void ULrInsectClimbMovementMode::UpdateWallBasis(const FVector& InWallNormal, co
 	}
 }
 
-void ULrInsectClimbMovementMode::UpdateWallRotationBasis(const FVector& InWallNormal, FQuat CurrentRotation, FVector MoveInput)
+void ULrInsectClimbMovementMode::UpdateWallRotationBasis(FQuat CurrentRotation, FVector MoveInput)
 {
 	// 确保基向量已更新（一般调用前已通过 UpdateWallBasis 计算过）
 	FRotator DesiredRotation;
@@ -502,7 +502,6 @@ void ULrInsectClimbMovementMode::UpdateWallRotationBasis(const FVector& InWallNo
 
 	// 如果需要根据 MoveInput 调整朝向（例如让角色面朝移动方向），可在此扩展。
 	// 当前设计保持墙面固定坐标系，不随输入旋转。
-
 	USceneComponent* UpdatedComp = GetMoverComponent()->GetUpdatedComponent();
 	if (UpdatedComp)
 	{
