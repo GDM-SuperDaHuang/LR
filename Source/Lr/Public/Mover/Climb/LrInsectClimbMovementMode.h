@@ -50,7 +50,6 @@ private:
 	FVector WallRight = FVector::ZeroVector;
 	FVector WallFinalMove = FVector::ZeroVector;
 	FVector WallForward = FVector::ZeroVector;
-
 	//头部朝向（墙面基向量），W/S 沿此方向移动
 	FVector HeadDir = FVector::ZeroVector;
 
@@ -73,7 +72,7 @@ private:
 	void BeginWallTransition(const FVector& NewNormal, const FVector& ImpactPoint);
 
 	//寻找分数最高的墙
-	int32 FindBestScoreWall(TArray<FLrWallInfo>& LrNewWallInfos, const FVector MoveInput, const FVector CurPos);
+	int32 FindBestScoreWall(TArray<FLrWallInfo>& LrNewWallInfos, const FVector& CurPos);
 
 	//绕角过渡状态
 	bool bWallTransition = false;

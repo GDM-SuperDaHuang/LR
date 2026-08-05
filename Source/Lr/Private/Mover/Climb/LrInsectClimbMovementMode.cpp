@@ -118,7 +118,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	FMoverDefaultSyncState& OutputSyncState = OutputState.SyncState.SyncStateCollection.FindOrAddMutableDataByType<FMoverDefaultSyncState>();
 	const FMoverDefaultSyncState* StartingSyncState = Params.StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
 	if (!StartingSyncState) return;
-	
+
 	TWeakObjectPtr<USceneComponent> UpdatedComp = Params.MovingComps.UpdatedComponent;
 	if (!UpdatedComp.Get()) return;
 
@@ -367,11 +367,11 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	int32 NewWallNum = FLrNewWallInfos.Num();
 	FLrWallInfo* BestScoreWall = nullptr;
 	// 中心未命中但方向射线找到墙 → 吸附到该墙面
-	if (RawMoveInput != FVector::ZeroVector && NewWallNum > 0)
+	if (NewWallNum > 0)
 	{
-		int32 Index = FindBestScoreWall(FLrNewWallInfos, RawMoveInput, CurPos);
+		int32 Index = FindBestScoreWall(FLrNewWallInfos, CurPos);
 		if (Index >= 0)
-		{
+		{ 
 			BestScoreWall = &FLrNewWallInfos[Index];
 		}
 	}
@@ -397,7 +397,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 		OutputState.MovementEndState.NextModeName = LrAllModes::Air;
 		return;
 	}
-	
+
 	// 已开始绕角过渡：本帧直接输出，由下一帧的过渡逻辑接管
 	if (bWallTransition)
 	{
@@ -460,6 +460,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 void ULrInsectClimbMovementMode::UpdateWallBasis(const FVector& InWallNormal, const FVector& MoveInput)
 {
 	WallNormal = InWallNormal.GetSafeNormal();
+
 	// 1. 始终计算 WallRight 和 WallForward（依赖法线，作为头部朝向兜底）
 	if (InWallNormal == FVector(0, 0, -1) || InWallNormal == FVector(0, 0, 1))
 	{
@@ -472,8 +473,17 @@ void ULrInsectClimbMovementMode::UpdateWallBasis(const FVector& InWallNormal, co
 		WallForward = FVector::CrossProduct(InWallNormal, WallRight).GetSafeNormal();
 	}
 
-	// 2. 头部朝向：固定使用墙面基向量 WallForward（不依赖相机）
-	HeadDir = WallForward;
+	// 2. 头部朝向：优先继承旧 HeadDir，投影到新墙面切平面
+	if (HeadDir.IsNearlyZero())
+	{
+		HeadDir = WallForward;
+	}
+	else
+	{
+		// 将旧 HeadDir 投影到新墙面的切平面上，保持昆虫爬行的连续性
+		const FVector ProjectedHead = HeadDir - WallNormal * FVector::DotProduct(HeadDir, WallNormal);
+		HeadDir = ProjectedHead.IsNearlyZero() ? WallForward : ProjectedHead.GetSafeNormal();
+	}
 
 	// 3. 计算最终移动向量（保留输入方向，但输入为零时置零）
 	if (MoveInput != FVector::ZeroVector)
@@ -559,16 +569,14 @@ void ULrInsectClimbMovementMode::BeginWallTransition(const FVector& NewNormal, c
 	UE_LOG(LogTemp, Display, TEXT("=== BeginWallTransition -> (%f,%f,%f)"), TargetNormal.X, TargetNormal.Y, TargetNormal.Z);
 }
 
-int32 ULrInsectClimbMovementMode::FindBestScoreWall(TArray<FLrWallInfo>& LrNewWallInfos, const FVector MoveInput, const FVector CurPos)
+int32 ULrInsectClimbMovementMode::FindBestScoreWall(TArray<FLrWallInfo>& LrNewWallInfos, const FVector& CurPos)
 {
 	int32 Index = -1;
 	int32 Num = LrNewWallInfos.Num();
 
 	if (Num > 0)
 	{
-		// 玩家输入 → 当前墙面坐标系 → 世界空间意图方向（A/D→-WallRight，W/S→WallForward）
-		const FVector WallMoveDir = (-MoveInput.X * WallRight + MoveInput.Y * WallForward).GetSafeNormal();
-		float BestScore = -FLT_MAX;\
+		float BestScore = -FLT_MAX;
 		float Score = -1;
 		for (int32 i = 0; i < Num; i++)
 		{
@@ -578,7 +586,7 @@ int32 ULrInsectClimbMovementMode::FindBestScoreWall(TArray<FLrWallInfo>& LrNewWa
 			if (Dist < KINDA_SMALL_NUMBER) continue;
 
 			// ① 主分：意图方向与"指向该墙"方向的一致性（-1~1）
-			const float IntentDot = FVector::DotProduct(WallMoveDir, ToWall / Dist);
+			const float IntentDot = FVector::DotProduct(WallFinalMove, ToWall / Dist);
 			// ② 次分：法线与当前墙差异越大越"新"（0~1）
 			const float NormalDiff = 1.f - FMath::Abs(FVector::DotProduct(Info.WallNormal, WallNormal));
 			// ③ 微权：距离近的优先，稳定对称场景下的选择
