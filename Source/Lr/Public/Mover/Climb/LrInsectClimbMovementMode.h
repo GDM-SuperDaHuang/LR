@@ -82,7 +82,7 @@ private:
 	FVector TransitionStartPos = FVector::ZeroVector;
 	FQuat TransitionStartRot = FQuat::Identity;
 	float TransitionAlpha = 0.f;
-
+	
 
 	UPROPERTY()
 	TObjectPtr<ULrMoverComponent> CacheMoverComponent;

@@ -10,12 +10,8 @@
 
 
 //==============================================================================
-// Activate — 进入攀爬模式时的初始吸附
-//   1) 沿角色前方向前发射 WallSearchDistance(40cm) 射线寻找墙面
-//   2) 若直线未命中，改用球体扫描作为容错
-//   3) 拒绝过于平坦的表面（与地面法线夹角 < 25°）
-//   4) 建立墙面局部坐标系：Z=WallNormal(腹部朝外), X=WallForward(头部朝上), Y=-WallRight(左右)
-//   5) 沿法线将角色吸附到墙面 + 立即设置旋转
+// Activate — 进入墙壁模式的平滑过渡
+//   替代瞬时吸附：记录目标位置/旋转，交由 SimulationTick 逐帧插值
 //==============================================================================
 void ULrInsectClimbMovementMode::Activate(const FMoverEventContext& Context, FName PrevModeName, const FMoverSimContext& SimContext,
                                           const FMoverTickStartData& StartState, FMoverSyncState* OutSyncState, FMoverAuxStateContext* OutAuxState)
@@ -33,7 +29,7 @@ void ULrInsectClimbMovementMode::Activate(const FMoverEventContext& Context, FNa
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(GetMoverComponent()->GetOwner());
 
-	const FVector Start = UpdatedComp->GetComponentLocation();
+	const FVector StartPos = UpdatedComp->GetComponentLocation();
 	const FVector Forward = UpdatedComp->GetForwardVector();
 
 	//--------------------------------------------------
@@ -41,40 +37,27 @@ void ULrInsectClimbMovementMode::Activate(const FMoverEventContext& Context, FNa
 	//--------------------------------------------------
 	FHitResult Hit;
 	bool bHit = GetWorld()->LineTraceSingleByChannel(
-		Hit, Start, Start + Forward * WallSearchDistance, ECC_WorldStatic, QueryParams);
+		Hit, StartPos, StartPos + Forward * WallSearchDistance, ECC_WorldStatic, QueryParams);
 
-	// 直线未命中 → 球体扫描作为fallback（处理角色嵌入墙内的情况）
+	// 直线未命中 → 球体扫描作为 fallback
 	if (!bHit)
 	{
 		const FCollisionShape Sphere = FCollisionShape::MakeSphere(WallSearchDistance * 0.5f);
 		bHit = GetWorld()->SweepSingleByChannel(
-			Hit, Start, Start + Forward * WallSearchDistance, FQuat::Identity,
+			Hit, StartPos, StartPos + Forward * WallSearchDistance, FQuat::Identity,
 			ECC_WorldStatic, Sphere, QueryParams);
 	}
 
 	if (!bHit) return;
 
-	// 拒绝过于平坦的表面（与地面的夹角 < 25°，Dot(法线, Up) > cos25° ≈ 0.906）
+	// 拒绝过于平坦的表面
 	if (FVector::DotProduct(Hit.Normal, FVector::UpVector) > 0.75f) return;
 
 	// 建立墙面局部坐标系
 	UpdateWallBasis(Hit.Normal, Forward);
 
-	// 沿法线吸附到墙面，腹部贴墙
-	const FVector TargetPos = Hit.Location + WallNormal * StickDistance;
-	const FVector SnapDelta = TargetPos - Start;
-	if (!SnapDelta.IsNearlyZero())
-	{
-		FHitResult SnapHit;
-		UpdatedComp->MoveComponent(SnapDelta, UpdatedComp->GetComponentQuat(), true, &SnapHit);
-	}
-
-	// 旋转：MakeFromXY(X=WallForward, Y=-WallRight) → Z=CrossProduct(X,Y)=WallNormal
-	// 昆虫头部（X轴）朝上，腹部（Z轴）朝墙外
-	const FRotator DesiredRotation = FRotationMatrix::MakeFromXY(WallForward, -WallRight).Rotator();
-	UpdatedComp->SetWorldRotation(DesiredRotation);
-
-	UpdateWallRotationBasis(UpdatedComp->GetComponentQuat(), Forward);
+	// 复用绕角过渡实现首次入墙平滑吸附
+	BeginWallTransition(Hit.Normal, Hit.Location);
 }
 
 //==============================================================================
@@ -145,7 +128,12 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	}
 
 	//--------------------------------------------------
-	// 0.5 绕角过渡：向新墙平滑滑动（位置+旋转插值，替代瞬移）
+	// 0.5 首次入墙过渡：从当前位置平滑吸附到墙面（替代 Activate 的瞬时吸附）
+	//--------------------------------------------------
+
+
+	//--------------------------------------------------
+	// 0.55 绕角过渡：向新墙平滑滑动（位置+旋转插值，替代瞬移）
 	//--------------------------------------------------
 	if (bWallTransition)
 	{
@@ -180,7 +168,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 	//--------------------------------------------------
 	FVector MoveDelta = Params.ProposedMove.LinearVelocity * DeltaTime;
 	FHitResult MoveHit;
-	UpdatedComp->MoveComponent(MoveDelta, CurrentRotation, true, &MoveHit);
+	UpdatedComp->MoveComponent(MoveDelta, CurrentRotation, true, &MoveHit);//可能无法移动，因为可能碰撞
 	FVector CurPos = UpdatedComp->GetComponentLocation();
 
 	//是否发现新墙
@@ -368,6 +356,10 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 		}
 		BeginWallTransition(BestScoreWall->WallNormal, BestScoreWall->WallImpactPoint);
 		bOnWall = true;
+		//--------------------------------------------------
+		// 6. 旋转：昆虫腹部朝向墙外（Z=WallNormal）
+		//--------------------------------------------------
+		UpdateWallRotationBasis(CurrentRotation, RawMoveInput);
 	}
 
 	if (!bOnWall)
@@ -385,10 +377,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 		return;
 	}
 
-	//--------------------------------------------------
-	// 6. 旋转：昆虫腹部朝向墙外（Z=WallNormal）
-	//--------------------------------------------------
-	UpdateWallRotationBasis(CurrentRotation, RawMoveInput);
+
 	// 同时需要重新获取当前的 CurrentRotation 用于后续的输出
 	CurrentRotation = UpdatedComp->GetComponentQuat();
 
@@ -489,8 +478,8 @@ void ULrInsectClimbMovementMode::UpdateWallRotationBasis(FQuat CurrentRotation, 
 		// 水平朝上的面（地板/立方体顶部）：脚贴地站立姿势
 		// 保持当前 Yaw 朝向，Pitch/Roll 归零使 Z=世界Up（背部朝上）
 		DesiredRotation = CurrentRotation.Rotator();
-		DesiredRotation.Pitch = 0.f;
-		DesiredRotation.Roll = 0.f;
+		DesiredRotation.Pitch = 0.f;//y
+		DesiredRotation.Roll = 0.f;//x,DesiredRotation.Yaw = 0.f;//z
 	}
 	else
 	{
