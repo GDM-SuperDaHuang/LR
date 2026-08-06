@@ -7,6 +7,7 @@
 #include "Pawn/LrPawnBase.h"
 #include "LrHeroPawn.generated.h"
 
+class UShapeComponent;
 class UCapsuleComponent;
 class UAIPerceptionStimuliSourceComponent;
 class UAIPerceptionComponent;
@@ -49,7 +50,8 @@ protected:
 	/** 碰撞体（NavAgent & Mover 都依赖它） */
 	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PawnInfo")
 	// TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PawnInfo")
+	TObjectPtr<UShapeComponent> LrCollisionComponent;
 	
 
 public:

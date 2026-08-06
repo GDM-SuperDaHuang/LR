@@ -19,6 +19,7 @@ public:
 protected:
 
 	/** 碰撞体（NavAgent & Mover 都依赖它） */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PawnInfo")
-	TObjectPtr<UBoxComponent> LrBoxComponent;
+	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PawnInfo")
+	// TObjectPtr<UBoxComponent> LrBoxComponent;
+	// UShapeComponent
 };

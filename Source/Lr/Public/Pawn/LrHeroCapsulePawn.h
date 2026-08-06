@@ -17,6 +17,6 @@ public:
 	ALrHeroCapsulePawn();
 
 	/** 碰撞体（NavAgent & Mover 都依赖它） */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PawnInfo")
-	TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
+	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PawnInfo")
+	// TObjectPtr<UCapsuleComponent> LrCapsuleComponent;
 };

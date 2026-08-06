@@ -92,6 +92,10 @@ void ULrInsectClimbMovementMode::GenerateMove_Implementation(const FMoverSimCont
 	if (!Inputs) return;
 
 	const FVector MoveInput = Inputs->GetMoveInput();
+	if (MoveInput==FVector::ZeroVector)
+	{
+		return;
+	}
 	// 不依赖相机朝向：直接使用墙面局部坐标，A/D→-WallRight，W/S→WallForward
 	OutProposedMove.LinearVelocity = WallFinalMove * ClimbSpeed;
 	OutProposedMove.DirectionIntent = MoveInput;

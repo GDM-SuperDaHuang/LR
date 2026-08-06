@@ -12,10 +12,10 @@
 
 ALrHeroBoxPawn::ALrHeroBoxPawn()
 {
-	LrBoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("Capsule"));
-	RootComponent = LrBoxComponent;
+	LrCollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("LrCollisionComponent"));
+	RootComponent = LrCollisionComponent;
 	// LrCapsuleComponent->InitCapsuleSize(34.f, 88.f);
-	LrBoxComponent->SetCollisionProfileName(TEXT("LrHeroPawnCapsuleComponent"));
+	LrCollisionComponent->SetCollisionProfileName(TEXT("LrHeroPawnCapsuleComponent"));
 
 	// 相机 弹簧臂
 	CameraBoom->SetupAttachment(RootComponent);
@@ -24,7 +24,7 @@ ALrHeroBoxPawn::ALrHeroBoxPawn()
 	// 骨骼 →碰撞体
 	// =========================
 	// LrSkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LrMesh"));
-	LrSkeletalMeshComponent->SetupAttachment(LrBoxComponent);
+	LrSkeletalMeshComponent->SetupAttachment(LrCollisionComponent);
 
 	// =========================
 	// 武器 →骨架
@@ -36,20 +36,20 @@ ALrHeroBoxPawn::ALrHeroBoxPawn()
 	// =========================
 	// Mover
 	// =========================
-	LrMoverComponent->SetUpdatedComponent(LrBoxComponent);
+	LrMoverComponent->SetUpdatedComponent(LrCollisionComponent);
 
 	// =========================
 	// Nav → Mover 桥接
 	// =========================
 	LrNavMoverComponent = CreateDefaultSubobject<ULrNavMovementComponent>(TEXT("NavMoverComponent"));
-	LrNavMoverComponent->UpdatedComponent = LrBoxComponent;
+	LrNavMoverComponent->UpdatedComponent = LrCollisionComponent;
 
 	/**
 	 * true：这个组件，是否会被 NavigationSystem 考虑为：
 	 * 1，动态障碍
 	 * 2，NavMesh 生成 / 更新的参与者
 	 */
-	LrBoxComponent->SetCanEverAffectNavigation(false);
+	LrCollisionComponent->SetCanEverAffectNavigation(false);
 
 
 	// =========================
