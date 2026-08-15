@@ -426,7 +426,7 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 
 void ULrInsectClimbMovementMode::UpdateWallBasis(const FVector& InWallNormal, const FVector& MoveInput)
 {
-	WallNormal = InWallNormal.GetSafeNormal();
+	WallNormal = InWallNormal.GetSafeNormal();//未来墙的法线
 
 	// 1. 始终计算 WallRight 和 WallForward（依赖法线，作为头部朝向兜底）
 	if (InWallNormal == FVector(0, 0, -1) || InWallNormal == FVector(0, 0, 1))
@@ -440,17 +440,19 @@ void ULrInsectClimbMovementMode::UpdateWallBasis(const FVector& InWallNormal, co
 		WallForward = FVector::CrossProduct(InWallNormal, WallRight).GetSafeNormal();
 	}
 
+	HeadDir = WallForward;
+
 	// 2. 头部朝向：优先继承旧 HeadDir，投影到新墙面切平面
-	if (HeadDir.IsNearlyZero())
-	{
-		HeadDir = WallForward;
-	}
-	else
-	{
-		// 将旧 HeadDir 投影到新墙面的切平面上，保持昆虫爬行的连续性
-		const FVector ProjectedHead = HeadDir - WallNormal * FVector::DotProduct(HeadDir, WallNormal);
-		HeadDir = ProjectedHead.IsNearlyZero() ? WallForward : ProjectedHead.GetSafeNormal();
-	}
+	// if (HeadDir.IsNearlyZero())
+	// {
+	// 	HeadDir = WallForward;
+	// }
+	// else
+	// {
+	// 	// 将旧 HeadDir 投影到新墙面的切平面上，保持昆虫爬行的连续性
+	// 	const FVector ProjectedHead = HeadDir - WallNormal * FVector::DotProduct(HeadDir, WallNormal);
+	// 	HeadDir = ProjectedHead.IsNearlyZero() ? WallForward : ProjectedHead.GetSafeNormal();
+	// }
 
 	// 3. 计算最终移动向量（保留输入方向，但输入为零时置零）
 	if (MoveInput != FVector::ZeroVector)
