@@ -15,6 +15,7 @@ UCLASS()
 class LR_API ULrFlyMovementMode : public UBaseMovementMode
 {
 	GENERATED_BODY()
+
 public:
 	ULrFlyMovementMode();
 
@@ -45,7 +46,14 @@ public:
 	float StopThreshold = 10.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fly")
-	float TurnSpeed = 0.75f;
+	float TurnSpeed = 0.75f; //倾斜速度
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fly")
+	float RollAngle = 60.f; //左右倾斜角度
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fly")
+	float PitchAngle = 60.f; //上下倾斜角度
+
 
 	// 缓存所属的自定义 Mover 组件，避免每帧重复查找
 	UPROPERTY()
@@ -54,4 +62,7 @@ public:
 	// 飞机Roll倾斜插值状态（跨帧保持，确保平滑过渡）
 	UPROPERTY()
 	float RollInterpValue = 0.f;
+	// 飞机Roll倾斜插值状态（跨帧保持，确保平滑过渡）
+	UPROPERTY()
+	float PitchInterpValue = 0.f;
 };

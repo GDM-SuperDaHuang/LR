@@ -162,31 +162,43 @@ void ULrFlyMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 
 		if (bHasMoveInput)
 		{
-			// 有移动输入时，根据移动方向计算目标倾斜角度（像飞机）
-			const float TargetRoll = FMath::Clamp(RawInput.X * 60.f, -60.f, 60.f); // 左右输入控制 Roll (-60 to 60 degrees)
-			// 使用 FInterpTo 实现平滑过渡而非直接赋值
-			// 成员变量 RollInterpValue (在头文件 LrFlyMovementMode.h 中声明)
-			RollInterpValue = FMath::FInterpTo(RollInterpValue, TargetRoll, DeltaTime, TurnSpeed * 2.f);
-			const float SmoothedRoll = FMath::Clamp(RollInterpValue, -60.f, 60.f);
+			// 有移动输入时，根据移动方向计算倾斜角度（像飞机）
+			// Roll: 左右输入控制 (-60 to 60 degrees)
+			const float TargetRoll = FMath::Clamp(RawInput.X * RollAngle, -RollAngle, RollAngle);
+			
+			// Pitch: 上下输入控制抬头低头 (-80 to 80 degrees)
+			const float TargetPitch = FMath::Clamp(RawInput.Z * PitchAngle, -PitchAngle, PitchAngle);
+			
+			// 使用 FInterpTo 实现平滑过渡 - 使用成员变量确保每个角色独立
+			RollInterpValue = FMath::FInterpTo(RollInterpValue, TargetRoll, DeltaTime, TurnSpeed * 3.f);
+			const float SmoothedRoll = FMath::Clamp(RollInterpValue, -RollAngle, RollAngle);
+			
+			// Pitch interpolation using same mechanism
+			PitchInterpValue = FMath::FInterpTo(PitchInterpValue, TargetPitch, DeltaTime, TurnSpeed * 3.f);
+			const float SmoothedPitch = FMath::Clamp(PitchInterpValue, -PitchAngle, PitchAngle);
 
-			// 保持 Yaw 为相机方向，只修改 Roll
+			
+			// 保持 Yaw 为相机方向，修改 Roll 和 Pitch
 			FRotator DesiredRot = Inputs->ControlRotation;
-			DesiredRot.Pitch = 0.f;
+			DesiredRot.Pitch = SmoothedPitch; // 使用插值后的Pitch
 			DesiredRot.Roll = SmoothedRoll;
 			// 从 FRotator 转换为 FQuat
 			FinalRotation = DesiredRot.Quaternion();
 		}
 		else
 		{
-			// 无移动输入时，回正 Roll 到 0（像飞机回正）
-			// 使用 FInterpTo 实现平滑回正而非直接设置
-			// 成员变量 RollInterpValue (在头文件 LrFlyMovementMode.h 中声明)
-			RollInterpValue = FMath::FInterpTo(RollInterpValue, 0.f, DeltaTime, TurnSpeed * 4.f);
-			const float SmoothedRoll = FMath::Clamp(RollInterpValue, -60.f, 60.f);
+			// 无移动输入时，回正 Roll 和 Pitch 到 0（像飞机回正）
+			// 使用 FInterpTo 实现平滑回正
+			RollInterpValue = FMath::FInterpTo(RollInterpValue, 0.f, DeltaTime, TurnSpeed * 5.f);
+			const float SmoothedRoll = FMath::Clamp(RollInterpValue, -RollAngle, RollAngle);
+			
+			// Pitch also interpolates to 0
+			PitchInterpValue = FMath::FInterpTo(PitchInterpValue, 0.f, DeltaTime, TurnSpeed * 5.f);
+			const float SmoothedPitch = FMath::Clamp(PitchInterpValue, -PitchAngle, PitchAngle);
 
-			// 创建目标旋转：Yaw 保持相机方向，Roll 插值到 0
+			// 创建目标旋转：Yaw 保持相机方向，Roll 和 Pitch 插值到 0
 			FRotator TargetRot = Inputs->ControlRotation;
-			TargetRot.Pitch = 0.f;
+			TargetRot.Pitch = SmoothedPitch;
 			TargetRot.Roll = SmoothedRoll;
 			// 从 FRotator 转换为 FQuat
 			FinalRotation = TargetRot.Quaternion();
