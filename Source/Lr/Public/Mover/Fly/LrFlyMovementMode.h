@@ -26,6 +26,27 @@ public:
 	// 模拟移动：根据提议速度实际移动组件，并输出同步状态
 	virtual void SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState) override;
 
+	//----------------------------------------------------
+	// 飞行参数（可在蓝图/细节面板中调整）
+	//----------------------------------------------------
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fly")
+	float MaxSpeed = 1200.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fly")
+	float MaxVerticalSpeed = 900.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fly")
+	float Acceleration = 3000.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fly")
+	float BrakingDeceleration = 5000.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fly")
+	float StopThreshold = 10.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fly")
+	float TurnSpeed = 12.f;
+
 	// 缓存所属的自定义 Mover 组件，避免每帧重复查找
 	UPROPERTY()
 	TObjectPtr<ULrMoverComponent> CacheMoverComponent;
