@@ -45,9 +45,13 @@ public:
 	float StopThreshold = 10.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fly")
-	float TurnSpeed = 12.f;
+	float TurnSpeed = 0.75f;
 
 	// 缓存所属的自定义 Mover 组件，避免每帧重复查找
 	UPROPERTY()
 	TObjectPtr<ULrMoverComponent> CacheMoverComponent;
+
+	// 飞机Roll倾斜插值状态（跨帧保持，确保平滑过渡）
+	UPROPERTY()
+	float RollInterpValue = 0.f;
 };
