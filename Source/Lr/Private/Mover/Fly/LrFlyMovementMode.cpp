@@ -56,21 +56,22 @@ void ULrFlyMovementMode::GenerateMove_Implementation(const FMoverSimContext& Sim
 		if (HorizontalMag > DeadZone)
 		{
 
-			const FRotator CamRot = Inputs->ControlRotation;
-			const FVector ForwardDir = FRotationMatrix(CamRot).GetUnitAxis(EAxis::X);
-			const FVector RightDir   = FRotationMatrix(CamRot).GetUnitAxis(EAxis::Y);
-			const FVector UpDir      = FRotationMatrix(CamRot).GetUnitAxis(EAxis::Z);
-			
-			// 假设 RawInput.X 是左右，RawInput.Y 是前后，RawInput.Z 是上下
-			FVector WorldDirection = ForwardDir * RawInput.Y + RightDir * RawInput.X + UpDir * RawInput.Z;
-			MoveIntent = WorldDirection.GetSafeNormal();
+			// const FRotator CamRot = Inputs->ControlRotation;
+			// const FVector ForwardDir = FRotationMatrix(CamRot).GetUnitAxis(EAxis::X);
+			// const FVector RightDir   = FRotationMatrix(CamRot).GetUnitAxis(EAxis::Y);
+			// const FVector UpDir      = FRotationMatrix(CamRot).GetUnitAxis(EAxis::Z);
+			//
+			// // 假设 RawInput.X 是左右，RawInput.Y 是前后，RawInput.Z 是上下
+			// // FVector WorldDirection = ForwardDir * RawInput.Y + RightDir * RawInput.X + UpDir * RawInput.Z;
+			// FVector WorldDirection = ForwardDir * RawInput.Y + RightDir * RawInput.X ;
+			// MoveIntent = WorldDirection.GetSafeNormal();
 
 			
-			// const FRotator YawRot(0.f, Inputs->ControlRotation.Yaw, 0.f);
-			// const FVector ForwardDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
-			// const FVector RightDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
-			// const FVector WorldHorizontal = ForwardDir * RawInput.Y + RightDir * RawInput.X;
-			// MoveIntent = WorldHorizontal.GetSafeNormal();
+			const FRotator YawRot(0.f, Inputs->ControlRotation.Yaw, 0.f);
+			const FVector ForwardDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
+			const FVector RightDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
+			const FVector WorldHorizontal = ForwardDir * RawInput.Y + RightDir * RawInput.X;
+			MoveIntent = WorldHorizontal.GetSafeNormal();
 			
 			SpeedScale = FMath::Clamp((HorizontalMag - DeadZone) / (1.f - DeadZone), 0.f, 1.f);
 		}
