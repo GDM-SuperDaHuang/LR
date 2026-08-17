@@ -28,13 +28,6 @@ void ULrWalkMovementMode::Activate(const FMoverEventContext& Context, FName Prev
 			CacheMoverComponent = Mover;
 		}
 	}
-	if (IsPlayer && !PC)
-	{
-		if (ALrHeroPawn* LrHeroPawn = Cast<ALrHeroPawn>(CacheMoverComponent->GetOuter()))
-		{
-			PC = Cast<ALrPlayerController>(LrHeroPawn->GetController());
-		}
-	}
 }
 
 
@@ -60,7 +53,6 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverSimContext& Si
 	//----------------------------------------------------
 	FVector MoveIntent = FVector::ZeroVector;
 	float SpeedScale = 0.f;
-
 	if (Inputs)
 	{
 		const FVector RawInput = Inputs->GetMoveInput();
@@ -234,14 +226,10 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
 	//--------------------------------------------------
 	double IsJump = ProposedVelocity.Z;
 	FFloorCheckResult Floor;
-	UFloorQueryUtils::FindFloor(
-		Params.MovingComps,
-		50.f, // Line trace/sweep distance
-		0.f,
-		true,
-		UpdatedComp->GetComponentLocation(),
-		Floor);
-
+	FFloorCheckSettings FloorSettings;
+	FloorSettings.FloorSweepDistance = 50.f;
+	UFloorQueryUtils::FindFloor(Params.MovingComps, FloorSettings, UpdatedComp->GetComponentLocation(), Floor);
+	
 	//--------------------------------------------------
 	// Snap To Floor
 	//--------------------------------------------------
