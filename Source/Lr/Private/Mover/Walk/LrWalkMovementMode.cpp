@@ -75,7 +75,7 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverSimContext& Si
 			const FVector ForwardDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
 			const FVector RightDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
 
-			const FVector WorldInput = ForwardDir * RawInput.Y + RightDir * RawInput.X + FVector(0, 0, RawInput.Z);
+			const FVector WorldInput = ForwardDir * RawInput.Y + RightDir * RawInput.X;
 
 			MoveIntent = WorldInput.GetSafeNormal();
 			SpeedScale = FMath::Clamp((Magnitude - DeadZone) / (1.f - DeadZone), 0.f, 1.f);

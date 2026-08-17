@@ -73,8 +73,16 @@ void ULrAirMovementMode::GenerateMove_Implementation(const FMoverSimContext& Sim
 		// 获取水平移动输入（忽略 Z 轴，因为空中通常不能直接上下移动）
 		FVector MoveInput = Inputs->GetMoveInput();
 		MoveInput.Z = 0.f;
-		// 空中控制力 = 输入方向 * 空中控制力强度（通常远小于地面加速度）
-		InputForce = MoveInput * Settings->AirControlForce;
+
+		// 将输入从相机空间转换到世界空间（仅使用 yaw，保持水平方向与相机朝向一致）
+		const FRotator CamRot = Inputs->ControlRotation;
+		const FRotator YawRot(0, CamRot.Yaw, 0);
+		const FVector ForwardDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
+		const FVector RightDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
+		const FVector WorldInput = ForwardDir * MoveInput.Y + RightDir * MoveInput.X;
+
+		// 使用摄像机相对的世界空间方向作为空中控制力
+		InputForce = WorldInput.GetSafeNormal() * Settings->AirControlForce;
 	}
 
 	// 合力 = 重力 + 空气阻力 + 输入力
