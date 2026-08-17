@@ -22,7 +22,7 @@ void ULrInsectClimbMovementMode::Activate(const FMoverEventContext& Context, FNa
 	{
 		CacheMoverComponent = Cast<ULrMoverComponent>(GetMoverComponent());
 	}
-
+	CacheMoverComponent->bFly = false;
 	USceneComponent* UpdatedComp = GetMoverComponent()->GetUpdatedComponent();
 	if (!UpdatedComp) return;
 

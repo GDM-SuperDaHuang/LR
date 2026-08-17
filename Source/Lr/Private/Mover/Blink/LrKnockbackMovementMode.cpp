@@ -13,6 +13,7 @@ void ULrKnockbackMovementMode::Activate(const FMoverEventContext& Context, FName
 	ElapsedTime = 0.f;
 	ULrMoverComponent* Mover = Cast<ULrMoverComponent>(GetMoverComponent());
 	if (!Mover) return;
+	Mover->bFly = false;
 	// 从外部输入缓存（关键点）
 	if (const FPendingLaunchData* Data = Mover->GetPendingLaunchData())
 	{

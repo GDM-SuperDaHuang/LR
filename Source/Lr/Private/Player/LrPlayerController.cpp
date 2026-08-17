@@ -219,7 +219,7 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 	{
 		Input = FVector::ZeroVector;
 	}
-	
+
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
 	{
 		ControlledPawn->UpdateMove(Input);
@@ -254,12 +254,13 @@ void ALrPlayerController::Jump() const
 		ControlledPawn->UpdatePressedJump(true);
 	}
 }
- 
+
 void ALrPlayerController::Fly() const
 {
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
 	{
 		ControlledPawn->LrMoverComponent->QueueNextMode(LrAllModes::Fly);
+		ControlledPawn->LrMoverComponent->bFly = !ControlledPawn->LrMoverComponent->bFly;
 	}
 }
 

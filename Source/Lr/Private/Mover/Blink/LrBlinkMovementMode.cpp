@@ -15,7 +15,7 @@ void ULrBlinkMovementMode::Activate(const FMoverEventContext& Context, FName Pre
 	ULrMoverComponent* Mover = Cast<ULrMoverComponent>(GetMoverComponent());
 
 	if (!Mover) return;
-
+	Mover->bFly = false;
 	const FMoverSyncState& SyncState = Mover->GetSyncState();
 	const FMoverDefaultSyncState* DefaultSync = SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
 

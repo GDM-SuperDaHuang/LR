@@ -65,7 +65,6 @@ void ULrFlyMovementMode::GenerateMove_Implementation(const FMoverSimContext& Sim
 			// // FVector WorldDirection = ForwardDir * RawInput.Y + RightDir * RawInput.X + UpDir * RawInput.Z;
 			// FVector WorldDirection = ForwardDir * RawInput.Y + RightDir * RawInput.X ;
 			// MoveIntent = WorldDirection.GetSafeNormal();
-
 			
 			const FRotator YawRot(0.f, Inputs->ControlRotation.Yaw, 0.f);
 			const FVector ForwardDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
@@ -138,11 +137,10 @@ void ULrFlyMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 	//--------------------------------------------------
 	// 跳跃退出飞行模式 -> 自由落体
 	//--------------------------------------------------
-	// const FLrMoverInputCmd* Inputs = Params.StartState.InputCmd.InputCollection.FindDataByType<FLrMoverInputCmd>();
-	// if (Inputs && Inputs->bIsJumpPressed)
-	// {
-	// 	OutputState.MovementEndState.NextModeName = LrAllModes::Air;
-	// }
+	if (!CacheMoverComponent->bFly)
+	{
+		OutputState.MovementEndState.NextModeName = LrAllModes::Air;
+	}
 
 	//--------------------------------------------------
 	// Rotation 计算（像飞机倾斜，缓慢过渡）
@@ -231,13 +229,6 @@ void ULrFlyMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 			// 剩余移动量 = 未消耗的移动量沿碰撞面滑动
 			RemainingMove = RemainingMove * (1.f - Hit.Time);
 			RemainingMove = FVector::VectorPlaneProject(RemainingMove, Hit.Normal);
-
-			// 向下碰到可站立地面 -> 落地
-			// if (Hit.Normal.Z >= 0.7f && ProposedVelocity.Z <= 0.f)
-			// {
-			// 	bHitWalkableFloor = true;
-			// 	RemainingMove.Z = FMath::Min(RemainingMove.Z, 0.f);
-			// }
 		}
 		else
 		{
