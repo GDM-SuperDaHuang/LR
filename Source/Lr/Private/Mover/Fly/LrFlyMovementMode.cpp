@@ -208,7 +208,7 @@ void ULrFlyMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 	// 迭代式移动与滑动（防卡墙、穿模），与 Walk 模式一致
 	//--------------------------------------------------
 	FVector RemainingMove = ProposedVelocity * DeltaTime;
-	bool bHitWalkableFloor = false;
+
 	constexpr int32 MaxSimulations = 4;
 
 	for (int32 i = 0; i < MaxSimulations && !RemainingMove.IsNearlyZero(); ++i)
@@ -243,12 +243,7 @@ void ULrFlyMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 	//--------------------------------------------------
 	const FVector FinalLocation = UpdatedComp->GetComponentLocation();
 	FVector ActualVelocity = (FinalLocation - StartingLocation) / DeltaTime;
-
-	if (bHitWalkableFloor && ProposedVelocity.Z <= 0.f)
-	{
-		ActualVelocity.Z = 0.f;
-	}
-
+	
 	OutputSyncState.SetTransforms_WorldSpace(
 		FinalLocation,
 		FinalRotation.Rotator(),
