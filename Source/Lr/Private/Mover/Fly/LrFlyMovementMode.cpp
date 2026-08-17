@@ -233,11 +233,11 @@ void ULrFlyMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 			RemainingMove = FVector::VectorPlaneProject(RemainingMove, Hit.Normal);
 
 			// 向下碰到可站立地面 -> 落地
-			if (Hit.Normal.Z >= 0.7f && ProposedVelocity.Z <= 0.f)
-			{
-				bHitWalkableFloor = true;
-				RemainingMove.Z = FMath::Min(RemainingMove.Z, 0.f);
-			}
+			// if (Hit.Normal.Z >= 0.7f && ProposedVelocity.Z <= 0.f)
+			// {
+			// 	bHitWalkableFloor = true;
+			// 	RemainingMove.Z = FMath::Min(RemainingMove.Z, 0.f);
+			// }
 		}
 		else
 		{
