@@ -30,6 +30,6 @@ private:
 	//相机影响
 	UPROPERTY(EditAnywhere)
 	bool IsPlayer = false; //是否是玩家，只有玩家有Camera。
-	UPROPERTY()
-	TObjectPtr<ALrPlayerController> PC;
+	// UPROPERTY()
+	// TObjectPtr<ALrPlayerController> PC;
 };

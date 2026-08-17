@@ -28,6 +28,13 @@ void ULrWalkMovementMode::Activate(const FMoverEventContext& Context, FName Prev
 			CacheMoverComponent = Mover;
 		}
 	}
+	// if (IsPlayer && !PC)
+	// {
+	// 	if (ALrHeroPawn* LrHeroPawn = Cast<ALrHeroPawn>(CacheMoverComponent->GetOuter()))
+	// 	{
+	// 		PC = Cast<ALrPlayerController>(LrHeroPawn->GetController());
+	// 	}
+	// }
 }
 
 
@@ -61,14 +68,20 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverSimContext& Si
 
 		if (Magnitude > DeadZone)
 		{
-			// 将原始输入从相机空间转换到世界空间
-			const FRotator CamRot = Inputs->ControlRotation;
-			const FRotator YawRot(0, CamRot.Yaw, 0);
-			const FVector ForwardDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
-			const FVector RightDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
-
-			const FVector WorldInput = ForwardDir * RawInput.Y + RightDir * RawInput.X;
-
+			FVector WorldInput = FVector::ZeroVector;
+			if (IsPlayer)
+			{
+				// 将原始输入从相机空间转换到世界空间
+				const FRotator CamRot = Inputs->ControlRotation;
+				const FRotator YawRot(0, CamRot.Yaw, 0);
+				const FVector ForwardDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
+				const FVector RightDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
+				WorldInput = ForwardDir * RawInput.Y + RightDir * RawInput.X;
+			}
+			else
+			{
+				WorldInput = RawInput;
+			}
 			MoveIntent = WorldInput.GetSafeNormal();
 			SpeedScale = FMath::Clamp((Magnitude - DeadZone) / (1.f - DeadZone), 0.f, 1.f);
 		}
@@ -229,7 +242,7 @@ void ULrWalkMovementMode::SimulationTick_Implementation(const FSimulationTickPar
 	FFloorCheckSettings FloorSettings;
 	FloorSettings.FloorSweepDistance = 50.f;
 	UFloorQueryUtils::FindFloor(Params.MovingComps, FloorSettings, UpdatedComp->GetComponentLocation(), Floor);
-	
+
 	//--------------------------------------------------
 	// Snap To Floor
 	//--------------------------------------------------
