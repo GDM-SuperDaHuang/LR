@@ -201,6 +201,9 @@ void ALrPawnBase::HandleMoverFinalized(const FMoverSyncState& SyncState, const F
 
 void ALrPawnBase::HandleOnMovementModeChanged(const FName& PreviousMovementModeName, const FName& NewMovementModeName)
 {
+	LrAnimationComponent->MovementData.bIsBlink = false;
+	LrAnimationComponent->MovementData.bIsFalling = false;
+	LrAnimationComponent->MovementData.bIsFly = false;
 	if (NewMovementModeName == LrAllModes::Blink) //在闪现
 	{
 		LrAnimationComponent->MovementData.bIsBlink = true;
@@ -209,17 +212,19 @@ void ALrPawnBase::HandleOnMovementModeChanged(const FName& PreviousMovementModeN
 	}
 	else if (NewMovementModeName == LrAllModes::Air) //在空中
 	{
-		LrAnimationComponent->MovementData.bIsBlink = false;
 		LrAnimationComponent->MovementData.bIsFalling = true;
 		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
 		// UE_LOG(LogTemp, Warning, TEXT("HandleOnMovementModeChanged Air "));
 	}
 	else if (NewMovementModeName == LrAllModes::Walk) //刚刚落地
 	{
-		LrAnimationComponent->MovementData.bIsBlink = false;
-		LrAnimationComponent->MovementData.bIsFalling = false;
 		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
 		// UE_LOG(LogTemp, Warning, TEXT("HandleOnMovementModeChanged Walk "));
+	}
+	else if (NewMovementModeName == LrAllModes::Fly)
+	{
+		LrAnimationComponent->MovementData.bIsFly = true;
+		LrAnimationComponent->OnMovementDataChanged.ExecuteIfBound(LrAnimationComponent->MovementData);
 	}
 }
 
@@ -283,8 +288,8 @@ void ALrPawnBase::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdCon
 	float FrictionMult = 1.0f;
 	CheckFloorPhysics(FrictionMult);
 
-	// 根据摩擦力调整输入强度
-	FVector EffectiveInput = CachedMoveInput;
+	// 根据摩擦力调整输入强度 
+ 	FVector EffectiveInput = CachedMoveInput;
 	if (FrictionMult < 0.5f)
 	{
 		EffectiveInput *= 0.2f;

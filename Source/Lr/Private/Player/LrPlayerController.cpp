@@ -96,14 +96,6 @@ void ALrPlayerController::SetupInputComponent()
 	ULrInputComponent* AuraInputComponent = CastChecked<ULrInputComponent>(InputComponent);
 	check(AuraInputComponent);
 	// 一键批量绑定所有“技能输入 Tag”到三个回调
-	// AuraInputComponent->BindAbilityActions(
-	// 	InputConfig, // 数据资产里配了 IA <-> Tag 表
-	// 	this,
-	// 	LrIMC,
-	// 	&ThisClass::AbilityInputTagPressed,
-	// 	&ThisClass::AbilityInputTagReleased,
-	// 	&ThisClass::AbilityInputTagHeld);
-
 	AuraInputComponent->BindAbilityActions(
 		InputConfig, // 数据资产里配了 IA <-> Tag 表
 		this,
@@ -136,47 +128,6 @@ void ALrPlayerController::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 	UpdateCamera(DeltaSeconds);
 }
-
-// 按下
-// void ALrPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
-// {
-// 	if (LrASC == nullptr)
-// 	{
-// 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
-// 		if (LrASC == nullptr) return;
-// 	}
-// 	LrASC->AbilityInputTagPressed(InputTag);
-// }
-//
-// // 释放
-// void ALrPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
-// {
-// 	if (LrASC == nullptr)
-// 	{
-// 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
-// 		if (LrASC == nullptr) return;
-// 	}
-// 	//可能不触发ASC
-// 	if (InputTag == FLrGameplayTags::Get().InputTag_Jump)
-// 	{
-// 		Jump();
-// 	}
-// 	else
-// 	{
-// 		LrASC->AbilityInputTagReleased(InputTag);
-// 	}
-// }
-//
-// // 一直按
-// void ALrPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
-// {
-// 	if (LrASC == nullptr)
-// 	{
-// 		LrASC = Cast<ULrASC>(ULrCommonLibrary::GetASC(GetPawn()));
-// 		if (LrASC == nullptr) return;
-// 	}
-// 	LrASC->AbilityInputTagHeld(InputTag);
-// }
 
 void ALrPlayerController::AbilityInputTagPressed0(int32 InputId)
 {
@@ -268,7 +219,7 @@ void ALrPlayerController::Move(const FInputActionValue& InputActionValue)
 	{
 		Input = FVector::ZeroVector;
 	}
-
+	
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())
 	{
 		ControlledPawn->UpdateMove(Input);
@@ -303,7 +254,7 @@ void ALrPlayerController::Jump() const
 		ControlledPawn->UpdatePressedJump(true);
 	}
 }
-
+ 
 void ALrPlayerController::Fly() const
 {
 	if (ALrPawnBase* ControlledPawn = GetPawn<ALrPawnBase>())

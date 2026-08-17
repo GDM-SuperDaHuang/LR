@@ -40,6 +40,9 @@ struct FLrAnimMovementData
 
 	UPROPERTY(BlueprintReadOnly)
 	int32 Status = 0; //状态，1:触电
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsFly = false; //是否在飞行
 };
 
 DECLARE_DELEGATE_OneParam(FOnMovementDataChanged, const FLrAnimMovementData&);

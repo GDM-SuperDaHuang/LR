@@ -132,7 +132,7 @@ void ULrFlyMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 	}
 
 	const FVector ProposedVelocity = Params.ProposedMove.LinearVelocity;
-	const FVector MoveIntent = Params.ProposedMove.DirectionIntent;
+	// const FVector MoveIntent = Params.ProposedMove.DirectionIntent;
 	const FVector StartingLocation = UpdatedComp->GetComponentLocation();
 
 	//--------------------------------------------------

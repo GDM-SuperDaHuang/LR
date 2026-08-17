@@ -110,9 +110,11 @@ void ULrWalkMovementMode::GenerateMove_Implementation(const FMoverSimContext& Si
 	//----------------------------------------------------
 	// Jump 处理
 	//----------------------------------------------------
+	CacheMoverComponent->bJumpInitiated = false;
 	if (Inputs && Inputs->bIsJumpPressed)
 	{
 		Velocity.Z = CacheMoverComponent->RealisticSettings->JumpImpulseForce;
+		CacheMoverComponent->bJumpInitiated = true;
 	}
 	else
 	{
