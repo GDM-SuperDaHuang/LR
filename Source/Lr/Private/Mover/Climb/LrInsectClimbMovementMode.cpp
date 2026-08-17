@@ -175,6 +175,10 @@ void ULrInsectClimbMovementMode::SimulationTick_Implementation(const FSimulation
 			// 过渡完成：采用新墙面基向量
 			bWallTransition = false;
 			UpdateWallBasis(TransitionTargetNormal, RawMoveInput);
+			if (FVector::DotProduct(TransitionTargetNormal, FVector::UpVector) > 0.75f)
+			{
+				OutputState.MovementEndState.NextModeName = LrAllModes::Walk;
+			}
 		}
 		const FVector TransFinal = UpdatedComp->GetComponentLocation();
 		const FVector TransVel = (TransFinal - StartingLocation) / DeltaTime;
