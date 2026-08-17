@@ -82,7 +82,7 @@ private:
 	FVector TransitionStartPos = FVector::ZeroVector;
 	FQuat TransitionStartRot = FQuat::Identity;
 	float TransitionAlpha = 0.f;
-	
+
 
 	UPROPERTY()
 	TObjectPtr<ULrMoverComponent> CacheMoverComponent;
@@ -91,7 +91,7 @@ private:
 	float WallSearchDistance = 40.f; //地面接触墙
 
 	UPROPERTY(EditAnywhere, Category = "InsectClimb")
-	float StickDistance = 15.f;
+	float StickDistance = 15.f; //吸附距离
 
 	UPROPERTY(EditAnywhere, Category = "InsectClimb")
 	float ClimbSpeed = 400.f;

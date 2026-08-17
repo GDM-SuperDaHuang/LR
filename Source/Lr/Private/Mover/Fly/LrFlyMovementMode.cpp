@@ -242,7 +242,7 @@ void ULrFlyMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 		else
 		{
 			// 没有碰撞，移动全部完成
-			RemainingMove = FVector::ZeroVector;
+  			RemainingMove = FVector::ZeroVector;
 			break;
 		}
 	}
