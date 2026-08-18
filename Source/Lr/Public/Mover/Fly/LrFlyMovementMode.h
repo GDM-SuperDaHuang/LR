@@ -55,18 +55,17 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fly")
 	float PitchAngle = 60.f; //上下倾斜角度
-
-
+	
 	// 缓存所属的自定义 Mover 组件，避免每帧重复查找
 	UPROPERTY()
 	TObjectPtr<ULrMoverComponent> CacheMoverComponent;
 
 	// 飞机Roll倾斜插值状态（跨帧保持，确保平滑过渡）
-	UPROPERTY()
-	float RollInterpValue = 0.f;
-	// 飞机Roll倾斜插值状态（跨帧保持，确保平滑过渡）
-	UPROPERTY()
-	float PitchInterpValue = 0.f;
+	// UPROPERTY()
+	// float RollInterpValue = 0.f;
+	// // 飞机Roll倾斜插值状态（跨帧保持，确保平滑过渡）
+	// UPROPERTY()
+	// float PitchInterpValue = 0.f;
 	
 	UPROPERTY()
 	float DeadZone = 0.2f;
