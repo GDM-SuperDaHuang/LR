@@ -128,8 +128,16 @@ void ULrAirMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 		// 0.71 是 cos(45°)，表示相对平坦的表面
 		if (Hit.Normal.Z >= 0.7f) //(Hit.Normal.Z >= 0.71f)
 		{
-			// 触地 -> 切换到行走模式
-			OutputState.MovementEndState.NextModeName = LrAllModes::Walk;
+			if (IsFly)
+			{
+				// 触地 -> 切换到行走模式
+				OutputState.MovementEndState.NextModeName = LrAllModes::Fly;
+			}
+			else
+			{
+				// 触地 -> 切换到行走模式
+				OutputState.MovementEndState.NextModeName = LrAllModes::Walk;
+			}
 		}
 		else
 		{

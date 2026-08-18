@@ -14,10 +14,14 @@ UCLASS()
 class LR_API ULrAirMovementMode : public UBaseMovementMode
 {
 	GENERATED_BODY()
+
 public:
 	ULrAirMovementMode();
 	virtual void GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const override;
 	virtual void SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState) override;
 	UPROPERTY()
 	TObjectPtr<ULrMoverComponent> CacheMoverComponent;
+
+	UPROPERTY(EditAnywhere, Category = "InsectClimb")
+	bool IsFly = false; //是否是飞行生物
 };

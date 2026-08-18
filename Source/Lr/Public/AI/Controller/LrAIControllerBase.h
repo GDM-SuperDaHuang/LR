@@ -60,18 +60,6 @@ protected:
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void InitializeAI();
 
-	/**
-	 * 感知系统检测到目标的回调
-	 * @param Actor   被感知到的 Actor
-	 * @param Stimulus 感知刺激数据（包含 WasSuccessfullySensed 判断是进入视野还是离开视野）
-	 *
-	 * 当目标进入感知范围时，写入黑板的 TargetActor 键
-	 * 当目标离开感知范围时，清除黑板的 TargetActor 键
-	 */
-	UFUNCTION()
-	void OnTargetDetected(AActor* Actor, FAIStimulus Stimulus);
-	// void SetTargetActor(AActor* Target);
-	// void ClearTargetActor();
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Team")
