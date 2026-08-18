@@ -26,7 +26,9 @@ public:
 	virtual void GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const override;
 	// 模拟移动：根据提议速度实际移动组件，并输出同步状态
 	virtual void SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState) override;
-
+	//相机影响
+	UPROPERTY(EditAnywhere)
+	bool IsPlayer = false; //是否是玩家，只有玩家有Camera。
 	//----------------------------------------------------
 	// 飞行参数（可在蓝图/细节面板中调整）
 	//----------------------------------------------------
@@ -65,4 +67,7 @@ public:
 	// 飞机Roll倾斜插值状态（跨帧保持，确保平滑过渡）
 	UPROPERTY()
 	float PitchInterpValue = 0.f;
+	
+	UPROPERTY()
+	float DeadZone = 0.2f;
 };

@@ -48,30 +48,34 @@ void ULrFlyMovementMode::GenerateMove_Implementation(const FMoverSimContext& Sim
 	if (Inputs)
 	{
 		const FVector RawInput = Inputs->GetMoveInput();
-		constexpr float DeadZone = 0.2f;
 
 		// 水平分量
 		const FVector HorizontalInput(RawInput.X, RawInput.Y, 0.f);
 		const float HorizontalMag = HorizontalInput.Size();
 		if (HorizontalMag > DeadZone)
 		{
+			if (IsPlayer)
+			{
+				// const FRotator CamRot = Inputs->ControlRotation;
+				// const FVector ForwardDir = FRotationMatrix(CamRot).GetUnitAxis(EAxis::X);
+				// const FVector RightDir   = FRotationMatrix(CamRot).GetUnitAxis(EAxis::Y);
+				// const FVector UpDir      = FRotationMatrix(CamRot).GetUnitAxis(EAxis::Z);
+				//
+				// // 假设 RawInput.X 是左右，RawInput.Y 是前后，RawInput.Z 是上下
+				// // FVector WorldDirection = ForwardDir * RawInput.Y + RightDir * RawInput.X + UpDir * RawInput.Z;
+				// FVector WorldDirection = ForwardDir * RawInput.Y + RightDir * RawInput.X ;
+				// MoveIntent = WorldDirection.GetSafeNormal();
+				const FRotator YawRot(0.f, Inputs->ControlRotation.Yaw, 0.f);
+				const FVector ForwardDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
+				const FVector RightDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
+				const FVector WorldHorizontal = ForwardDir * RawInput.Y + RightDir * RawInput.X;
+				MoveIntent = WorldHorizontal.GetSafeNormal();
+			}
+			else
+			{
+				MoveIntent = RawInput;
+			}
 
-			// const FRotator CamRot = Inputs->ControlRotation;
-			// const FVector ForwardDir = FRotationMatrix(CamRot).GetUnitAxis(EAxis::X);
-			// const FVector RightDir   = FRotationMatrix(CamRot).GetUnitAxis(EAxis::Y);
-			// const FVector UpDir      = FRotationMatrix(CamRot).GetUnitAxis(EAxis::Z);
-			//
-			// // 假设 RawInput.X 是左右，RawInput.Y 是前后，RawInput.Z 是上下
-			// // FVector WorldDirection = ForwardDir * RawInput.Y + RightDir * RawInput.X + UpDir * RawInput.Z;
-			// FVector WorldDirection = ForwardDir * RawInput.Y + RightDir * RawInput.X ;
-			// MoveIntent = WorldDirection.GetSafeNormal();
-			
-			const FRotator YawRot(0.f, Inputs->ControlRotation.Yaw, 0.f);
-			const FVector ForwardDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
-			const FVector RightDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
-			const FVector WorldHorizontal = ForwardDir * RawInput.Y + RightDir * RawInput.X;
-			MoveIntent = WorldHorizontal.GetSafeNormal();
-			
 			SpeedScale = FMath::Clamp((HorizontalMag - DeadZone) / (1.f - DeadZone), 0.f, 1.f);
 		}
 
@@ -152,7 +156,6 @@ void ULrFlyMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 	if (Inputs)
 	{
 		const FVector RawInput = Inputs->GetMoveInput();
-		constexpr float DeadZone = 0.2f;
 
 		// 检查是否有显著水平或垂直移动输入
 		const FVector HorizontalInput(RawInput.X, RawInput.Y, 0.f);
@@ -164,19 +167,19 @@ void ULrFlyMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 			// 有移动输入时，根据移动方向计算倾斜角度（像飞机）
 			// Roll: 左右输入控制 (-60 to 60 degrees)
 			const float TargetRoll = FMath::Clamp(RawInput.X * RollAngle, -RollAngle, RollAngle);
-			
+
 			// Pitch: 上下输入控制抬头低头 (-80 to 80 degrees)
 			const float TargetPitch = FMath::Clamp(RawInput.Z * PitchAngle, -PitchAngle, PitchAngle);
-			
+
 			// 使用 FInterpTo 实现平滑过渡 - 使用成员变量确保每个角色独立
 			RollInterpValue = FMath::FInterpTo(RollInterpValue, TargetRoll, DeltaTime, TurnSpeed * 3.f);
 			const float SmoothedRoll = FMath::Clamp(RollInterpValue, -RollAngle, RollAngle);
-			
+
 			// Pitch interpolation using same mechanism
 			PitchInterpValue = FMath::FInterpTo(PitchInterpValue, TargetPitch, DeltaTime, TurnSpeed * 3.f);
 			const float SmoothedPitch = FMath::Clamp(PitchInterpValue, -PitchAngle, PitchAngle);
 
-			
+
 			// 保持 Yaw 为相机方向，修改 Roll 和 Pitch
 			FRotator DesiredRot = Inputs->ControlRotation;
 			DesiredRot.Pitch = SmoothedPitch; // 使用插值后的Pitch
@@ -190,7 +193,7 @@ void ULrFlyMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 			// 使用 FInterpTo 实现平滑回正
 			RollInterpValue = FMath::FInterpTo(RollInterpValue, 0.f, DeltaTime, TurnSpeed * 5.f);
 			const float SmoothedRoll = FMath::Clamp(RollInterpValue, -RollAngle, RollAngle);
-			
+
 			// Pitch also interpolates to 0
 			PitchInterpValue = FMath::FInterpTo(PitchInterpValue, 0.f, DeltaTime, TurnSpeed * 5.f);
 			const float SmoothedPitch = FMath::Clamp(PitchInterpValue, -PitchAngle, PitchAngle);
@@ -233,20 +236,356 @@ void ULrFlyMovementMode::SimulationTick_Implementation(const FSimulationTickPara
 		else
 		{
 			// 没有碰撞，移动全部完成
-  			RemainingMove = FVector::ZeroVector;
+			RemainingMove = FVector::ZeroVector;
 			break;
 		}
 	}
-	
+
 	//--------------------------------------------------
 	// Recalculate Actual Velocity（解决客户端拉回）
 	//--------------------------------------------------
 	const FVector FinalLocation = UpdatedComp->GetComponentLocation();
 	FVector ActualVelocity = (FinalLocation - StartingLocation) / DeltaTime;
-	
+
 	OutputSyncState.SetTransforms_WorldSpace(
 		FinalLocation,
 		FinalRotation.Rotator(),
 		ActualVelocity,
 		FVector::ZeroVector);
 }
+
+
+// ============================================================================
+// GenerateMove
+// ============================================================================
+
+// void ULrFlyMovementMode::GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
+// {
+// 	Super::GenerateMove_Implementation(SimContext, StartState, TimeStep, OutProposedMove);
+//
+// 	const FMoverDefaultSyncState* SyncState = StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
+//
+// 	const FLrMoverInputCmd* Inputs = StartState.InputCmd.InputCollection.FindDataByType<FLrMoverInputCmd>();
+//
+// 	if (!SyncState)
+// 	{
+// 		return;
+// 	}
+//
+// 	const float DeltaSeconds = TimeStep.StepMs * 0.001f;
+//
+// 	if (DeltaSeconds <= 0.f)
+// 	{
+// 		return;
+// 	}
+//
+// 	//------------------------------------------------------------
+// 	// 当前速度
+// 	//------------------------------------------------------------
+//
+// 	FVector Velocity = SyncState->GetVelocity_WorldSpace();
+//
+// 	//------------------------------------------------------------
+// 	// 当前旋转
+// 	//------------------------------------------------------------
+// 	const FQuat CurrentRotation = SyncState->GetOrientation_WorldSpace().Quaternion();
+// 	// const FRotator CurrentRotation =
+// 	// 	SyncState
+// 	// 	->GetOrientation_WorldSpace()
+// 	// 	.Rotator();
+//
+// 	//------------------------------------------------------------
+// 	// 输入
+// 	//------------------------------------------------------------
+//
+// 	FVector MoveIntent = FVector::ZeroVector;
+//
+// 	float SpeedScale = 0.f;
+//
+// 	float VerticalIntent = 0.f;
+//
+// 	if (Inputs)
+// 	{
+// 		const FVector RawInput = Inputs->GetMoveInput();
+// 		const FVector HorizontalInput(RawInput.X, RawInput.Y, 0.f);
+// 		const float HorizontalMag = HorizontalInput.Size();
+//
+// 		//--------------------------------------------------------
+// 		// 水平移动
+// 		//--------------------------------------------------------
+// 		if (HorizontalMag > DeadZone)
+// 		{
+// 			const FRotator YawRotation(0.f, Inputs->ControlRotation.Yaw, 0.f);
+// 			const FVector Forward = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+// 			const FVector Right = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+// 			const FVector WorldInput = Forward * RawInput.Y + Right * RawInput.X;
+// 			MoveIntent = WorldInput.GetSafeNormal();
+// 			SpeedScale = FMath::Clamp((HorizontalMag - DeadZone) / (1.f - DeadZone), 0.f, 1.f);
+// 		}
+//
+// 		//--------------------------------------------------------
+// 		// 垂直移动
+// 		//--------------------------------------------------------
+// 		if (FMath::Abs(RawInput.Z) > DeadZone)
+// 		{
+// 			const float VerticalMagnitude = FMath::Clamp(
+// 				(FMath::Abs(RawInput.Z) - DeadZone) /
+// 				(1.f - DeadZone),
+// 				0.f,
+// 				1.f);
+//
+// 			VerticalIntent = VerticalMagnitude * FMath::Sign(RawInput.Z);
+// 		}
+// 	}
+//
+// 	//------------------------------------------------------------
+// 	// 速度
+// 	//------------------------------------------------------------
+// 	const FVector DesiredVelocity = MoveIntent * (MaxSpeed * SpeedScale) + FVector(
+// 		0.f,
+// 		0.f,
+// 		MaxVerticalSpeed * VerticalIntent);
+//
+// 	if (!DesiredVelocity.IsNearlyZero())
+// 	{
+// 		Velocity = FMath::VInterpConstantTo(
+// 			Velocity,
+// 			DesiredVelocity,
+// 			DeltaSeconds,
+// 			Acceleration);
+// 	}
+// 	else
+// 	{
+// 		Velocity = FMath::VInterpConstantTo(
+// 			Velocity,
+// 			FVector::ZeroVector,
+// 			DeltaSeconds,
+// 			BrakingDeceleration);
+//
+// 		if (Velocity.SizeSquared() < FMath::Square(StopThreshold))
+// 		{
+// 			Velocity = FVector::ZeroVector;
+// 		}
+// 	}
+//
+// 	//------------------------------------------------------------
+// 	// Rotation Target
+// 	//------------------------------------------------------------
+// 	FRotator TargetRotation = CurrentRotation.Rotator();
+//
+// 	if (Inputs)
+// 	{
+// 		const FVector RawInput = Inputs->GetMoveInput();
+// 		const FVector HorizontalInput(RawInput.X, RawInput.Y, 0.f);
+// 		const bool bHasHorizontalInput = HorizontalInput.Size() > DeadZone;
+// 		const bool bHasVerticalInput = FMath::Abs(RawInput.Z) > DeadZone;
+// 		const bool bHasInput = bHasHorizontalInput || bHasVerticalInput;
+//
+// 		//--------------------------------------------------------
+// 		// Yaw
+// 		//--------------------------------------------------------
+// 		TargetRotation.Yaw = Inputs->ControlRotation.Yaw;
+//
+// 		//--------------------------------------------------------
+// 		// Roll
+// 		//--------------------------------------------------------
+// 		float TargetRoll = 0.f;
+// 		if (bHasHorizontalInput)
+// 		{
+// 			TargetRoll = FMath::Clamp(RawInput.X * RollAngle, -RollAngle, RollAngle);
+// 		}
+//
+// 		//--------------------------------------------------------
+// 		// Pitch
+// 		//--------------------------------------------------------
+//
+// 		float TargetPitch = 0.f;
+//
+// 		if (bHasVerticalInput)
+// 		{
+// 			TargetPitch = FMath::Clamp(RawInput.Z * PitchAngle, -PitchAngle, PitchAngle);
+// 		}
+//
+// 		if (!bHasInput)
+// 		{
+// 			TargetRoll = 0.f;
+// 			TargetPitch = 0.f;
+// 		}
+//
+// 		//--------------------------------------------------------
+// 		// 平滑
+// 		//--------------------------------------------------------
+// 		TargetRotation.Roll = FMath::FInterpTo(CurrentRotation.Rotator().Roll,
+// 		                                       TargetRoll,
+// 		                                       DeltaSeconds,
+// 		                                       TurnSpeed);
+//
+// 		TargetRotation.Pitch = FMath::FInterpTo(CurrentRotation.Rotator().Pitch,
+// 		                                        TargetPitch,
+// 		                                        DeltaSeconds,
+// 		                                        TurnSpeed);
+//
+// 		//--------------------------------------------------------
+// 		// Yaw 也平滑
+// 		//--------------------------------------------------------
+// 		const float YawDelta = FMath::FindDeltaAngleDegrees(CurrentRotation.Rotator().Yaw, TargetRotation.Yaw);
+//
+// 		const float SmoothedYawDelta = FMath::FInterpTo(
+// 			0.f,
+// 			YawDelta,
+// 			DeltaSeconds,
+// 			TurnSpeed);
+//
+// 		TargetRotation.Yaw = CurrentRotation.Rotator().Yaw + SmoothedYawDelta;
+// 	}
+//
+// 	//------------------------------------------------------------
+// 	// Rotation -> Angular Velocity
+// 	//------------------------------------------------------------
+// 	const float PitchDelta = FMath::FindDeltaAngleDegrees(CurrentRotation.Rotator().Pitch, TargetRotation.Pitch);
+//
+// 	const float YawDelta = FMath::FindDeltaAngleDegrees(CurrentRotation.Rotator().Yaw, TargetRotation.Yaw);
+//
+// 	const float RollDelta = FMath::FindDeltaAngleDegrees(CurrentRotation.Rotator().Roll, TargetRotation.Roll);
+//
+// 	OutProposedMove.AngularVelocityDegrees = FVector(
+// 		PitchDelta / DeltaSeconds,
+// 		YawDelta / DeltaSeconds,
+// 		RollDelta / DeltaSeconds);
+//
+// 	//------------------------------------------------------------
+// 	// Output
+// 	//------------------------------------------------------------
+//
+// 	OutProposedMove.LinearVelocity = Velocity;
+// 	OutProposedMove.DirectionIntent = MoveIntent;
+// 	OutProposedMove.bHasDirIntent = !MoveIntent.IsNearlyZero();
+// }
+//
+// void ULrFlyMovementMode::SimulationTick_Implementation(
+// 	const FSimulationTickParams& Params,
+// 	FMoverTickEndData& OutputState)
+// {
+// 	Super::SimulationTick_Implementation(Params, OutputState);
+//
+// 	FMoverDefaultSyncState& OutputSyncState = OutputState.SyncState.SyncStateCollection.FindOrAddMutableDataByType<FMoverDefaultSyncState>();
+//
+// 	const FMoverDefaultSyncState* StartingSyncState = Params.StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
+//
+// 	if (!StartingSyncState)
+// 	{
+// 		return;
+// 	}
+//
+// 	USceneComponent* UpdatedComp = Params.MovingComps.UpdatedComponent.Get();
+//
+// 	if (!UpdatedComp)
+// 	{
+// 		return;
+// 	}
+//
+// 	const float DeltaTime = Params.TimeStep.StepMs * 0.001f;
+//
+// 	if (DeltaTime <= 0.f)
+// 	{
+// 		return;
+// 	}
+//
+// 	//------------------------------------------------------------
+// 	// 飞行状态
+// 	//------------------------------------------------------------
+//
+// 	if (CacheMoverComponent && !CacheMoverComponent->bFly)
+// 	{
+// 		OutputState.MovementEndState.NextModeName = LrAllModes::Air;
+// 	}
+//
+// 	//------------------------------------------------------------
+// 	// 当前旋转
+// 	//------------------------------------------------------------
+// 	const FQuat CurrentRotation = StartingSyncState->GetOrientation_WorldSpace().Quaternion();
+//
+// 	//------------------------------------------------------------
+// 	// Angular Velocity
+// 	//------------------------------------------------------------
+//
+// 	const FVector AngularVelocity = Params.ProposedMove.AngularVelocityDegrees;
+//
+// 	const FRotator DeltaRotation(AngularVelocity.X * DeltaTime,
+// 	                             AngularVelocity.Y * DeltaTime,
+// 	                             AngularVelocity.Z * DeltaTime);
+//
+// 	const FQuat DeltaQuat = DeltaRotation.Quaternion();
+//
+// 	const FQuat FinalRotation = DeltaQuat * CurrentRotation;
+//
+// 	//------------------------------------------------------------
+// 	// 移动
+// 	//------------------------------------------------------------
+//
+// 	const FVector StartingLocation = UpdatedComp->GetComponentLocation();
+//
+// 	FVector RemainingMove = Params.ProposedMove.LinearVelocity * DeltaTime;
+//
+// 	constexpr int32 MaxSimulations = 4;
+// 	for (int32 i = 0; i < MaxSimulations && !RemainingMove.IsNearlyZero(); ++i)
+// 	{
+// 		FHitResult Hit;
+//
+// 		UpdatedComp->MoveComponent(
+// 			RemainingMove,
+// 			FinalRotation,
+// 			true,
+// 			&Hit);
+//
+// 		//--------------------------------------------------------
+// 		// 穿透
+// 		//--------------------------------------------------------
+//
+// 		if (Hit.bStartPenetrating)
+// 		{
+// 			const FVector Depenetration = Hit.Normal * (Hit.PenetrationDepth + 0.1f);
+//
+// 			UpdatedComp->MoveComponent(
+// 				Depenetration,
+// 				FinalRotation,
+// 				true,
+// 				nullptr);
+//
+// 			continue;
+// 		}
+//
+// 		//--------------------------------------------------------
+// 		// 碰撞滑动
+// 		//--------------------------------------------------------
+//
+// 		if (Hit.IsValidBlockingHit())
+// 		{
+// 			RemainingMove *= (1.f - Hit.Time);
+//
+// 			RemainingMove = FVector::VectorPlaneProject(RemainingMove, Hit.Normal);
+// 		}
+// 		else
+// 		{
+// 			RemainingMove = FVector::ZeroVector;
+//
+// 			break;
+// 		}
+// 	}
+//
+// 	//------------------------------------------------------------
+// 	// 实际速度
+// 	//------------------------------------------------------------
+// 	const FVector FinalLocation = UpdatedComp->GetComponentLocation();
+// 	const FVector ActualVelocity = (FinalLocation - StartingLocation) / DeltaTime;
+//
+// 	//------------------------------------------------------------
+// 	// Sync State
+// 	//------------------------------------------------------------
+//
+// 	OutputSyncState.SetTransforms_WorldSpace(
+// 		FinalLocation,
+// 		FinalRotation.Rotator(),
+// 		ActualVelocity,
+// 		FVector::ZeroVector);
+// }
