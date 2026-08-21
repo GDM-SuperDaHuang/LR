@@ -19,12 +19,14 @@ class LR_API ULrNavMovementComponent : public UPawnMovementComponent
 
 public:
 	virtual void BeginPlay() override;
-
+	virtual bool IsFlying() const override;
+	virtual bool IsMovingOnGround() const override;
+	virtual bool CanStartPathFollowing() const override;
 	virtual void RequestDirectMove(const FVector& MoveVelocity, bool bForceMaxSpeed) override;
 	// 重写停止激活移动的函数
 	virtual void StopActiveMovement() override;
 	// virtual FVector GetActorFeetLocation() const override;
-	
+
 	UPROPERTY()
 	TObjectPtr<ALrEnemyPawn> LrEnemyPawn;
 };

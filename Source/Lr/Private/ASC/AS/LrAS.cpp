@@ -142,7 +142,7 @@ void ULrAS::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackDat
 		bool bIsDead = CombatInterface->IsDead();
 		if (NewHP <= 0 && !bIsDead) //死亡
 		{
-			// 击退方向
+			// 击退方向 有bug Props.SourceAvatarActor==null
 			FVector KnockDir = (Data.Target.GetAvatarActor()->GetActorLocation() - Props.SourceAvatarActor->GetActorLocation()).GetSafeNormal();
 			// 竖直分量
 			KnockDir.Z = 0.3f;

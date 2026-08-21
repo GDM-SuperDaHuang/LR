@@ -5,13 +5,9 @@
 #include "StateTreeTaskBase.h"
 #include "AI/Controller/LrAIControllerBase.h"
 #include "Component/LrPatrolRouteComponent.h"
-#include "Component/Combat/LrAICombatComponent.h"
 #include "Engine/World.h"
-#include "Mover/LrAllModes.h"
-#include "Mover/LrMoverComponent.h"
-#include "Navigation/PathFollowingComponent.h"
 #include "Pawn/LrEnemyPawn.h"
-#include "FLrSTT.generated.h"
+#include "FLrSTTPatrol.generated.h"
 
 /**
  *Running, // 当前节点或状态仍在执行中，StateTree 会继续调用 Tick

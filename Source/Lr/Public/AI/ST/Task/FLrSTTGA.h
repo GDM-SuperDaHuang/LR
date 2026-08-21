@@ -3,23 +3,12 @@
 #include "StateTreeExecutionContext.h"
 #include "StateTreeLinker.h"
 #include "StateTreeTaskBase.h"
-#include "AI/Controller/LrAIControllerBase.h"
 #include "Component/LrPatrolRouteComponent.h"
 #include "Component/Combat/LrAICombatComponent.h"
 #include "Engine/World.h"
-#include "Mover/LrAllModes.h"
-#include "Mover/LrMoverComponent.h"
-#include "Navigation/PathFollowingComponent.h"
 #include "Pawn/LrEnemyPawn.h"
-#include "FLrSTTChase.generated.h"
+#include "FLrSTTGA.generated.h"
 
-/**
- *Running, // 当前节点或状态仍在执行中，StateTree 会继续调用 Tick
- *Stopped,// StateTree 被外部请求停止，但没有明确成功或失败
- *Succeeded,// 当前节点或状态执行完成且成功，可能触发状态切换或终止
- *Failed,// 当前节点或状态执行失败，可能触发状态切换或终止
- *Unset, // 默认值，状态未初始化
- */
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 技能
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -8,7 +8,7 @@
 #include "Mover/LrAllModes.h"
 #include "Mover/LrMoverComponent.h"
 #include "Pawn/LrEnemyPawn.h"
-#include "FLrSTT.generated.h"
+#include "FLrSTTFly.generated.h"
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 飞行初始化
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22,6 +22,9 @@ struct FFlyInitTaskInstanceData
 
 	UPROPERTY(EditAnywhere, Category="Output")
 	FVector TargetLocation = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, Category="Output")
+	FVector InitLocation = FVector::ZeroVector;
 };
 
 USTRUCT(BlueprintType)
@@ -29,11 +32,18 @@ struct FLrFlyInitTask : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 	using FInstanceDataType = FFlyInitTaskInstanceData;
+	using FExecutionRuntimeDataType = FFlyInitTaskInstanceData; // ← 新增
 
 	virtual const UStruct* GetInstanceDataType() const override
 	{
 		return FInstanceDataType::StaticStruct();
 	}
+
+	virtual const UStruct* GetExecutionRuntimeDataType() const override // ← 新增
+	{
+		return FExecutionRuntimeDataType::StaticStruct();
+	}
+
 
 	// 在 Link 阶段绑定 ExternalData
 	virtual bool Link(FStateTreeLinker& Linker) override
@@ -44,58 +54,70 @@ struct FLrFlyInitTask : public FStateTreeTaskCommonBase
 
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override
 	{
+		
 		// 初始化巡逻点
-		FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+		// FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+		FExecutionRuntimeDataType& InstanceData = Context.GetExecutionRuntimeData(*this); //持久数据
 
 		// 获取 ExternalData
 		ALrEnemyPawn& Enemy = Context.GetExternalData(LrEnemyPawn);
-		FVector InitLocation = Enemy.GetActorLocation();
-		InitLocation.Z = InitLocation.Z + InstanceData.FlyHeight;
-		InstanceData.TargetLocation = InitLocation;
+
 		ALrAIControllerBase* AI = Cast<ALrAIControllerBase>(Enemy.GetController());
 		if (!AI)
 		{
 			return EStateTreeRunStatus::Failed;
 		}
+		
+		FVector CurLocation = Enemy.GetActorLocation();
+		CurLocation.Z = CurLocation.Z + InstanceData.FlyHeight;
+		if (InstanceData.TargetLocation == FVector::ZeroVector)
+		{
+			// InstanceData.InitLocation = CurLocation;
+			InstanceData.TargetLocation = CurLocation;
+		}
+		else
+		{
+			return EStateTreeRunStatus::Succeeded;
+		}
+		
 		Enemy.LrMoverComponent->QueueNextMode(LrAllModes::Fly);
 		// 移动
-		AI->MoverToTarget(InitLocation);
+		AI->MoverToTarget(InstanceData.TargetLocation);
 		return EStateTreeRunStatus::Running;
 	}
 
 	// 检查是否到达
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override
 	{
-		FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+		// FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+		FExecutionRuntimeDataType& InstanceData = Context.GetExecutionRuntimeData(*this); //持久数据
+		
 		ALrEnemyPawn& Enemy = Context.GetExternalData(LrEnemyPawn);
 		//射线检测
 		FCollisionQueryParams QueryParams;
 		QueryParams.AddIgnoredActor(&Enemy);
 		const FVector ProbeStart = Enemy.GetActorLocation();
-		const FVector ProbeEnd = ProbeStart + FVector::DownVector * 100.f;
+		const FVector ProbeEnd = ProbeStart + FVector::DownVector * 10000.f;
 
 		FHitResult ProbeHit;
 		const bool bProbeHit = Enemy.GetWorld()->LineTraceSingleByChannel(ProbeHit, ProbeStart, ProbeEnd, ECC_WorldStatic, QueryParams);
 		if (bProbeHit)
 		{
 			float HeightFromStart = ProbeStart.Z - ProbeHit.Location.Z;
-			if (HeightFromStart < InstanceData.FlyHeight)
+			if (HeightFromStart > InstanceData.FlyHeight)
+			{
+				return EStateTreeRunStatus::Succeeded;
+			}
+			else
 			{
 				ALrAIControllerBase* AI = Cast<ALrAIControllerBase>(Enemy.GetController());
 				if (!AI)
 				{
 					return EStateTreeRunStatus::Failed;
 				}
-				if (AI->MoveState == EMoveState::Finish)
-				{
-					// // 继续移动
-					// AI->MoverToTarget(InstanceData.TargetLocation);
-					return EStateTreeRunStatus::Succeeded;
-				}
-			}
-			else
-			{
-				return EStateTreeRunStatus::Succeeded;
+				// // 继续移动
+				AI->MoverToTarget(InstanceData.TargetLocation);
+				return EStateTreeRunStatus::Running;
 			}
 		}
 		return EStateTreeRunStatus::Running;

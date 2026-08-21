@@ -36,6 +36,10 @@ ALrAIControllerBase::ALrAIControllerBase()
 	// PerceptionComponent->SetDominantSense(UAISense_Sight::StaticClass());
 
 	check(GetPathFollowingComponent());
+	UPathFollowingComponent* PathFollowing = GetPathFollowingComponent();
+
+	UE_LOG(LogTemp, Warning, TEXT("PathFollowing=%s"), *GetNameSafe(PathFollowing));
+	
 }
 
 FGenericTeamId ALrAIControllerBase::GetGenericTeamId() const
@@ -50,7 +54,11 @@ void ALrAIControllerBase::MoverToTarget(const FVector& TargetLocation)
 	FAIMoveRequest MoveReq;
 	MoveReq.SetGoalLocation(TargetLocation);
 	MoveReq.SetAcceptanceRadius(20.f);
-	FAIRequestID FaiRequestID = MoveTo(MoveReq).MoveId;
+	MoveReq.SetUsePathfinding(false);                // 走 AbstractNavData：起点→终点直线路径，不依赖地面网格
+	MoveReq.SetProjectGoalLocation(false);           // 关键：不再把目标点投影回地面导航网格
+	MoveReq.SetRequireNavigableEndLocation(false);   // 目标点不必落在导航网格上
+	MoveTo(MoveReq);
+	// FAIRequestID FaiRequestID = MoveTo(MoveReq).MoveId;
 }
 
 void ALrAIControllerBase::MoveToPlayer(AActor* Player)

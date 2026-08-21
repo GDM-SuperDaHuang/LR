@@ -18,6 +18,30 @@ void ULrNavMovementComponent::BeginPlay()
 	NavMovementProperties.bUpdateNavAgentWithOwnersCollision = true;
 }
 
+bool ULrNavMovementComponent::IsFlying() const
+{
+	return true;
+}
+
+bool ULrNavMovementComponent::IsMovingOnGround() const
+{
+	return false;
+}
+
+bool ULrNavMovementComponent::CanStartPathFollowing() const
+{
+	const bool bResult = Super::CanStartPathFollowing();
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("[%s] CanStartPathFollowing = %s"),
+		*GetNameSafe(GetOwner()),
+		bResult ? TEXT("TRUE") : TEXT("FALSE"));
+
+	return bResult;
+}
+
 void ULrNavMovementComponent::RequestDirectMove(const FVector& MoveVelocity, bool bForceMaxSpeed)
 {
 	Super::RequestDirectMove(MoveVelocity, bForceMaxSpeed);
