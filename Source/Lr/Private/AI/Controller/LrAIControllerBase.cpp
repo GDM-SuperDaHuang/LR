@@ -11,10 +11,9 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "Component/LrPatrolRouteComponent.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "NavMesh/RecastNavMesh.h"
 #include "Pawn/LrEnemyPawn.h"
 #include "Perception/AIPerceptionComponent.h"
-#include "Perception/AIPerceptionTypes.h"
-#include "Perception/AISenseConfig_Sight.h"
 
 ALrAIControllerBase::ALrAIControllerBase()
 {
@@ -53,7 +52,24 @@ FGenericTeamId ALrAIControllerBase::GetGenericTeamId() const
 void ALrAIControllerBase::FindPathForMoveRequest(const FAIMoveRequest& MoveRequest, FPathFindingQuery& Query, FNavPathSharedPtr& OutPath) const
 {
 	OutPath.Reset();
+	int32 UserFlags = MoveRequest.GetUserFlags();
+	if (UserFlags == 0)
+	{
+		// Name=ARecastNavMesh-Default
+		const ARecastNavMesh* RecastNavMesh = Cast<ARecastNavMesh>(Query.NavData.Get());
+		if (RecastNavMesh)
+		{
+			OutPath = RecastNavMesh->CreatePathInstance<FNavMeshPath>(Query);
+			if (!(OutPath.IsValid() ? OutPath->CastPath<FNavMeshPath>() : nullptr))
+			{
+				OutPath.Reset();
+				return;
+			}
+		}
+		return;
+	}
 
+	// Name=Nav3DData-Fly
 	const ANav3DData* Nav3DData = Cast<ANav3DData>(Query.NavData.Get());
 	if (!Nav3DData)
 	{
@@ -76,19 +92,16 @@ void ALrAIControllerBase::FindPathForMoveRequest(const FAIMoveRequest& MoveReque
 		return;
 	}
 
-	const ENavigationQueryResult::Type Result = FNav3DPathCoordinator::FindPath(
-		*Nav3DPath,
-		Nav3DRequest);
+	const ENavigationQueryResult::Type Result = FNav3DPathCoordinator::FindPath(*Nav3DPath, Nav3DRequest);
 	if (Result != ENavigationQueryResult::Success || !Nav3DPath->IsValid())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[%s] Nav3D path failed: Result=%d, Points=%d"),
-		       *GetNameSafe(GetPawn()), static_cast<int32>(Result), Nav3DPath->GetPathPoints().Num());
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Nav3D path failed: Result=%d, Points=%d"), *GetNameSafe(GetPawn()), static_cast<int32>(Result), Nav3DPath->GetPathPoints().Num());
 		OutPath.Reset();
 	}
 }
 
 
-void ALrAIControllerBase::MoverToTarget(const FVector& TargetLocation)
+void ALrAIControllerBase::MoverToTarget(const FVector& TargetLocation, int32 MoveMode)
 {
 	MoveState = EMoveState::Start;
 	FAIMoveRequest MoveReq;
@@ -98,7 +111,7 @@ void ALrAIControllerBase::MoverToTarget(const FVector& TargetLocation)
 	MoveReq.SetProjectGoalLocation(false);
 	MoveReq.SetRequireNavigableEndLocation(false);
 	MoveReq.SetAllowPartialPath(false);
-
+	MoveReq.SetUserFlags(MoveMode);
 	const FPathFollowingRequestResult Result = MoveTo(MoveReq);
 	if (Result.Code != EPathFollowingRequestResult::RequestSuccessful &&
 		Result.Code != EPathFollowingRequestResult::AlreadyAtGoal)
@@ -108,10 +121,27 @@ void ALrAIControllerBase::MoverToTarget(const FVector& TargetLocation)
 	}
 }
 
-void ALrAIControllerBase::MoveToPlayer(AActor* Player)
+void ALrAIControllerBase::MoveToPlayer(AActor* Player, int32 MoverMode)
 {
 	MoveState = EMoveState::Start;
-	MoveToActor(Player, 50.f);
+	UPathFollowingComponent* FollowingComponent = GetPathFollowingComponent();
+	if (FollowingComponent && FollowingComponent->GetStatus() != EPathFollowingStatus::Idle)
+	{
+		FollowingComponent->AbortMove(*this, FPathFollowingResultFlags::ForcedScript | FPathFollowingResultFlags::NewRequest
+		                              , FAIRequestID::CurrentRequest, EPathFollowingVelocityMode::Keep);
+	}
+
+	FAIMoveRequest MoveReq(Player);
+	MoveReq.SetUsePathfinding(true);
+	MoveReq.SetAllowPartialPath(true);
+	MoveReq.SetNavigationFilter(DefaultNavigationFilterClass);
+	MoveReq.SetAcceptanceRadius(AcceptanceRadius);
+	MoveReq.SetReachTestIncludesAgentRadius(true);
+	MoveReq.SetCanStrafe(true);
+	MoveReq.SetUserFlags(MoverMode);
+	MoveTo(MoveReq);
+	// abort active movement to keep only one request running
+	// MoveToActor(Player, 50.f);
 }
 
 
@@ -134,59 +164,7 @@ void ALrAIControllerBase::OnPossess(APawn* InPawn)
 		// 生成半径500，6个点的巡逻圈
 		Patrol->GenerateCircle(500.f, 6);
 	}
-
-	// UBehaviorTree* BT = Enemy->GetBehaviorTree();
-	// if (!BT)
-	// {
-	// 	return;
-	// }
-	// UBlackboardComponent* BBPtr = Blackboard;
-	// UseBlackboard(BT->BlackboardAsset, BBPtr);
-	//
-	// Blackboard->SetValueAsVector(LrBBKeys::HomeLocation, Enemy->GetHomeLocation());
-	// RunBehaviorTree(Enemy->GetBehaviorTree());
-	// BBPtr->SetValueAsEnum(LrBBKeys::AIState, static_cast<uint8>(ELrAIState::Idle));
-
-	// 先解开再重新绑定感知回调：当感知系统检测到或丢失目标时，触发 OnTargetDetected
-	// PerceptionComponent->OnTargetPerceptionUpdated.RemoveDynamic(this, &ALrAIControllerBase::OnTargetDetected);
-	// PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ALrAIControllerBase::OnTargetDetected);
 }
-
-// void ALrAIControllerBase::OnPossess(APawn* InPawn)
-// {
-// 	Super::OnPossess(InPawn);
-// 	InitializeAI();
-// 	const ALrEnemyPawn* Enemy = Cast<ALrEnemyPawn>(InPawn);
-// 	if (!Enemy)
-// 	{
-// 		return;
-// 	}
-//
-// 	//生成巡逻点
-// 	ULrPatrolRouteComponent* Patrol = Enemy->GetPatrolRoute();
-// 	if (Patrol)
-// 	{
-// 		FVector Home = Enemy->GetActorLocation();
-// 		Patrol->SetHomeLocation(Home);
-// 		// 生成半径500，6个点的巡逻圈
-// 		Patrol->GenerateCircle(500.f, 6);
-// 	}
-//
-// 	UBehaviorTree* BT = Enemy->GetBehaviorTree();
-// 	if (!BT)
-// 	{
-// 		return;
-// 	}
-// 	UBlackboardComponent* BBPtr = Blackboard;
-// 	UseBlackboard(BT->BlackboardAsset, BBPtr);
-// 	Blackboard->SetValueAsVector(LrBBKeys::HomeLocation, Enemy->GetHomeLocation());
-// 	RunBehaviorTree(Enemy->GetBehaviorTree());
-// 	BBPtr->SetValueAsEnum(LrBBKeys::AIState, static_cast<uint8>(ELrAIState::Idle));
-//
-// 	// 先解开再重新绑定感知回调：当感知系统检测到或丢失目标时，触发 OnTargetDetected
-// 	PerceptionComponent->OnTargetPerceptionUpdated.RemoveDynamic(this, &ALrAIControllerBase::OnTargetDetected);
-// 	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ALrAIControllerBase::OnTargetDetected);
-// }
 
 void ALrAIControllerBase::InitializeAI()
 {

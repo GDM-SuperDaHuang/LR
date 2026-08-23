@@ -48,8 +48,9 @@ public:
 	UPROPERTY()
 	EMoveState MoveState = EMoveState::None;
 
-	void MoverToTarget(const FVector& TargetLocation);
-	void MoveToPlayer(AActor* Player);
+	// MoveMode,0:Ground,1:Fly
+	void MoverToTarget(const FVector& TargetLocation, int32 MoveMode);
+	void MoveToPlayer(AActor* Player, int32 MoverMode);
 
 protected:
 	/**
@@ -60,7 +61,6 @@ protected:
 	 */
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void InitializeAI();
-
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Team")

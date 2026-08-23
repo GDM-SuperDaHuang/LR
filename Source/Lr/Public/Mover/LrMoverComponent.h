@@ -25,6 +25,11 @@ class LR_API ULrMoverComponent : public UMoverComponent
 public:
 	ULrMoverComponent();
 
+	FName GetCurMovementModeName() const
+	{
+		return GetMovementModeName();
+	}
+
 	UPROPERTY(EditAnywhere, Instanced, Category = "Realistic Movement")
 	TObjectPtr<ULrMovementSettings> RealisticSettings;
 

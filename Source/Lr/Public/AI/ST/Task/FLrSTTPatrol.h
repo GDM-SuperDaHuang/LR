@@ -6,6 +6,8 @@
 #include "AI/Controller/LrAIControllerBase.h"
 #include "Component/LrPatrolRouteComponent.h"
 #include "Engine/World.h"
+#include "Mover/LrAllModes.h"
+#include "Mover/LrMoverComponent.h"
 #include "Pawn/LrEnemyPawn.h"
 #include "FLrSTTPatrol.generated.h"
 
@@ -70,8 +72,17 @@ struct FLrPatrolTask : public FStateTreeTaskCommonBase
 		{
 			return EStateTreeRunStatus::Failed;
 		}
+
 		// 移动
-		AI->MoverToTarget(InstanceData.CurrentDestination);
+		FName CurMovementModeName = Enemy.LrMoverComponent->GetCurMovementModeName();
+		if (CurMovementModeName == LrAllModes::Fly)
+		{
+			AI->MoverToTarget(InstanceData.CurrentDestination, 1);
+		}
+		else
+		{
+			AI->MoverToTarget(InstanceData.CurrentDestination, 0);
+		}
 		return EStateTreeRunStatus::Running;
 	}
 
@@ -96,8 +107,16 @@ struct FLrPatrolTask : public FStateTreeTaskCommonBase
 		if (AI->MoveState == EMoveState::Finish)
 		{
 			InstanceData.CurrentDestination = NextPoint;
-			// 继续移动
-			AI->MoverToTarget(InstanceData.CurrentDestination);
+			// 移动
+			FName CurMovementModeName = Enemy.LrMoverComponent->GetCurMovementModeName();
+			if (CurMovementModeName == LrAllModes::Fly)
+			{
+				AI->MoverToTarget(InstanceData.CurrentDestination, 1);
+			}
+			else
+			{
+				AI->MoverToTarget(InstanceData.CurrentDestination, 0);
+			}
 			return EStateTreeRunStatus::Running;
 		}
 

@@ -5,7 +5,8 @@
 #include "StateTreeTaskBase.h"
 #include "AI/Controller/LrAIControllerBase.h"
 #include "Component/LrPatrolRouteComponent.h"
-#include "Engine/World.h"
+#include "Mover/LrAllModes.h"
+#include "Mover/LrMoverComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Pawn/LrEnemyPawn.h"
 #include "FLrSTTChase.generated.h"
@@ -85,7 +86,15 @@ struct FLrChaseTask : public FStateTreeTaskCommonBase
 				// retry after an explicit completed request.
 				if (AI->MoveState == EMoveState::Finish && AI->GetMoveStatus() == EPathFollowingStatus::Idle)
 				{
-					AI->MoveToPlayer(Patrol->TargetActor);
+					FName CurMovementModeName = Enemy.LrMoverComponent->GetCurMovementModeName();
+					if (CurMovementModeName == LrAllModes::Fly)
+					{
+						AI->MoveToPlayer(Patrol->TargetActor, 1);
+					}
+					else
+					{
+						AI->MoveToPlayer(Patrol->TargetActor, 0);
+					}
 				}
 			}
 		}
@@ -112,7 +121,15 @@ struct FLrChaseTask : public FStateTreeTaskCommonBase
 				// Do not treat a failed query (Idle) as an immediate retry signal.
 				if (AI->MoveState == EMoveState::Finish && AI->GetMoveStatus() == EPathFollowingStatus::Idle)
 				{
-					AI->MoveToPlayer(InstanceData.TargetActor);
+					FName CurMovementModeName = Enemy.LrMoverComponent->GetCurMovementModeName();
+					if (CurMovementModeName == LrAllModes::Fly)
+					{
+						AI->MoveToPlayer(InstanceData.TargetActor, 1);
+					}
+					else
+					{
+						AI->MoveToPlayer(InstanceData.TargetActor, 0);
+					}
 				}
 			}
 			return EStateTreeRunStatus::Running;

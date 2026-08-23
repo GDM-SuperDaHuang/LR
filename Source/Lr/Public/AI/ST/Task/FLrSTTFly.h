@@ -54,7 +54,6 @@ struct FLrFlyInitTask : public FStateTreeTaskCommonBase
 
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override
 	{
-		
 		// 初始化巡逻点
 		// FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 		FExecutionRuntimeDataType& InstanceData = Context.GetExecutionRuntimeData(*this); //持久数据
@@ -67,7 +66,7 @@ struct FLrFlyInitTask : public FStateTreeTaskCommonBase
 		{
 			return EStateTreeRunStatus::Failed;
 		}
-		
+
 		FVector CurLocation = Enemy.GetActorLocation();
 		CurLocation.Z = CurLocation.Z + InstanceData.FlyHeight;
 		if (InstanceData.TargetLocation == FVector::ZeroVector)
@@ -79,10 +78,10 @@ struct FLrFlyInitTask : public FStateTreeTaskCommonBase
 		{
 			return EStateTreeRunStatus::Succeeded;
 		}
-		
+
 		Enemy.LrMoverComponent->QueueNextMode(LrAllModes::Fly);
 		// 移动
-		AI->MoverToTarget(InstanceData.TargetLocation);
+		AI->MoverToTarget(InstanceData.TargetLocation, 1);
 		return EStateTreeRunStatus::Running;
 	}
 
@@ -91,7 +90,7 @@ struct FLrFlyInitTask : public FStateTreeTaskCommonBase
 	{
 		// FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 		FExecutionRuntimeDataType& InstanceData = Context.GetExecutionRuntimeData(*this); //持久数据
-		
+
 		ALrEnemyPawn& Enemy = Context.GetExternalData(LrEnemyPawn);
 		//射线检测
 		FCollisionQueryParams QueryParams;
@@ -119,7 +118,7 @@ struct FLrFlyInitTask : public FStateTreeTaskCommonBase
 				// query also leaves PathFollowing idle and must not spin here.
 				if (AI->MoveState == EMoveState::Finish && AI->GetMoveStatus() == EPathFollowingStatus::Idle)
 				{
-					AI->MoverToTarget(InstanceData.TargetLocation);
+					AI->MoverToTarget(InstanceData.TargetLocation,1);
 				}
 				return EStateTreeRunStatus::Running;
 			}
