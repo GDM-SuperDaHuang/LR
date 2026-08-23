@@ -117,8 +117,7 @@ struct FLrFlyInitTask : public FStateTreeTaskCommonBase
 				}
 				// Only retry after an explicit completed request. A failed synchronous
 				// query also leaves PathFollowing idle and must not spin here.
-				if (AI->MoveState == EMoveState::Finish &&
-					AI->GetMoveStatus() == EPathFollowingStatus::Idle)
+				if (AI->MoveState == EMoveState::Finish && AI->GetMoveStatus() == EPathFollowingStatus::Idle)
 				{
 					AI->MoverToTarget(InstanceData.TargetLocation);
 				}

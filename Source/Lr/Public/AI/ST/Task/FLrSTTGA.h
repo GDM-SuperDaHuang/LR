@@ -5,7 +5,6 @@
 #include "StateTreeTaskBase.h"
 #include "Component/LrPatrolRouteComponent.h"
 #include "Component/Combat/LrAICombatComponent.h"
-#include "Engine/World.h"
 #include "Pawn/LrEnemyPawn.h"
 #include "FLrSTTGA.generated.h"
 

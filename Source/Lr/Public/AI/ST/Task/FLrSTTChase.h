@@ -83,8 +83,7 @@ struct FLrChaseTask : public FStateTreeTaskCommonBase
 				// MoveToActor observes a moving goal and requests repaths itself. A
 				// failed synchronous query also leaves PathFollowing idle, so only
 				// retry after an explicit completed request.
-				if (AI->MoveState == EMoveState::Finish &&
-					AI->GetMoveStatus() == EPathFollowingStatus::Idle)
+				if (AI->MoveState == EMoveState::Finish && AI->GetMoveStatus() == EPathFollowingStatus::Idle)
 				{
 					AI->MoveToPlayer(Patrol->TargetActor);
 				}
@@ -111,8 +110,7 @@ struct FLrChaseTask : public FStateTreeTaskCommonBase
 			{
 				// The active MoveToActor request already tracks the target actor.
 				// Do not treat a failed query (Idle) as an immediate retry signal.
-				if (AI->MoveState == EMoveState::Finish &&
-					AI->GetMoveStatus() == EPathFollowingStatus::Idle)
+				if (AI->MoveState == EMoveState::Finish && AI->GetMoveStatus() == EPathFollowingStatus::Idle)
 				{
 					AI->MoveToPlayer(InstanceData.TargetActor);
 				}

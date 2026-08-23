@@ -43,7 +43,6 @@ ALrAIControllerBase::ALrAIControllerBase()
 	UPathFollowingComponent* PathFollowing = GetPathFollowingComponent();
 
 	UE_LOG(LogTemp, Warning, TEXT("PathFollowing=%s"), *GetNameSafe(PathFollowing));
-	
 }
 
 FGenericTeamId ALrAIControllerBase::GetGenericTeamId() const
@@ -51,10 +50,7 @@ FGenericTeamId ALrAIControllerBase::GetGenericTeamId() const
 	return FGenericTeamId(TeamID);
 }
 
-void ALrAIControllerBase::FindPathForMoveRequest(
-	const FAIMoveRequest& MoveRequest,
-	FPathFindingQuery& Query,
-	FNavPathSharedPtr& OutPath) const
+void ALrAIControllerBase::FindPathForMoveRequest(const FAIMoveRequest& MoveRequest, FPathFindingQuery& Query, FNavPathSharedPtr& OutPath) const
 {
 	OutPath.Reset();
 
@@ -86,7 +82,7 @@ void ALrAIControllerBase::FindPathForMoveRequest(
 	if (Result != ENavigationQueryResult::Success || !Nav3DPath->IsValid())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[%s] Nav3D path failed: Result=%d, Points=%d"),
-			*GetNameSafe(GetPawn()), static_cast<int32>(Result), Nav3DPath->GetPathPoints().Num());
+		       *GetNameSafe(GetPawn()), static_cast<int32>(Result), Nav3DPath->GetPathPoints().Num());
 		OutPath.Reset();
 	}
 }
@@ -108,7 +104,7 @@ void ALrAIControllerBase::MoverToTarget(const FVector& TargetLocation)
 		Result.Code != EPathFollowingRequestResult::AlreadyAtGoal)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[%s] Nav3D MoveTo failed for %s (Code=%d)"),
-			*GetNameSafe(GetPawn()), *TargetLocation.ToString(), static_cast<int32>(Result.Code));
+		       *GetNameSafe(GetPawn()), *TargetLocation.ToString(), static_cast<int32>(Result.Code));
 	}
 }
 
@@ -206,8 +202,10 @@ void ALrAIControllerBase::OnMoveCompleted(FAIRequestID RequestID, EPathFollowing
 {
 	Super::OnMoveCompleted(RequestID, Result);
 	UE_LOG(LogTemp, Verbose, TEXT("[%s] Move completed: Result=%d"),
-		*GetNameSafe(GetPawn()), static_cast<int32>(Result));
-	MoveState = Result == EPathFollowingResult::Success
-		? EMoveState::Finish
-		: EMoveState::None;
+	       *GetNameSafe(GetPawn()), static_cast<int32>(Result));
+	// MoveState = Result == EPathFollowingResult::Success
+	// 	            ? EMoveState::Finish
+	// 	            : EMoveState::None;
+
+	MoveState = EMoveState::Finish;
 }
