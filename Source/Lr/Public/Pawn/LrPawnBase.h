@@ -46,6 +46,7 @@ public:
 	virtual ULrASC* GetASC() const override;
 	virtual ULrAS* GetAS() const override;
 	virtual uint8 GetClassID() const;
+	virtual FVector GetNavAgentLocation() const override;
 	virtual void ToDie(const FLrDieParameters& LrDieConfig) override;
 	virtual FVector GetProjectileLocation() const override;
 	/** 战斗组件 */

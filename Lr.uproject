@@ -61,6 +61,10 @@
 			"Enabled": true
 		},
 		{
+			"Name": "Nav3D",
+			"Enabled": true
+		},
+		{
 			"Name": "MotionWarping",
 			"Enabled": true
 		},

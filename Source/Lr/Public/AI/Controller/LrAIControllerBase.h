@@ -43,6 +43,7 @@ public:
 	virtual FGenericTeamId GetGenericTeamId() const override;
 	virtual void ShutdownAI();
 	virtual void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result) override;
+	virtual void FindPathForMoveRequest(const FAIMoveRequest& MoveRequest, FPathFindingQuery& Query, FNavPathSharedPtr& OutPath) const override;
 
 	UPROPERTY()
 	EMoveState MoveState = EMoveState::None;

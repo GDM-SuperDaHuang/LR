@@ -12,9 +12,11 @@ void ULrNavMovementComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	LrEnemyPawn = Cast<ALrEnemyPawn>(GetOwner());
-	NavAgentProps.AgentRadius = 100;
+	NavAgentProps.AgentRadius = 35;
 	NavAgentProps.AgentHeight = 176;
 	NavAgentProps.bCanWalk = true;
+	NavAgentProps.bCanFly = true;
+	NavAgentProps.PreferredNavData = FSoftClassPath(TEXT("/Script/Nav3D.Nav3DData"));
 	NavMovementProperties.bUpdateNavAgentWithOwnersCollision = true;
 }
 
@@ -55,7 +57,8 @@ void ULrNavMovementComponent::RequestDirectMove(const FVector& MoveVelocity, boo
 		LrEnemyPawn->UpdateMove(FVector::ZeroVector);
 		return;
 	}
-	// 转换成方向输入
+	// PathFollowing supplies a world-space velocity. Mover consumes a directional intent,
+	// while the active walk/fly mode remains responsible for speed and acceleration.
 	const FVector MoveDirection = MoveVelocity.GetSafeNormal();
 	LrEnemyPawn->UpdateMove(MoveDirection);
 	// 面向移动方向

@@ -146,6 +146,18 @@ uint8 ALrPawnBase::GetClassID() const
 	return 0;
 }
 
+FVector ALrPawnBase::GetNavAgentLocation() const
+{
+	// APawn's default subtracts BaseEyeHeight, which can place grounded agents
+	// inside the floor voxel. Navigation uses the Mover collision center instead.
+	if (LrMoverComponent && LrMoverComponent->GetUpdatedComponent())
+	{
+		return LrMoverComponent->GetUpdatedComponent()->GetComponentLocation();
+	}
+
+	return GetActorLocation();
+}
+
 void ALrPawnBase::ToDie(const FLrDieParameters& LrDieConfig)
 {
 	LrMoverComponent->Launch(LrDieConfig.DeathImpulse, LrDieConfig.Duration);

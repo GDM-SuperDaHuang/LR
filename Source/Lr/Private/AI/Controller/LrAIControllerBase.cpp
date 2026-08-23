@@ -4,6 +4,10 @@
 #include "AI/Controller/LrAIControllerBase.h"
 
 #include "NavigationSystem.h"
+#include "Nav3DData.h"
+#include "Pathfinding/Core/Nav3DPath.h"
+#include "Pathfinding/Core/Nav3DPathCoordinator.h"
+#include "Pathfinding/Core/Nav3DPathingTypes.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "Component/LrPatrolRouteComponent.h"
 #include "Navigation/PathFollowingComponent.h"
@@ -47,6 +51,46 @@ FGenericTeamId ALrAIControllerBase::GetGenericTeamId() const
 	return FGenericTeamId(TeamID);
 }
 
+void ALrAIControllerBase::FindPathForMoveRequest(
+	const FAIMoveRequest& MoveRequest,
+	FPathFindingQuery& Query,
+	FNavPathSharedPtr& OutPath) const
+{
+	OutPath.Reset();
+
+	const ANav3DData* Nav3DData = Cast<ANav3DData>(Query.NavData.Get());
+	if (!Nav3DData)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Move request has no Nav3DData"), *GetNameSafe(GetPawn()));
+		return;
+	}
+
+	FNav3DPathingRequest Nav3DRequest;
+	Nav3DRequest.StartLocation = Query.StartLocation;
+	Nav3DRequest.EndLocation = Query.EndLocation;
+	Nav3DRequest.NavData = Nav3DData;
+	Nav3DRequest.AgentProperties = GetNavAgentPropertiesRef();
+	Nav3DRequest.LogVerbosity = ENav3DPathingLogVerbosity::Silent;
+
+	OutPath = Nav3DData->CreatePathInstance<FNav3DPath>(Query);
+	FNav3DPath* Nav3DPath = OutPath.IsValid() ? OutPath->CastPath<FNav3DPath>() : nullptr;
+	if (!Nav3DPath)
+	{
+		OutPath.Reset();
+		return;
+	}
+
+	const ENavigationQueryResult::Type Result = FNav3DPathCoordinator::FindPath(
+		*Nav3DPath,
+		Nav3DRequest);
+	if (Result != ENavigationQueryResult::Success || !Nav3DPath->IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Nav3D path failed: Result=%d, Points=%d"),
+			*GetNameSafe(GetPawn()), static_cast<int32>(Result), Nav3DPath->GetPathPoints().Num());
+		OutPath.Reset();
+	}
+}
+
 
 void ALrAIControllerBase::MoverToTarget(const FVector& TargetLocation)
 {
@@ -54,11 +98,18 @@ void ALrAIControllerBase::MoverToTarget(const FVector& TargetLocation)
 	FAIMoveRequest MoveReq;
 	MoveReq.SetGoalLocation(TargetLocation);
 	MoveReq.SetAcceptanceRadius(20.f);
-	MoveReq.SetUsePathfinding(false);                // 走 AbstractNavData：起点→终点直线路径，不依赖地面网格
-	MoveReq.SetProjectGoalLocation(false);           // 关键：不再把目标点投影回地面导航网格
-	MoveReq.SetRequireNavigableEndLocation(false);   // 目标点不必落在导航网格上
-	MoveTo(MoveReq);
-	// FAIRequestID FaiRequestID = MoveTo(MoveReq).MoveId;
+	MoveReq.SetUsePathfinding(true);
+	MoveReq.SetProjectGoalLocation(false);
+	MoveReq.SetRequireNavigableEndLocation(false);
+	MoveReq.SetAllowPartialPath(false);
+
+	const FPathFollowingRequestResult Result = MoveTo(MoveReq);
+	if (Result.Code != EPathFollowingRequestResult::RequestSuccessful &&
+		Result.Code != EPathFollowingRequestResult::AlreadyAtGoal)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Nav3D MoveTo failed for %s (Code=%d)"),
+			*GetNameSafe(GetPawn()), *TargetLocation.ToString(), static_cast<int32>(Result.Code));
+	}
 }
 
 void ALrAIControllerBase::MoveToPlayer(AActor* Player)
@@ -154,17 +205,9 @@ void ALrAIControllerBase::ShutdownAI()
 void ALrAIControllerBase::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
 {
 	Super::OnMoveCompleted(RequestID, Result);
-	// if (Result == EPathFollowingResult::Success)
-	// {
-	// 	UE_LOG(LogTemp, Warning, TEXT("到达目标"));
-	// }
-	// else if (Result == EPathFollowingResult::Aborted)
-	// {
-	// 	UE_LOG(LogTemp, Warning, TEXT("移动被取消"));
-	// }
-	// else if (Result == EPathFollowingResult::Blocked)
-	// {
-	// 	UE_LOG(LogTemp, Warning, TEXT("被阻挡"));
-	// }
-	MoveState = EMoveState::Finish;
+	UE_LOG(LogTemp, Verbose, TEXT("[%s] Move completed: Result=%d"),
+		*GetNameSafe(GetPawn()), static_cast<int32>(Result));
+	MoveState = Result == EPathFollowingResult::Success
+		? EMoveState::Finish
+		: EMoveState::None;
 }

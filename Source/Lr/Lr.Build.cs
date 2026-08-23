@@ -13,7 +13,7 @@ public class Lr : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"GameplayTasks", "Core", "CoreUObject", "Engine", "UnrealEd", "InputCore", "EnhancedInput", "Mover", "AIModule", "GameplayTags", "GameplayAbilities", "MotionWarping", "AnimationBlueprintLibrary", "AnimGraphRuntime", "AIModule",
-			"NavigationSystem", "StateTreeModule", "GameplayStateTreeModule", "LevelSequence", "MovieScene"
+			"NavigationSystem", "Nav3D", "StateTreeModule", "GameplayStateTreeModule", "LevelSequence", "MovieScene"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]
