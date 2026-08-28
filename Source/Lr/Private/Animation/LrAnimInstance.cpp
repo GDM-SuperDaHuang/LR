@@ -3,7 +3,9 @@
 
 #include "Animation/LrAnimInstance.h"
 
+#include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "Component/LrAnimationComponent.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/Pawn.h"
 #include "Pawn/LrPawnBase.h"
 
@@ -34,8 +36,28 @@ void ULrAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 void ULrAnimInstance::OnMovementDataUpdated(const FLrAnimMovementData& NewData)
 {
 	MovementData = NewData;
-	if (MovementData.Status==1)
+	if (MovementData.Status == 1)
 	{
 		Montage_Stop(0.1f);
+	}
+	if (MovementData.bIsFly) //播放声音
+	{
+		// 如果已经在播放，则不重复播放
+		if (AnimationComponent->CachedPawn->FlyLoopSoundComponent->IsPlaying())
+		{
+			return;
+		}
+		// 设置声音并播放（循环）
+		AnimationComponent->CachedPawn->FlyLoopSoundComponent->SetSound(AnimationComponent->CachedPawn->FlyLoopSound);
+		AnimationComponent->CachedPawn->FlyLoopSoundComponent->bAutoActivate = true;
+		AnimationComponent->CachedPawn->FlyLoopSoundComponent->Play();
+	}
+	else //关闭声音
+	{
+		// 如果已经在播放，则不重复播放
+		if (AnimationComponent->CachedPawn->FlyLoopSoundComponent->IsPlaying())
+		{
+			AnimationComponent->CachedPawn->FlyLoopSoundComponent->Stop();
+		}
 	}
 }

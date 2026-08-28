@@ -9,10 +9,10 @@
 #include "ASC/LrASC.h"
 #include "ASC/AS/LrAS.h"
 #include "Component/LrAnimationComponent.h"
+#include "Components/AudioComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Data/LrExcelConfig.h"
-#include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "Kismet/KismetMaterialLibrary.h"
 #include "Lib/LrCommonLibrary.h"
@@ -21,12 +21,6 @@
 #include "Mover/LrAllModes.h"
 #include "Mover/LrMoverComponent.h"
 #include "Mover/Air/LrAirMovementMode.h"
-#include "Mover/Blink/LrBlinkMovementMode.h"
-#include "Mover/Blink/LrKnockbackMovementMode.h"
-#include "Mover/Death/LrDeathMovementMode.h"
-#include "Mover/Empty/LrEmptyMovementMode.h"
-#include "Mover/Fly/LrFlyMovementMode.h"
-#include "Mover/Walk/LrWalkMovementMode.h"
 
 // Sets default values
 ALrPawnBase::ALrPawnBase()
@@ -106,6 +100,12 @@ ALrPawnBase::ALrPawnBase()
 	StiffnessFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Debuff_Stiffness"));
 	StiffnessFX->SetAutoActivate(false);
 	StiffnessFX->SetupAttachment(LrSkeletalMeshComponent);
+
+
+	FlyLoopSoundComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("LrFlyLoopSoundComponent"));
+	FlyLoopSoundComponent->SetupAttachment(LrSkeletalMeshComponent);
+
+
 }
 
 

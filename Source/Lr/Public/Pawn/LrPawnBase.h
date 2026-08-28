@@ -102,6 +102,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FX")
 	TObjectPtr<UNiagaraComponent> StiffnessFX;
 
+	// 音效 组件实例
+	UPROPERTY()
+	UAudioComponent* FlyLoopSoundComponent; // 飞行循环音
+	// 声音资产
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	USoundBase* FlyLoopSound;
+	
 protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

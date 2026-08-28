@@ -67,7 +67,7 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category="Animation")
 	FLrAnimMovementData MovementData;
-
+	
 	FLrAnimMovementData& GetMovementData()
 	{
 		return MovementData;
@@ -80,10 +80,12 @@ protected:
 	// /** 检查数据是否有显著变化（避免微小浮点差异触发广播） */
 	// bool HasDataChangedSignificantly(const FLrAnimMovementData& NewData);
 
-protected:
+
+public:
 	UPROPERTY()
 	TObjectPtr<ALrPawnBase> CachedPawn;
 
+protected:
 	UPROPERTY()
 	TObjectPtr<ULrMoverComponent> CachedMover;
 

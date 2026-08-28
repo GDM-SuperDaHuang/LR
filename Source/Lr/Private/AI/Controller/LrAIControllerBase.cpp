@@ -10,8 +10,9 @@
 #include "Pathfinding/Core/Nav3DPathingTypes.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "Component/LrPatrolRouteComponent.h"
+#include "Mover/Nav/LrNavMovementComponent.h"
 #include "Navigation/PathFollowingComponent.h"
-#include "NavMesh/RecastNavMesh.h"
+#include "NavFilters/NavigationQueryFilter.h"
 #include "Pawn/LrEnemyPawn.h"
 #include "Perception/AIPerceptionComponent.h"
 
@@ -55,16 +56,28 @@ void ALrAIControllerBase::FindPathForMoveRequest(const FAIMoveRequest& MoveReque
 	int32 UserFlags = MoveRequest.GetUserFlags();
 	if (UserFlags == 0)
 	{
-		// Name=ARecastNavMesh-Default
-		const ARecastNavMesh* RecastNavMesh = Cast<ARecastNavMesh>(Query.NavData.Get());
+		UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+		const ANavigationData* RecastNavMesh = NavSys
+			? NavSys->GetNavDataForAgentName(TEXT("Ground"))
+			: nullptr;
 		if (RecastNavMesh)
 		{
-			OutPath = RecastNavMesh->CreatePathInstance<FNavMeshPath>(Query);
-			if (!(OutPath.IsValid() ? OutPath->CastPath<FNavMeshPath>() : nullptr))
-			{
-				OutPath.Reset();
-				return;
-			}
+			Query.NavData = const_cast<ANavigationData*>(RecastNavMesh);
+			Query.NavAgentProperties = static_cast<FNavAgentProperties>(RecastNavMesh->GetConfig());
+			Query.QueryFilter = MoveRequest.GetNavigationFilter()
+				? UNavigationQueryFilter::GetQueryFilter(
+					*RecastNavMesh,
+					this,
+					MoveRequest.GetNavigationFilter())
+				: RecastNavMesh->GetDefaultQueryFilter();
+			Super::FindPathForMoveRequest(MoveRequest, Query, OutPath);
+			UE_LOG(LogTemp, Warning, TEXT("[%s] Ground path query: NavData=%s, PathValid=%s, Ready=%s, Points=%d, Filter=%s"),
+				*GetNameSafe(GetPawn()),
+				*GetNameSafe(RecastNavMesh),
+				OutPath.IsValid() && OutPath->IsValid() ? TEXT("TRUE") : TEXT("FALSE"),
+				OutPath.IsValid() && OutPath->IsReady() ? TEXT("TRUE") : TEXT("FALSE"),
+				OutPath.IsValid() ? OutPath->GetPathPoints().Num() : 0,
+				Query.QueryFilter.IsValid() ? TEXT("TRUE") : TEXT("FALSE"));
 		}
 		return;
 	}
@@ -119,6 +132,13 @@ void ALrAIControllerBase::MoverToTarget(const FVector& TargetLocation, int32 Mov
 		UE_LOG(LogTemp, Warning, TEXT("[%s] Nav3D MoveTo failed for %s (Code=%d)"),
 		       *GetNameSafe(GetPawn()), *TargetLocation.ToString(), static_cast<int32>(Result.Code));
 	}
+	UE_LOG(LogTemp, Warning, TEXT("[%s] MoveTo result: Code=%d, MoveStatus=%d, NavMove=%s"),
+		*GetNameSafe(GetPawn()),
+		static_cast<int32>(Result.Code),
+		GetMoveStatus(),
+		GetPawn() && GetPawn()->FindComponentByClass<ULrNavMovementComponent>()
+			? *GetNameSafe(Cast<UObject>(GetPawn()->FindComponentByClass<ULrNavMovementComponent>()))
+			: TEXT("NONE"));
 }
 
 void ALrAIControllerBase::MoveToPlayer(AActor* Player, int32 MoverMode)
@@ -153,6 +173,10 @@ void ALrAIControllerBase::OnPossess(APawn* InPawn)
 	if (!Enemy)
 	{
 		return;
+	}
+	if (GetPathFollowingComponent())
+	{
+		GetPathFollowingComponent()->UpdateCachedComponents();
 	}
 
 	//生成巡逻点

@@ -31,4 +31,5 @@ public:
 
 	UPROPERTY(Transient)
 	TObjectPtr<ULrAnimationComponent> AnimationComponent;
+	
 };
