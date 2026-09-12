@@ -7,6 +7,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "TimerManager.h"
 #include "ASC/LrASC.h"
+#include "Component/GC/LrDestructionComponent.h"
 #include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -82,10 +83,18 @@ void ALrProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 		return;
 	}
 
+	//如果是生物
 	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(ProjectileOwner)))
 	{
 		DamageEffectParams.AddFlag(EDamageFlags::Burn);
 		LrASC->ApplyDamageToTarget(ProjectileOwner, OtherActor, DamageEffectParams);
+	}
+
+	//如果是物体，可能会破坏物体
+	const FVector BulletVelocity = GetVelocity();
+	if (ULrDestructionComponent* Destruction = OtherActor->FindComponentByClass<ULrDestructionComponent>())
+	{
+		Destruction->ApplyBulletImpact(SweepResult, BulletVelocity, 100.f);
 	}
 
 	DeactivateProjectile();
