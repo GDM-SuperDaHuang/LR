@@ -66,8 +66,7 @@ bool ULrDestructionComponent::ApplyImpact(const FLrDestructionImpactParams& Para
 		return false;
 	}
 
-	const FVector ImpactDirection =
-		Params.ImpactDirection.GetSafeNormal();
+	const FVector ImpactDirection = Params.ImpactDirection.GetSafeNormal();
 
 	if (ImpactDirection.IsNearlyZero())
 	{

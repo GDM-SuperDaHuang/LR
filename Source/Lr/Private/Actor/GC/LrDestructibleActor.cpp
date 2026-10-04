@@ -15,6 +15,10 @@ ALrDestructibleActor::ALrDestructibleActor()
 	RootComponent = GeometryCollection;
 	Destruction = CreateDefaultSubobject<ULrDestructionComponent>(TEXT("Destruction"));
 	Destruction->SetGeometryCollection(GeometryCollection);
+	//防止一开始就碎裂
+	// GeometryCollection->SetSimulatePhysics(false);
+	GeometryCollection->SetEnableGravity(false);
+	GeometryCollection->SetCollisionProfileName(TEXT("BlockAll"));
 }
 
 void ALrDestructibleActor::TestBreak() const
@@ -23,6 +27,7 @@ void ALrDestructibleActor::TestBreak() const
 	{
 		return;
 	}
+	GeometryCollection->SetEnableGravity(true);
 
 	const FVector HitPoint = GetActorLocation();
 
