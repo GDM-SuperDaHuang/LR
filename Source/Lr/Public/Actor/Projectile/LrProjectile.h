@@ -45,7 +45,10 @@ public:
 	// 命中声音
 	UPROPERTY(EditAnywhere, Category="Info")
 	TObjectPtr<USoundBase> ImpactSound;
-	
+
+	// 测试
+	UPROPERTY(EditAnywhere)
+	float TestDamage = 100.f;
 
 protected:
 	virtual void BeginPlay() override;

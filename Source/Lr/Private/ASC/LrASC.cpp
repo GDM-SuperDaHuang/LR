@@ -256,7 +256,7 @@ void ULrASC::AbilityInputTagPressed0(const int32 InputId)
 	//防止你在遍历 Ability 列表时，它被同时修改（比如添加/移除 Ability）
 	FScopedAbilityListLock ActiveScopeLoc(*this);
 	TArray<FGameplayAbilitySpec> GameplayAbilitySpecs = GetActivatableAbilities();
-	UE_LOG(LogTemp, Warning, TEXT("AbilityInputTagPressed0 GameplayAbilitySpecs.Num() =%d "), GameplayAbilitySpecs.Num());
+	// UE_LOG(LogTemp, Warning, TEXT("AbilityInputTagPressed0 GameplayAbilitySpecs.Num() =%d "), GameplayAbilitySpecs.Num());
 	for (FGameplayAbilitySpec AbilitySpec : GameplayAbilitySpecs)
 	{
 		if (AbilitySpec.InputID == InputId)
@@ -264,7 +264,7 @@ void ULrASC::AbilityInputTagPressed0(const int32 InputId)
 			if (InputId < LrInputID::Hold) //短按技能
 			{
 				bool bTryActivateAbility = TryActivateAbility(AbilitySpec.Handle);
-				UE_LOG(LogTemp, Warning, TEXT("AbilityInputTagPressed0 bTryActivateAbility =%d "), bTryActivateAbility);
+				// UE_LOG(LogTemp, Warning, TEXT("AbilityInputTagPressed0 bTryActivateAbility =%d "), bTryActivateAbility);
 			}
 			else //长按技能
 			{

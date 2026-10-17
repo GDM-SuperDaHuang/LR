@@ -77,6 +77,16 @@ void ULrDestructionComponent::BeginPlay()
  */
 bool ULrDestructionComponent::ApplyImpact(const FLrDestructionImpactParams& Params)
 {
+	/**
+	 * 通用入口没有 ItemIndex，
+	 * 使用 -1，让 Geometry Collection
+	 * 根据 Location + Radius 进行场影响。
+	 */
+	return ApplyImpactWithItem(INDEX_NONE, Params);
+}
+
+bool ULrDestructionComponent::ApplyImpactWithItem(int32 ItemIndex, const FLrDestructionImpactParams& Params)
+{
 	if (!IsValidGeometryCollection())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("LrDestruction: GeometryCollection is invalid."));
@@ -106,20 +116,8 @@ bool ULrDestructionComponent::ApplyImpact(const FLrDestructionImpactParams& Para
 		return false;
 	}
 
-	/**
-	 * 这里没有直接使用 ItemIndex。
-	 *
-	 * 因为对于通用 ApplyImpact，
-	 * 我们只有一个世界空间 HitPoint。
-	 *
-	 * ApplyExternalStrain 的 ItemIndex
-	 * 对于碰撞命中可以来自 HitResult。
-	 *
-	 * 如果没有 ItemIndex，
-	 * 这里使用 -1，让 Geometry Collection
-	 * 根据 Location + Radius 进行场影响。
-	 */
-	const int32 ItemIndex = INDEX_NONE;
+	// Static / Sleeping 的 GC 直接打 Strain 不会碎，先唤醒再破坏。
+	WakeUpForImpact();
 
 	/**
 	 * 第一阶段：
@@ -185,11 +183,34 @@ bool ULrDestructionComponent::ApplyBulletImpact(const FHitResult& Hit, const FVe
 		return false;
 	}
 
-	const FVector Direction = BulletVelocity.IsNearlyZero() ? -Hit.ImpactNormal : BulletVelocity.GetSafeNormal();
+	// Overlap 回调的 SweepResult 可能没有 ImpactPoint / ImpactNormal，做兜底。
+	FVector HitPoint = Hit.ImpactPoint;
+	if (HitPoint.IsNearlyZero())
+	{
+		HitPoint = Hit.Location;
+	}
+	if (HitPoint.IsNearlyZero())
+	{
+		HitPoint = GeometryCollection->GetComponentLocation();
+	}
+
+	FVector Direction = BulletVelocity.GetSafeNormal();
+	if (Direction.IsNearlyZero())
+	{
+		Direction = (-Hit.ImpactNormal).GetSafeNormal();
+	}
+	if (Direction.IsNearlyZero())
+	{
+		Direction = DefaultImpactParams.ImpactDirection.GetSafeNormal();
+	}
+	if (Direction.IsNearlyZero())
+	{
+		Direction = FVector::ForwardVector;
+	}
 
 	FLrDestructionImpactParams Params = DefaultImpactParams;
 
-	Params.HitPoint = Hit.ImpactPoint;
+	Params.HitPoint = HitPoint;
 
 	Params.ImpactDirection = Direction;
 
@@ -205,7 +226,27 @@ bool ULrDestructionComponent::ApplyBulletImpact(const FHitResult& Hit, const FVe
 	 */
 	Params.Strain = Damage;
 
-	return ApplyImpact(Params);
+	// 有精确 Item（Block Hit）就打精确 Piece，否则按 Location + Radius 场影响。
+	const int32 ItemIndex = Hit.Item >= 0 ? Hit.Item : INDEX_NONE;
+	UE_LOG(LogTemp, Warning, TEXT("BulletHit Item=%d bBlocking=%d ImpactPoint=%s Damage=%f"),Hit.Item, Hit.bBlockingHit, *Hit.ImpactPoint.ToString(), Damage);
+	return ApplyImpactWithItem(ItemIndex, Params);
+}
+
+bool ULrDestructionComponent::WakeUpForImpact()
+{
+	if (!IsValidGeometryCollection())
+	{
+		return false;
+	}
+
+	// 必须 Simulate 才能 Break / 飞碎片。
+	GeometryCollection->SetSimulatePhysics(true);
+	// Static 睡眠体直接 Strain 不会碎，切 Dynamic 唤醒。
+	GeometryCollection->SetDynamicState(Chaos::EObjectStateType::Dynamic);
+	GeometryCollection->SetEnableGravity(true);
+	GeometryCollection->WakeRigidBody();
+
+	return true;
 }
 
 // 获取当前绑定的 GeometryCollection 组件（可为空，调用前建议用 IsValidGeometryCollection 校验）。

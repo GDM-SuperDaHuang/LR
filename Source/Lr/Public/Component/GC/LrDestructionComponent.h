@@ -186,6 +186,15 @@ public:
 	bool ApplyBulletImpact(const FHitResult& Hit, const FVector& BulletVelocity, float Damage = 100.0f);
 
 	/**
+	 * 唤醒 Geometry Collection 用于破坏。
+	 *
+	 * Static / Sleeping 的 GC 直接打 Strain 不会碎，
+	 * 需要先切 Dynamic + 重力 + Simulate，才能 Cluster Break。
+	 */
+	UFUNCTION(BlueprintCallable, Category = "LR|Destruction")
+	bool WakeUpForImpact();
+
+	/**
 	 * 获取 Geometry Collection。
 	 */
 	UFUNCTION(BlueprintPure, Category = "LR|Destruction")
@@ -225,6 +234,12 @@ protected:
 	 * 获取 Hit 对应的 ItemIndex。
 	 */
 	int32 GetHitItemIndex(const FHitResult& Hit) const;
+
+	/**
+	 * 带 ItemIndex 的破坏入口（子弹精确命中用）。
+	 * INDEX_NONE 时退化为按 Location + Radius 场影响。
+	 */
+	bool ApplyImpactWithItem(int32 ItemIndex, const FLrDestructionImpactParams& Params);
 
 	/**
 	 * 应用 Cluster 破坏。

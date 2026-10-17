@@ -7,6 +7,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "TimerManager.h"
 #include "ASC/LrASC.h"
+#include "Actor/GC/LrDestructibleActor.h"
 #include "Component/GC/LrDestructionComponent.h"
 #include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
@@ -34,6 +35,10 @@ ALrProjectile::ALrProjectile()
 	Collision->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
 	Collision->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
 	Collision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap); //对于pawn，ECR_Block：阻挡的时候触发。ECR_Overlap:重叠时候触发。
+	// 可破坏物：GC 可能是 Destructible / PhysicsBody / WorldStatic，全部放 Overlap 才能收到
+	Collision->SetCollisionResponseToChannel(ECC_Destructible, ECR_Overlap);
+	Collision->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Overlap);
+	Collision->SetGenerateOverlapEvents(true);
 
 	Movement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Movement"));
 	Movement->InitialSpeed = Speed; // 初始速度
@@ -84,17 +89,44 @@ void ALrProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 	}
 
 	//如果是生物
-	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(ProjectileOwner)))
+	if (ULrASC* LrASC = Cast<ULrASC>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor)))
 	{
 		DamageEffectParams.AddFlag(EDamageFlags::Burn);
 		LrASC->ApplyDamageToTarget(ProjectileOwner, OtherActor, DamageEffectParams);
 	}
 
-	//如果是物体，可能会破坏物体
-	const FVector BulletVelocity = GetVelocity();
-	if (ULrDestructionComponent* Destruction = OtherActor->FindComponentByClass<ULrDestructionComponent>())
+	//如果是可破坏物体，则碎裂：优先走 Actor 入口（自带唤醒 + Hit 兜底）
+	FVector BulletVelocity = GetVelocity();
+	if (Movement && BulletVelocity.IsNearlyZero())
 	{
-		Destruction->ApplyBulletImpact(SweepResult, BulletVelocity, 100.f);
+		BulletVelocity = Movement->Velocity;
+	}
+	if (BulletVelocity.IsNearlyZero())
+	{
+		BulletVelocity = GetActorForwardVector() * FMath::Max(Speed, 600.f);
+	}
+
+	// Overlap 的 SweepResult 可能没有 ImpactPoint / Item，这里补一个可靠的 Hit
+	FHitResult FixedHit(SweepResult);
+	if (FixedHit.ImpactPoint.IsNearlyZero())
+	{
+		FixedHit.Location = GetActorLocation();
+		FixedHit.ImpactPoint = GetActorLocation();
+		FixedHit.ImpactNormal = (-BulletVelocity).GetSafeNormal();
+		FixedHit.Normal = FixedHit.ImpactNormal;
+		FixedHit.TraceStart = FixedHit.ImpactPoint - BulletVelocity.GetSafeNormal() * 10.f;
+		FixedHit.TraceEnd = FixedHit.ImpactPoint;
+		FixedHit.Component = OtherComp;
+		FixedHit.bBlockingHit = false;
+	}
+
+	if (ALrDestructibleActor* Destructible = Cast<ALrDestructibleActor>(OtherActor))
+	{
+		Destructible->NotifyBulletHit(FixedHit, BulletVelocity, TestDamage);
+	}
+	else if (ULrDestructionComponent* Destruction = OtherActor->FindComponentByClass<ULrDestructionComponent>())
+	{
+		Destruction->ApplyBulletImpact(FixedHit, BulletVelocity, TestDamage);
 	}
 
 	DeactivateProjectile();
