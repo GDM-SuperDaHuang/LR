@@ -708,6 +708,23 @@ def lookat(eye, target, roll=0.0):
 
 # ---------------------------------------------------------------- 阶段 1: 关卡 + 环境
 
+# 夜境光照预设 —— UE5 默认启用物理光照单位（平行光=lux, 点光=cd）。
+# 想微调时改这里再重跑 stage_env()，或直接在编辑器里拖对应 Actor 的滑块。
+LIGHT_PRESET = {
+    'moon_lux': 12.0,        # 月光。0.25=真实月光太暗; 8~20 = 夜晚可读
+    'moon_color': (130, 170, 255),
+    'moon_pitch': -15.0,     # 地平线上 15 度; 太低会被大气吸收掉
+    'sky_lux': 0.5,          # 天光/环境填充
+    'sky_color': (105, 135, 210),
+    'atmo_scatter': 0.022,   # 越小夜空越黑 (0.01~0.05)
+    'atmo_height': 60000.0,
+    'torch_cd': 1100.0,      # 壁挂火把点光 (cd)
+    'pit_cd': 5200.0,        # 火盆
+    'candle_cd': 220.0,      # 烛火
+    'lamp_cd': 1400.0,       # 门廊灯
+}
+
+
 def stage_env():
     """新建关卡 L_Manor，铺地面与光照。幂等：先删旧关卡再重建。"""
     if unreal.EditorAssetLibrary.does_asset_exist(LEVEL_PATH):
@@ -727,30 +744,205 @@ def stage_env():
     g = place(UNIQUE + 'Diorama_Ground', 0, 0, z=0.0, label='MANOR_Ground', pivot='base')
     snap_z(g, 0.0, 'top')
 
-    # --- 光照（对齐 Lr_Overview 的黄昏风格：pitch -50, yaw -10, int 3.0）
-    sun = spawn_class(unreal.DirectionalLight, (0, 0, 800), 'MANOR_Sun',
-                      unreal.Rotator(roll=0.0, pitch=-50.0, yaw=-10.0))
-    c = sun.get_component_by_class(unreal.DirectionalLightComponent)
-    c.set_editor_property('intensity', 3.0)
-    c.set_editor_property('temperature', 4200.0)
+    # ============ 夜境：无天气、无云、月光 ============
+    # 月光：地平线下 40 度，冷蓝 8200K，强度压低（室内火把才是主角）
+    moon = spawn_class(unreal.DirectionalLight, (0, 0, 800), 'MANOR_Moon',
+                       unreal.Rotator(roll=0.0, pitch=-15.0, yaw=115.0))
+    c = moon.get_component_by_class(unreal.DirectionalLightComponent)
+    c.set_editor_property('intensity', 12.0)
+    c.set_editor_property('light_color', unreal.Color(r=140, g=180, b=255, a=255))
+    c.set_editor_property('cast_shadows', True)
 
+    # 天光：只提供极弱的冷色环境填充
     sky = spawn_class(unreal.SkyLight, (0, 0, 600), 'MANOR_SkyLight')
     c = sky.get_component_by_class(unreal.SkyLightComponent)
-    c.set_editor_property('intensity', 1.0)
+    c.set_editor_property('intensity', 0.5)
+    c.set_editor_property('light_color', unreal.Color(r=105, g=135, b=210, a=255))
     c.set_editor_property('real_time_capture', True)
 
-    spawn_class(unreal.SkyAtmosphere, (0, 0, 0), 'MANOR_SkyAtmosphere')
-    spawn_class(unreal.VolumetricCloud, (0, 0, 0), 'MANOR_VolumetricCloud')
+    # 夜空：把大气散射压到极低 -> 深蓝近黑夜空，而非日间蓝天
+    atmo = spawn_class(unreal.SkyAtmosphere, (0, 0, 0), 'MANOR_SkyAtmosphere')
+    ac = atmo.get_component_by_class(unreal.SkyAtmosphereComponent)
+    ac.set_editor_property('rayleigh_scattering_scale', 0.022)
+    ac.set_editor_property('mie_scattering_scale', 0.006)
+    ac.set_editor_property('multi_scattering_factor', 0.0)
+    ac.set_editor_property('ground_albedo', unreal.Color(r=5, g=5, b=6, a=255))
+    ac.set_editor_property('atmosphere_height', 60000.0)
+    ac.set_editor_property('aerial_pespective_view_distance_scale', 0.0)
+    ac.set_editor_property('aerial_perspective_start_depth', 200000.0)
 
-    fog = spawn_class(unreal.ExponentialHeightFog, (0, 0, 0), 'MANOR_Fog')
-    fc = fog.get_component_by_class(unreal.ExponentialHeightFogComponent)
-    fc.set_editor_property('fog_density', 0.012)
-    fc.set_editor_property('fog_height_falloff', 0.18)
-    fc.set_editor_property('start_distance', 20000.0)
+    # 后期：让火焰有 bloom 光晕 + 夜色暗角
+    ppv = spawn_class(unreal.PostProcessVolume, (0, 0, 0), 'MANOR_PP')
+    ppv.set_editor_property('unbound', True)
+    st = ppv.get_editor_property('settings')
+    st.set_editor_property('bloom_intensity', 1.6)
+    st.set_editor_property('bloom_threshold', 0.85)
+    st.set_editor_property('vignette_intensity', 1.5)
+    st.set_editor_property('film_grain_intensity', 6.0)
+    st.set_editor_property('white_temp', 8200.0)
+    ppv.set_editor_property('settings', st)
 
     # 注意: 不放 SM_SkySphere —— 半径过大且 SkyAtmosphere 已负责天空
     save()
     unreal.log('MANOR: stage_env done, actors=%d' % count())
+    return count()
+
+
+# ---------------------------------------------------------------- 火光 / 夜境光源
+
+FIREDIR = '/Game/Fire_EXP_Vol01_Free/Niagara/Fire/Loop/'
+NS_TORCH = FIREDIR + 'NS_Sub_FireTorch_Loop_002'   # 小火把焰
+NS_SMALL = FIREDIR + 'NS_Sub_FireSmall_Loop_001'  # 烛火
+NS_MID = FIREDIR + 'NS_Sub_FireMid_Loop_001'      # 中火
+NS_LARGE = FIREDIR + 'NS_Sub_FireLarge_Loop_004'  # 大火（盆）
+LAMP_BP = '/Game/Docks/VOL2_Powell/Blueprints/BP_Lamp_01a'
+
+TORCH_Z = 210.0        # 壁挂火把高度
+
+
+def place_niagara(path, x, y, z, yaw=0.0, scale=1.0, label='N'):
+    a = spawn_class(unreal.NiagaraActor, (x, y, z), label, rot(yaw))
+    if not a:
+        return None
+    c = a.get_component_by_class(unreal.NiagaraComponent)
+    ns = unreal.EditorAssetLibrary.load_asset(path)
+    if ns:
+        c.set_asset(ns)
+    if scale != 1.0:
+        a.set_actor_scale3d(unreal.Vector(scale, scale, scale))
+    return a
+
+
+def place_bp(path, x, y, z, yaw=0.0, label='BP'):
+    bp = unreal.EditorAssetLibrary.load_asset(path)
+    if not bp:
+        unreal.log_warning('MISSING BP: ' + path)
+        return None
+    gen = bp.generated_class()
+    a = spawn_class(gen, (x, y, z), label, rot(yaw))
+    return a
+
+
+def point_light(x, y, z, intensity=700.0, temp=2200.0, radius=750.0,
+                label='MANOR_PtL', shadows=False, blue=0.55):
+    a = spawn_class(unreal.PointLight, (x, y, z), label, rot(0))
+    if not a:
+        return None
+    c = a.get_component_by_class(unreal.PointLightComponent)
+    c.set_editor_property('intensity', intensity)
+    c.set_editor_property('use_temperature', True)
+    c.set_editor_property('temperature', temp)
+    c.set_editor_property('attenuation_radius', radius)
+    c.set_editor_property('cast_shadows', shadows)
+    return a
+
+
+def wall_torch(x, y, z, yaw, label):
+    """
+    壁挂火把 = 木板支架 + Niagara 火焰 + 暖色点光。
+    yaw: 火把朝向(0=+X,90=+Y,180=-X,270=-Y)，即从墙面朝房间内。
+    """
+    import math
+    r = math.radians(yaw)
+    ox, oy = math.cos(r), math.sin(r)
+    # 支架贴着墙，沿墙方向横放
+    place(PROPS + 'Old_Planks_Plank_1', x, y, z, yaw=yaw + 90.0,
+          label=label + '_Brk', pivot='center')
+    # 火焰朝房间内探出 26cm
+    fx, fy = x + ox * 26.0, y + oy * 26.0
+    place_niagara(NS_TORCH, fx, fy, z + 10.0, yaw=yaw, scale=0.85,
+                  label=label + '_Flame')
+    point_light(fx, fy, z + 34.0, 1100.0, 2050.0, 1000.0, label + '_L')
+
+
+def fire_pit(x, y, z, scale=1.0, label='MANOR_Pit'):
+    """火盆：金属桶 + 大火 + 强暖光。"""
+    place(PROPS + 'Metal_Barrel', x, y, z, yaw=25.0, label=label + '_Barrel',
+          pivot='base')
+    place_niagara(NS_LARGE, x, y, z + 95.0 * scale, yaw=0.0, scale=1.15,
+                  label=label + '_Fire')
+    point_light(x, y, z + 150.0 * scale, 5200.0, 1950.0, 1900.0, label + '_L',
+                shadows=True)
+
+
+def candle(x, y, z, label='MANOR_Candle'):
+    """烛火：小火焰 + 很弱的暖光。"""
+    place_niagara(NS_SMALL, x, y, z, yaw=0.0, scale=0.6, label=label + '_F')
+    point_light(x, y, z + 14.0, 220.0, 2300.0, 340.0, label + '_L')
+
+
+def stage_lights():
+    """
+    夜境内室/室外火光：一层+二层壁挂火把、火盆、烛火、门廊灯。
+    每个火把=3个actor(支架/火焰/点光)。
+    """
+    import math
+    clear_prefix('MANOR_Torch', 'MANOR_Pit', 'MANOR_Candle',
+                 'MANOR_LampL', 'MANOR_Lamp')
+    n = 0
+
+    # ---------- 一层：内隔墙两侧 ----------
+    # 内部横墙 y=0（南面 -> 大厅, 北面 -> 储藏室/卧室）
+    for x in (-1400, -1000, 200, 600, 1400):
+        wall_torch(x, -30, TORCH_Z, 270, 'MANOR_Torch_H1S_%d' % x)
+        n += 1
+    for x in (-1400, -1000, 1000):
+        wall_torch(x, 30, TORCH_Z, 90, 'MANOR_Torch_H1N_%d' % x)
+        n += 1
+    # 内部纵墙 x=400（西面 -> 大厅, 东面 -> 餐厅/卧室）
+    for y in (-1000, -200, 200, 1000):
+        wall_torch(370, y, TORCH_Z, 180, 'MANOR_Torch_V1W_%d' % y)
+        wall_torch(430, y, TORCH_Z, 0, 'MANOR_Torch_V1E_%d' % y)
+        n += 2
+
+    # ---------- 一层：外墙内侧（补房间暗角）----------
+    for x in (-1400, -1000, 1000):
+        wall_torch(x, -1170, TORCH_Z, 90, 'MANOR_Torch_W1S_%d' % x)
+        n += 1
+    for x in (-1400, -1000, 1000):
+        wall_torch(x, 1170, TORCH_Z, 270, 'MANOR_Torch_W1N_%d' % x)
+        n += 1
+    for y in (-1000, -600, 200, 600, 1000):
+        wall_torch(-1570, y, TORCH_Z, 0, 'MANOR_Torch_W1W_%d' % y)
+        wall_torch(1570, y, TORCH_Z, 180, 'MANOR_Torch_W1E_%d' % y)
+        n += 2
+
+    # ---------- 二层（z=500）----------
+    for x in (-1000, -200, 600, 1400):
+        wall_torch(x, -1170, 500, 90, 'MANOR_Torch_W2S_%d' % x)
+    for x in (-1000, 1000):
+        wall_torch(x, 1170, 500, 270, 'MANOR_Torch_W2N_%d' % x)
+    for y in (-600, 600):
+        wall_torch(-1570, y, 500, 0, 'MANOR_Torch_W2W_%d' % y)
+        wall_torch(1570, y, 500, 180, 'MANOR_Torch_W2E_%d' % y)
+    for x in (-1000, 200, 1400):
+        wall_torch(x, 30, 500, 90, 'MANOR_Torch_P2H_%d' % x)
+    n += 14
+
+    # ---------- 塔楼三层内角 ----------
+    for li, z in enumerate((170.0, 470.0, 770.0)):
+        wall_torch(830, 830, z, 270, 'MANOR_Torch_T%d' % li)
+        n += 1
+
+    # ---------- 火盆 ----------
+    fire_pit(-600, -600, 0, 1.0, 'MANOR_Pit_Hall')      # 大厅主火盆
+    fire_pit(-1450, 1100, 0, 0.8, 'MANOR_Pit_Store')     # 储藏室小火盆
+    fire_pit(-1200, -1900, 0, 0.9, 'MANOR_Pit_PorchA')   # 门廊外两侧
+    fire_pit(300, -1900, 0, 0.9, 'MANOR_Pit_PorchB')
+
+    # ---------- 烛火（餐桌 / 卧室）----------
+    candle(940, -570, 85, 'MANOR_Candle_DinA')
+    candle(1060, -630, 85, 'MANOR_Candle_DinB')
+    candle(1230, 380, 135, 'MANOR_Candle_Bed')
+    candle(-1450, -380, 0, 'MANOR_Candle_Chest')
+
+    # ---------- 门廊灯 ----------
+    for x in (-800, 800):
+        place_bp(LAMP_BP, x, -1660, 0, yaw=0, label='MANOR_Lamp_%d' % x)
+        point_light(x, -1660, 280, 1400.0, 2350.0, 900.0, 'MANOR_LampL_%d' % x)
+
+    save()
+    unreal.log('MANOR: stage_lights done, ~%d sources, actors=%d' % (n, count()))
     return count()
 
 
@@ -759,7 +951,7 @@ def stage_env():
 def build_all():
     """完整生成冒险宅邸场景。可重复执行（幂等：重建 L_Manor）。"""
     unreal.ViewportService.set_view_mode('lit')
-    unreal.ViewportService.set_exposure(True, -0.2)
+    unreal.ViewportService.set_exposure(False)
     stages = [
         ('环境/光照', stage_env),
         ('主楼外壳', stage_shell),
@@ -768,6 +960,7 @@ def build_all():
         ('屋顶', stage_roof),
         ('室内道具', stage_props),
         ('室外环境', stage_outside),
+        ('火光/光源', stage_lights),
     ]
     for name, fn in stages:
         n = fn()
