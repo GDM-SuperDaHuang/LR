@@ -217,3 +217,10 @@ When asked to rebuild / relaunch / test, use the project script — not manual `
 - **Living gotchas:** when you solve a real problem, append a one-line gotcha+fix to this file so the
   next session doesn't relearn it.
 <!-- END VibeUE -->
+
+## Project gotchas (manual)
+
+- **Screenshots during PIE (UE 5.8):** `EditorAppToolset.CaptureViewport` ignores `captureTransform` and returns the PIE game camera view. `AutomationLibrary.take_high_res_screenshot(..., force_game_view=True)` also renders the PIE game view regardless of the `camera` argument; pass `force_game_view=False` for editor-viewport renders. Only one automation screenshot task completes per batch — move the camera, then call once. Top-down pawn rigs (e.g. `BP_LrHeroDungBeetlePawn`) ignore control rotation; the game view only follows pawn position, so to change the PIE camera view move the pawn or use a `CameraActor` placed in the editor world before PIE (it replicates into the game world).
+- **Sleeping GeometryCollections ignore all programmatic wake/physics commands** (`apply_linear_velocity`, `add_impulse_at_location`, `wake_all_rigid_bodies` are no-ops; `wake_rigid_body`/`is_any_rigid_body_awake` are `UPrimitiveComponent` base methods, meaningless for GC particles). But `apply_external_strain` works while asleep, and **setting the GC actor/component transform moves sleeping particles** — use scripted transform animation for controlled motion (e.g. `LrDestructionComponent`'s ToppleOnly).
+- **`unreal.HitResult.import_text` with `Item=0`** targets the GC root; direct member access is restricted (`hit.item` is protected) — read via `hit.get_editor_property('item')` inside try/except or skip.
+- **`unreal.Rotator(...).quaternion()`** exists for rotator→quat conversion (`unreal.KismetMathLibrary` does NOT exist in this build).

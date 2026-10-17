@@ -110,6 +110,26 @@ struct FLrDestructionImpactParams
 	int32 RandomSeed = 1337;
 };
 
+/**
+ * 破坏结果：按碰撞来源选择 GC 的反应。
+ *
+ * Nothing      ：3 - 不倒下也不碎裂（忽略本次命中）。
+ * ToppleOnly   ：1 - 倒下但不碎裂（脚本化倾倒：沿冲击方向绕底缘旋转，无 Strain）。
+ * BreakAndFall ：2 - 倒下并碎裂（Strain + BreakingVelocity，子弹路径）。
+ */
+UENUM(BlueprintType)
+enum class ELrDestructionResult : uint8
+{
+	/** 3: 不倒下也不碎裂 */
+	Nothing UMETA(DisplayName = "Nothing"),
+
+	/** 1: 倒下但不碎裂 */
+	ToppleOnly UMETA(DisplayName = "ToppleOnly"),
+
+	/** 2: 倒下并碎裂 */
+	BreakAndFall UMETA(DisplayName = "BreakAndFall"),
+};
+
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class LR_API ULrDestructionComponent : public UActorComponent
@@ -178,6 +198,9 @@ public:
 
 	virtual void BeginPlay() override;
 
+	/** Tick：仅在脚本化倾倒（ToppleOnly）期间启用。 */
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
 	/**
 	 * 子弹 / 近战 / 投射物 / 爆炸统一调用接口。
 	 *
@@ -203,10 +226,35 @@ public:
 	bool ApplyImpactSimple(const FVector& HitPoint, const FVector& ImpactDirection, float ForwardSpeed = 1200.0f, float BreakRadius = 100.0f);
 
 	/**
-	 * 子弹命中专用接口。
+	 * 子弹命中专用接口，等价于 ApplyImpactWithResult(BreakAndFall, ...)。
 	 */
 	UFUNCTION(BlueprintCallable, Category = "LR|Destruction")
 	bool ApplyBulletImpact(const FHitResult& Hit, const FVector& BulletVelocity, float Damage = 100.0f);
+
+	/**
+	 * 按结果选择破坏方式的统一入口。
+	 *
+	 * 碰撞来源（子弹 / 近战 / 角色撞击 / 爆炸 / 载具）在各自事件入口
+	 * 选择 Result 传入，或由上层按 GameplayTag 查表决定。
+	 *
+ * Nothing      ：直接返回，不产生 Strain、不变换。
+ *                注意：若物理通道是 Block，物理接触本身仍可能推动 GC；
+ *                需要“完全无反应”时把对应通道（如 Pawn）设为 Ignore，或在游戏层拦截。
+ * ToppleOnly   ：脚本化倾倒：沿冲击方向绕底部边缘旋转（重力式加速），不产生 Strain（不会碎）。
+ *                说明：睡眠 GC（Dynamic + StartAwake=false）的粒子不响应
+ *                ApplyLinearVelocity / ApplyAngularVelocity / ApplyImpulseAtLocation
+ *                等唤醒命令（UE5.8 引擎行为，已实测），但粒子会跟随 Actor 变换，
+ *                因此用脚本化旋转实现“倒而不碎”。
+ * BreakAndFall ：走子弹路径（Strain >= 阈值时碎裂并飞出）。
+ *
+ * @param Result 期望结果
+ * @param Hit 命中信息（提供 ImpactPoint / ImpactNormal / Item）
+ * @param ImpactVelocity 冲击速度矢量，用于推导方向；为零时退化为 -ImpactNormal
+ * @param Damage 伤害值，BreakAndFall 时直接映射为 Strain
+ * @param ToppleDuration ToppleOnly 的倾倒时长（秒）
+ */
+	UFUNCTION(BlueprintCallable, Category = "LR|Destruction")
+	bool ApplyImpactWithResult(ELrDestructionResult Result, const FHitResult& Hit, const FVector& ImpactVelocity, float Damage = 100.0f, float ToppleDuration = 0.8f);
 
 	/**
 	 * 唤醒 Geometry Collection 用于破坏。
@@ -259,6 +307,23 @@ protected:
 	int32 GetHitItemIndex(const FHitResult& Hit) const;
 
 	/**
+	 * 解析冲击方向：ImpactVelocity 优先，其次 -ImpactNormal，
+	 * 再退回 DefaultImpactParams.ImpactDirection。
+	 */
+	FVector ResolveImpactDirection(const FHitResult& Hit, const FVector& ImpactVelocity) const;
+
+	/**
+	 * 启动脚本化倾倒（ToppleOnly）：沿 Direction 的水平分量，
+	 * 绕几何体底部、倾倒方向一侧的边缘旋转 90°。
+	 */
+	void StartScriptedTopple(const FVector& Direction, float Duration);
+
+	/**
+	 * 推进脚本化倾倒：重力式加速（t^2），Slerp 旋转并绕轴心补偿位移。
+	 */
+	void TickScriptedTopple(float DeltaTime);
+
+	/**
 	 * 带 ItemIndex 的破坏入口（子弹精确命中用）。
 	 * INDEX_NONE 时退化为按 Location + Radius 场影响。
 	 */
@@ -279,4 +344,27 @@ private:
 	 * 是否已经执行过第一次破坏。
 	 */
 	bool bHasImpacted = false;
+
+	// —— 脚本化倾倒（ToppleOnly）运行时状态 ——
+
+	/** 是否正在倾倒 */
+	bool bToppling = false;
+
+	/** 已倾倒时间（秒） */
+	float ToppleElapsedSeconds = 0.0f;
+
+	/** 倾倒总时长（秒） */
+	float ToppleDurationSeconds = 0.8f;
+
+	/** 旋转轴心（几何体底部、倾倒方向一侧边缘，世界坐标） */
+	FVector TopplePivot = FVector::ZeroVector;
+
+	/** 倾倒起始 Actor 旋转 */
+	FQuat ToppleStartQuat = FQuat::Identity;
+
+	/** 起始位置相对轴心的位移 */
+	FVector ToppleStartOffset = FVector::ZeroVector;
+
+	/** 从起始旋转到“倾倒 90°”的旋转增量（世界空间） */
+	FQuat ToppleDeltaQuat = FQuat::Identity;
 };

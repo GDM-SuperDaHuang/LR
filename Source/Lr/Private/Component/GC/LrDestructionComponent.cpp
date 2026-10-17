@@ -9,22 +9,28 @@
  *
  * 调用链示例：
  *   子弹命中 -> ApplyBulletImpact(Hit, BulletVelocity, Damage)
- *     -> ApplyImpact(Params)
- *       -> ApplyStrain()             // 破坏
- *       -> ApplyBreakingVelocity()   // 抛射碎片
+ *     -> ApplyImpactWithResult(BreakAndFall, ...)
+ *       -> ApplyImpactWithItem()
+ *         -> ApplyStrain()             // 破坏
+ *         -> ApplyBreakingVelocity()   // 抛射碎片
+ *
+ *   其他来源 -> ApplyImpactWithResult(Nothing / ToppleOnly / BreakAndFall, ...)
+ *     ToppleOnly -> StartScriptedTopple()  // 脚本化倾倒（睡眠 GC 不响应速度命令，但跟随 Actor 变换）
  */
 
 #include "Component/GC/LrDestructionComponent.h"
 
+#include "GameFramework/Actor.h"
 #include "GeometryCollection/GeometryCollectionComponent.h"
 
 // 构造函数：设置组件默认值
-// - 关闭 Tick（破坏是事件驱动，不需要每帧更新）
+// - 平时不 Tick（破坏是事件驱动）；仅脚本化倾倒（ToppleOnly）期间临时开启
 // - 初始化 DefaultImpactParams，提供蓝图/代码开箱即用的破坏手感
 ULrDestructionComponent::ULrDestructionComponent()
 {
-	// 破坏组件为事件驱动型，不需要 Tick，关闭以节省性能。
-	PrimaryComponentTick.bCanEverTick = false;
+	// 破坏组件平时不 Tick，只在脚本化倾倒期间启用（见 StartScriptedTopple）。
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 	
 	// 默认撞击点：原点；默认方向：前向。实际调用时会被真实命中数据覆盖。
 	DefaultImpactParams.HitPoint = FVector::ZeroVector;
@@ -204,7 +210,7 @@ bool ULrDestructionComponent::ApplyImpactSimple(const FVector& HitPoint, const F
 }
 
 /**
- * 子弹命中专用接口：从开火数据构造破坏参数。
+ * 子弹命中专用接口：等价于 ApplyImpactWithResult(BreakAndFall, ...)。
  * @param Hit 子弹碰撞的 FHitResult（提供 ImpactPoint / ImpactNormal）
  * @param BulletVelocity 子弹速度矢量，用于推导冲击方向；为零时退化为 -ImpactNormal
  * @param Damage 伤害值，直接映射为 Strain（破坏强度）
@@ -212,11 +218,43 @@ bool ULrDestructionComponent::ApplyImpactSimple(const FVector& HitPoint, const F
  */
 bool ULrDestructionComponent::ApplyBulletImpact(const FHitResult& Hit, const FVector& BulletVelocity, float Damage)
 {
+	return ApplyImpactWithResult(ELrDestructionResult::BreakAndFall, Hit, BulletVelocity, Damage);
+}
+
+/**
+ * 按结果选择破坏方式的统一入口。
+ *
+ * Result == Nothing      ：不唤醒、不产生 Strain、不施加速度，直接返回。
+ * Result == ToppleOnly   ：脚本化倾倒（沿冲击方向绕底缘旋转 90°），不产生 Strain。
+ * Result == BreakAndFall ：构造 Strain=Damage 的参数走 ApplyImpactWithItem（子弹路径）。
+ */
+bool ULrDestructionComponent::ApplyImpactWithResult(ELrDestructionResult Result, const FHitResult& Hit, const FVector& ImpactVelocity, float Damage, float ToppleDuration)
+{
 	if (!IsValidGeometryCollection())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("LrDestruction: GeometryCollection is invalid."));
 		return false;
 	}
 
+	// 3: 不倒下也不碎裂：什么都不做。
+	// 若碰撞通道是 Block，物理接触本身仍可能推动 GC；需要完全无反应时走通道 Ignore / 游戏层拦截。
+	if (Result == ELrDestructionResult::Nothing)
+	{
+		return true;
+	}
+
+	const FVector Direction = ResolveImpactDirection(Hit, ImpactVelocity);
+
+	// 1: 倒下但不碎裂：脚本化倾倒（睡眠 GC 粒子不响应速度/冲量命令，但跟随 Actor 变换）。
+	if (Result == ELrDestructionResult::ToppleOnly)
+	{
+		StartScriptedTopple(Direction, ToppleDuration);
+
+		UE_LOG(LogTemp, Log, TEXT("LrDestruction: ToppleOnly loc=%s dir=%s duration=%.2f."), *Hit.ImpactPoint.ToString(), *Direction.ToString(), ToppleDuration);
+		return true;
+	}
+
+	// 2: 倒下并碎裂：原子弹路径。
 	// Overlap 回调的 SweepResult 可能没有 ImpactPoint / ImpactNormal，做兜底。
 	FVector HitPoint = Hit.ImpactPoint;
 	if (HitPoint.IsNearlyZero())
@@ -226,20 +264,6 @@ bool ULrDestructionComponent::ApplyBulletImpact(const FHitResult& Hit, const FVe
 	if (HitPoint.IsNearlyZero())
 	{
 		HitPoint = GeometryCollection->GetComponentLocation();
-	}
-
-	FVector Direction = BulletVelocity.GetSafeNormal();
-	if (Direction.IsNearlyZero())
-	{
-		Direction = (-Hit.ImpactNormal).GetSafeNormal();
-	}
-	if (Direction.IsNearlyZero())
-	{
-		Direction = DefaultImpactParams.ImpactDirection.GetSafeNormal();
-	}
-	if (Direction.IsNearlyZero())
-	{
-		Direction = FVector::ForwardVector;
 	}
 
 	FLrDestructionImpactParams Params = DefaultImpactParams;
@@ -264,6 +288,25 @@ bool ULrDestructionComponent::ApplyBulletImpact(const FHitResult& Hit, const FVe
 	const int32 ItemIndex = Hit.Item >= 0 ? Hit.Item : INDEX_NONE;
 	UE_LOG(LogTemp, Warning, TEXT("BulletHit Item=%d bBlocking=%d ImpactPoint=%s Damage=%f"),Hit.Item, Hit.bBlockingHit, *Hit.ImpactPoint.ToString(), Damage);
 	return ApplyImpactWithItem(ItemIndex, Params);
+}
+
+// 解析冲击方向：ImpactVelocity 优先，其次 -ImpactNormal，再退回 DefaultImpactParams.ImpactDirection，最后 Fallback 前向。
+FVector ULrDestructionComponent::ResolveImpactDirection(const FHitResult& Hit, const FVector& ImpactVelocity) const
+{
+	FVector Direction = ImpactVelocity.GetSafeNormal();
+	if (Direction.IsNearlyZero())
+	{
+		Direction = (-Hit.ImpactNormal).GetSafeNormal();
+	}
+	if (Direction.IsNearlyZero())
+	{
+		Direction = DefaultImpactParams.ImpactDirection.GetSafeNormal();
+	}
+	if (Direction.IsNearlyZero())
+	{
+		Direction = FVector::ForwardVector;
+	}
+	return Direction;
 }
 
 bool ULrDestructionComponent::WakeUpForImpact()
@@ -466,4 +509,100 @@ bool ULrDestructionComponent::ApplyBreakingVelocity(int32 ItemIndex, const FLrDe
 	 */
 	GeometryCollection->ApplyBreakingLinearVelocity(ItemIndex, Velocity);
 	return true;
+}
+
+// Tick 仅在脚本化倾倒期间生效（平时 bStartWithTickEnabled=false）。
+void ULrDestructionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (bToppling)
+	{
+		TickScriptedTopple(DeltaTime);
+	}
+}
+
+/**
+ * 启动脚本化倾倒（ToppleOnly）。
+ *
+ * 背景：睡眠 GC（Dynamic + StartAwake=false）的粒子不响应
+ * ApplyLinearVelocity / ApplyAngularVelocity / ApplyImpulseAtLocation / WakeParticle
+ * 等唤醒命令（UE5.8 引擎行为，已实测：命令送达但粒子保持睡眠冻结），
+ * 但粒子会跟随 Actor（Component）变换（已实测）。因此用脚本化旋转实现“倒而不碎”：
+ *
+ *   - 旋转增量：FindBetweenNormals(Up, Direction)，即把局部 +Z 倒向冲击方向；
+ *   - 轴心：几何体底部、倾倒方向一侧的边缘（世界坐标），保证旋转过程不插入地面；
+ *   - 曲线：t^2 重力式加速，末端直接停在 90°（倒平）。
+ */
+void ULrDestructionComponent::StartScriptedTopple(const FVector& Direction, float Duration)
+{
+	AActor* Owner = GetOwner();
+	if (!Owner || !IsValidGeometryCollection())
+	{
+		return;
+	}
+
+	// 只取水平方向参与倾倒；水平分量为零时退化为 Actor 前向。
+	FVector DirH(Direction.X, Direction.Y, 0.0f);
+	if (!DirH.Normalize())
+	{
+		DirH = Owner->GetActorForwardVector().GetSafeNormal2D();
+	}
+	if (DirH.IsNearlyZero())
+	{
+		return;
+	}
+
+	// 轴心 = 几何体底部、倾倒方向一侧的边缘（世界坐标，取 GC 当前包围盒）。
+	const FBoxSphereBounds Bounds = GeometryCollection->Bounds;
+	const FVector Center = Bounds.Origin;
+	const FVector Extent = Bounds.BoxExtent;
+
+	TopplePivot.X = DirH.X > 0.0f ? Center.X + Extent.X : Center.X - Extent.X;
+	TopplePivot.Y = DirH.Y > 0.0f ? Center.Y + Extent.Y : Center.Y - Extent.Y;
+	TopplePivot.Z = Center.Z - Extent.Z;
+
+	ToppleStartQuat = Owner->GetActorQuat();
+	ToppleStartOffset = Owner->GetActorLocation() - TopplePivot;
+
+	// FindBetweenNormals 避免手写轴角的方向符号歧义：局部 Up 恰好倒向 DirH。
+	ToppleDeltaQuat = FQuat::FindBetweenNormals(FVector::UpVector, DirH);
+
+	ToppleElapsedSeconds = 0.0f;
+	ToppleDurationSeconds = FMath::Max(Duration, 0.05f);
+	bToppling = true;
+
+	SetComponentTickEnabled(true);
+}
+
+/**
+ * 推进脚本化倾倒：Delta(t) = Slerp(I, ToppleDeltaQuat, t^2)。
+ *   Rotation(t) = Delta(t) * StartQuat
+ *   Location(t) = Pivot + Delta(t) * (StartLoc - Pivot)
+ * 倾倒完成后停止 Tick，Actor 停在倒平的姿态（GC 仍为睡眠冻结，不产生碎裂）。
+ */
+void ULrDestructionComponent::TickScriptedTopple(float DeltaTime)
+{
+	AActor* Owner = GetOwner();
+	if (!Owner)
+	{
+		bToppling = false;
+		SetComponentTickEnabled(false);
+		return;
+	}
+
+	ToppleElapsedSeconds += DeltaTime;
+	const float Alpha = FMath::Clamp(ToppleElapsedSeconds / ToppleDurationSeconds, 0.0f, 1.0f);
+	const float Eased = Alpha * Alpha; // 重力式加速
+
+	const FQuat Delta = FQuat::Slerp(FQuat::Identity, ToppleDeltaQuat, Eased);
+
+	Owner->SetActorRotation(Delta * ToppleStartQuat);
+	Owner->SetActorLocation(TopplePivot + Delta.RotateVector(ToppleStartOffset), false, nullptr, ETeleportType::None);
+
+	if (Alpha >= 1.0f)
+	{
+		bToppling = false;
+		SetComponentTickEnabled(false);
+	}
 }
