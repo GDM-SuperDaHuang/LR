@@ -63,6 +63,24 @@ void ULrDestructionComponent::BeginPlay()
 	{
 		ResolveGeometryCollection();
 	}
+
+	ApplyDamageSettings();
+}
+
+// 覆盖 GC 的破坏模型与阈值：
+// GC 资产默认 DamageThreshold = { 500000, 50000, 5000 }，
+// 而本组件用 Damage/Strain 的 100 级手感数值，不覆盖则 Strain 永远达不到阈值。
+void ULrDestructionComponent::ApplyDamageSettings()
+{
+	if (!bOverrideDamageThreshold || !IsValidGeometryCollection())
+	{
+		return;
+	}
+
+	GeometryCollection->SetDamageModel(EDamageModelTypeEnum::Chaos_Damage_Model_UserDefined_Damage_Threshold);
+	GeometryCollection->SetDamageThreshold(DamageThreshold);
+
+	UE_LOG(LogTemp, Log, TEXT("LrDestruction: DamageThreshold overridden to %s."), *FString::JoinBy(DamageThreshold, TEXT(", "), [](float Value) { return FString::SanitizeFloat(Value); }));
 }
 
 /**
@@ -78,9 +96,9 @@ void ULrDestructionComponent::BeginPlay()
 bool ULrDestructionComponent::ApplyImpact(const FLrDestructionImpactParams& Params)
 {
 	/**
-	 * 通用入口没有 ItemIndex，
-	 * 使用 -1，让 Geometry Collection
-	 * 根据 Location + Radius 进行场影响。
+	 * 通用入口没有 ItemIndex，传 INDEX_NONE；
+	 * ApplyImpactWithItem 内部会退化为根 Cluster 索引，
+	 * 由引擎按 Location + Radius 影响附近子块。
 	 */
 	return ApplyImpactWithItem(INDEX_NONE, Params);
 }
@@ -116,8 +134,24 @@ bool ULrDestructionComponent::ApplyImpactWithItem(int32 ItemIndex, const FLrDest
 		return false;
 	}
 
-	// Static / Sleeping 的 GC 直接打 Strain 不会碎，先唤醒再破坏。
+	// 睡眠中的 GC 需要保持 Simulate/Gravity，碎裂判定本身会唤醒命中范围内的子块。
 	WakeUpForImpact();
+
+	/**
+	 * ApplyExternalStrain / ApplyBreakingLinearVelocity 的 ItemIndex
+	 * 必须是有效碎片索引（来自 HitResult.Item）：
+	 * 传 INDEX_NONE 时引擎找不到对应 Handle，整条命令会被静默丢弃。
+	 * 无命中信息时退化为根 Cluster，按 Location + Radius 影响附近子块。
+	 */
+	if (ItemIndex < 0)
+	{
+		ItemIndex = GeometryCollection->GetRootIndex();
+	}
+	if (ItemIndex < 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LrDestruction: GeometryCollection has no valid RootIndex."));
+		return false;
+	}
 
 	/**
 	 * 第一阶段：
@@ -241,7 +275,7 @@ bool ULrDestructionComponent::WakeUpForImpact()
 
 	// 必须 Simulate 才能 Break / 飞碎片。
 	GeometryCollection->SetSimulatePhysics(true);
-	// Static 睡眠体直接 Strain 不会碎，切 Dynamic 唤醒。
+	// 保持 DynamicCollection 状态为 Dynamic（仅在物理状态重建时生效；碎裂的实际唤醒靠 ApplyBreakingLinearVelocity）。
 	GeometryCollection->SetDynamicState(Chaos::EObjectStateType::Dynamic);
 	GeometryCollection->SetEnableGravity(true);
 	GeometryCollection->WakeRigidBody();

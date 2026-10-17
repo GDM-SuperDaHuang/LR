@@ -15,10 +15,11 @@ ALrDestructibleActor::ALrDestructibleActor()
 	RootComponent = GeometryCollection;
 	Destruction = CreateDefaultSubobject<ULrDestructionComponent>(TEXT("Destruction"));
 	Destruction->SetGeometryCollection(GeometryCollection);
-	//防止一开始就碎裂：Static 睡眠体，命中时再切 Dynamic
+	//防止一开始就碎裂：Dynamic + StartAwake=false -> 物理体初始睡眠（Static 粒子不参与碎裂判定，命中后什么都不会发生）
 	GeometryCollection->SetSimulatePhysics(true);
-	GeometryCollection->ObjectType = EObjectStateTypeEnum::Chaos_Object_Static;
-	GeometryCollection->SetEnableGravity(false);
+	GeometryCollection->ObjectType = EObjectStateTypeEnum::Chaos_Object_Dynamic;
+	GeometryCollection->BodyInstance.bStartAwake = false;
+	GeometryCollection->SetEnableGravity(true);
 	GeometryCollection->SetCollisionProfileName(TEXT("BlockAll"));
 	// 子弹是 QueryOnly Overlap，GC 侧必须对 Projectile / Destructible 放 Overlap 才能收到
 	GeometryCollection->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
@@ -31,6 +32,13 @@ ALrDestructibleActor::ALrDestructibleActor()
 void ALrDestructibleActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Actor BeginPlay 早于组件 BeginPlay，测试破坏前先把破坏阈值切到游戏数值。
+	if (Destruction)
+	{
+		Destruction->ApplyDamageSettings();
+	}
+
 	if (!bTestBreak)
 	{
 		TestBreak();

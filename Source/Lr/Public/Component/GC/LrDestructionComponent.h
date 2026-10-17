@@ -153,6 +153,29 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Destruction")
 	FLrDestructionImpactParams DefaultImpactParams;
 
+	/**
+	 * 是否用下面的 DamageThreshold 覆盖 GC 自带的破坏阈值。
+	 *
+	 * GC 资产默认阈值为 { 500000, 50000, 5000 }，
+	 * 而 Damage / Strain 的量级是 100，不覆盖永远不会碎。
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Destruction")
+	bool bOverrideDamageThreshold = true;
+
+	/**
+	 * 每级 Cluster 的破坏阈值，对应 GC 的 Damage Threshold 数组；
+	 * 长度不足时引擎使用最后一个值。
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Destruction")
+	TArray<float> DamageThreshold = { 100.0f, 100.0f, 100.0f };
+
+	/**
+	 * 应用破坏设置（DamageModel 切到 UserDefined + 覆盖 DamageThreshold），幂等。
+	 * 需在施加 Strain 之前调用，否则本次 Impact 仍按资产阈值判定。
+	 */
+	UFUNCTION(BlueprintCallable, Category = "LR|Destruction")
+	void ApplyDamageSettings();
+
 	virtual void BeginPlay() override;
 
 	/**
@@ -188,8 +211,8 @@ public:
 	/**
 	 * 唤醒 Geometry Collection 用于破坏。
 	 *
-	 * Static / Sleeping 的 GC 直接打 Strain 不会碎，
-	 * 需要先切 Dynamic + 重力 + Simulate，才能 Cluster Break。
+	 * 睡眠中的 GC（Dynamic + StartAwake=false）需要保持 Simulate + 重力；
+	 * 碎裂由 ApplyExternalStrain / ApplyBreakingLinearVelocity 负责唤醒命中范围内的子块。
 	 */
 	UFUNCTION(BlueprintCallable, Category = "LR|Destruction")
 	bool WakeUpForImpact();
