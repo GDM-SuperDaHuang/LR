@@ -5,6 +5,7 @@
 
 #include "Component/GC/LrDestructionComponent.h"
 #include "GeometryCollection/GeometryCollectionComponent.h"
+#include "TimerManager.h"
 
 // Sets default values
 ALrDestructibleActor::ALrDestructibleActor()
@@ -95,5 +96,34 @@ bool ALrDestructibleActor::NotifyBulletHit(const FHitResult& Hit, const FVector&
 	FVector FixedVelocity = Direction.IsNearlyZero() ? FVector::ForwardVector * 1000.f : Direction * FMath::Max(BulletVelocity.Size(), 1000.f);
 
 	// WakeUp + Strain + BreakingVelocity 都在 Destruction 里做
-	return Destruction->ApplyBulletImpact(FixedHit, FixedVelocity, Damage);
+	const bool bBroken = Destruction->ApplyBulletImpact(FixedHit, FixedVelocity, Damage);
+
+	// 产生碎片后启动销毁计时（重复命中会重置计时，从最后一次碎裂起算）
+	if (bBroken && FragmentLifeTime > 0.f && GetWorld())
+	{
+		GetWorldTimerManager().SetTimer(
+			FragmentDestroyTimerHandle,
+			this,
+			&ALrDestructibleActor::DestroyFragments,
+			FragmentLifeTime,
+			false);
+	}
+
+	return bBroken;
+}
+
+void ALrDestructibleActor::DestroyFragments()
+{
+	if (!GeometryCollection)
+	{
+		return;
+	}
+
+	// 停止模拟并移除碰撞，隐藏渲染，碎片即从场景中消失
+	GeometryCollection->SetSimulatePhysics(false);
+	GeometryCollection->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GeometryCollection->SetGenerateOverlapEvents(false);
+	GeometryCollection->SetVisibility(false, true);
+
+	UE_LOG(LogTemp, Log, TEXT("LrDestruction: DestroyFragments on %s."), *GetName());
 }
