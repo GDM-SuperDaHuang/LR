@@ -124,10 +124,10 @@ void ALrProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 	{
 		Destructible->NotifyBulletHit(FixedHit, BulletVelocity, TestDamage);
 	}
-	else if (ULrDestructionComponent* Destruction = OtherActor->FindComponentByClass<ULrDestructionComponent>())
-	{
-		Destruction->ApplyBulletImpact(FixedHit, BulletVelocity, TestDamage);
-	}
+	// else if (ULrDestructionComponent* Destruction = OtherActor->FindComponentByClass<ULrDestructionComponent>())
+	// {
+	// 	Destruction->ApplyBulletImpact(FixedHit, BulletVelocity, TestDamage);
+	// }
 
 	DeactivateProjectile();
 }

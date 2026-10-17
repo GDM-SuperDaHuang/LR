@@ -19,9 +19,9 @@ public:
 
 	virtual void BeginPlay() override;
 	//测试
-	void TestBreak() const;
-	UPROPERTY(EditAnywhere)
-	bool bTestBreak =false;
+	// void TestBreak() const;
+	// UPROPERTY(EditAnywhere)
+	// bool bTestBreak =false;
 
 	// 子弹 / 投射物命中统一入口：唤醒 + 碎裂
 	UFUNCTION(BlueprintCallable, Category = "LR|Destruction")

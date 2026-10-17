@@ -39,30 +39,30 @@ void ALrDestructibleActor::BeginPlay()
 		Destruction->ApplyDamageSettings();
 	}
 
-	if (!bTestBreak)
-	{
-		TestBreak();
-	}
+	// if (!bTestBreak)
+	// {
+	// 	TestBreak();
+	// }
 	
 }
 
-void ALrDestructibleActor::TestBreak() const
-{
-	if (!Destruction || !GeometryCollection)
-	{
-		return;
-	}
-
-	const FVector HitPoint = GetActorLocation();
-
-	const FVector Direction = FVector::ForwardVector;
-
-	Destruction->ApplyImpactSimple(
-		HitPoint,
-		Direction,
-		1500.f,
-		100.f);
-}
+// void ALrDestructibleActor::TestBreak() const
+// {
+// 	if (!Destruction || !GeometryCollection)
+// 	{
+// 		return;
+// 	}
+//
+// 	const FVector HitPoint = GetActorLocation();
+//
+// 	const FVector Direction = FVector::ForwardVector;
+//
+// 	Destruction->ApplyImpactSimple(
+// 		HitPoint,
+// 		Direction,
+// 		1500.f,
+// 		100.f);
+// }
 
 bool ALrDestructibleActor::NotifyBulletHit(const FHitResult& Hit, const FVector& BulletVelocity, float Damage)
 {
